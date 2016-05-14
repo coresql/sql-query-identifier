@@ -1,0 +1,157 @@
+import { expect } from 'chai';
+import { scanToken } from '../../src/tokenizer';
+
+
+/* eslint prefer-arrow-callback: 0 */
+describe('scan', function () {
+  const initState = (input) => ({
+    input,
+    start: 0,
+    end: input.length - 1,
+    position: -1,
+  });
+
+  it('scans inline comments', function () {
+    const actual = scanToken(initState('-- my comment'));
+    const expected = {
+      type: 'comment-inline',
+      value: '-- my comment',
+      start: 0,
+      end: 12,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans block comments', function () {
+    const commentBlock = '/*\n * This is my comment block\n */';
+    const actual = scanToken(initState(commentBlock));
+    const expected = {
+      type: 'comment-block',
+      value: commentBlock,
+      start: 0,
+      end: 33,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans white spaces', function () {
+    const actual = scanToken(initState('   \n\t  '));
+    const expected = {
+      type: 'whitespace',
+      value: '   \n\t  ',
+      start: 0,
+      end: 6,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans SELECT keyword', function () {
+    const actual = scanToken(initState('SELECT'));
+    const expected = {
+      type: 'keyword',
+      value: 'SELECT',
+      start: 0,
+      end: 5,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans INSERT keyword', function () {
+    const actual = scanToken(initState('INSERT'));
+    const expected = {
+      type: 'keyword',
+      value: 'INSERT',
+      start: 0,
+      end: 5,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans DELETE keyword', function () {
+    const actual = scanToken(initState('DELETE'));
+    const expected = {
+      type: 'keyword',
+      value: 'DELETE',
+      start: 0,
+      end: 5,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans UPDATE keyword', function () {
+    const actual = scanToken(initState('UPDATE'));
+    const expected = {
+      type: 'keyword',
+      value: 'UPDATE',
+      start: 0,
+      end: 5,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans CREATE keyword', function () {
+    const actual = scanToken(initState('CREATE'));
+    const expected = {
+      type: 'keyword',
+      value: 'CREATE',
+      start: 0,
+      end: 5,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans TABLE keyword', function () {
+    const actual = scanToken(initState('TABLE'));
+    const expected = {
+      type: 'keyword',
+      value: 'TABLE',
+      start: 0,
+      end: 4,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans DATABASE keyword', function () {
+    const actual = scanToken(initState('DATABASE'));
+    const expected = {
+      type: 'keyword',
+      value: 'DATABASE',
+      start: 0,
+      end: 7,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans \'Hello World\' as string value', function () {
+    const actual = scanToken(initState('\'Hello World\''));
+    const expected = {
+      type: 'string',
+      value: '\'Hello World\'',
+      start: 0,
+      end: 12,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('skips unkown tokens', function () {
+    const actual = scanToken(initState('*'));
+    const expected = {
+      type: 'unkown',
+      value: '*',
+      start: 0,
+      end: 0,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans ; individual identifier', function () {
+    const actual = scanToken(initState(';'));
+    const expected = {
+      type: 'semicolon',
+      value: ';',
+      start: 0,
+      end: 0,
+    };
+    expect(actual).to.eql(expected);
+  });
+});

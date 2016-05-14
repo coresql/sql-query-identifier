@@ -1,0 +1,15 @@
+{
+  "extends": "airbnb/base",
+  "parser": "babel-eslint",
+  "env": {
+    "node": true,
+    "mocha": true
+  },
+  "rules": {
+    "max-len": 0,
+    "no-use-before-define": 0,
+    "space-before-function-paren": [2, {"anonymous": "always", "named": "always"}],
+    "func-names": 0,
+    "id-length": [1, {"exceptions": ["i", "j", "e", "a", "b", "t"]}]
+  }
+}
