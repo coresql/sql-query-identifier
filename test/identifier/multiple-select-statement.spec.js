@@ -14,5 +14,19 @@ describe('identifier', function () {
 
       expect(actual).to.eql(expected);
     });
+
+    it('should identify a query with different statements in multiple lines', function () {
+      const actual = identify(`
+        INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');
+        SELECT * FROM Persons';
+      `);
+
+      const expected = [
+        'Insert',
+        'Select',
+      ];
+
+      expect(actual).to.eql(expected);
+    });
   });
 });
