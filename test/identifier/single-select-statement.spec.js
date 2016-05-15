@@ -27,6 +27,27 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    it('should identify "DROP TABLE" statement', function () {
+      const actual = identify('DROP TABLE Persons;');
+      const expected = ['DROP_TABLE'];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify "DROP DATABASE" statement', function () {
+      const actual = identify('DROP DATABASE Profile;');
+      const expected = ['DROP_DATABASE'];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify "TRUNCATE TABLE" statement', function () {
+      const actual = identify('TRUNCATE TABLE Persons;');
+      const expected = ['TRUNCATE'];
+
+      expect(actual).to.eql(expected);
+    });
+
     it('should identify "INSERT" statement', function () {
       const actual = identify('INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');');
       const expected = ['INSERT'];
