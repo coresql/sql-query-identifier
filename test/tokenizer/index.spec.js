@@ -122,6 +122,17 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
+  it('scans TRUNCATE keyword', function () {
+    const actual = scanToken(initState('TRUNCATE'));
+    const expected = {
+      type: 'keyword',
+      value: 'TRUNCATE',
+      start: 0,
+      end: 7,
+    };
+    expect(actual).to.eql(expected);
+  });
+
   it('scans \'Hello World\' as string value', function () {
     const actual = scanToken(initState('\'Hello World\''));
     const expected = {

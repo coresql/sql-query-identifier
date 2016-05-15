@@ -150,6 +150,32 @@ describe('parser', function () {
 
       expect(actual).to.eql(expected);
     });
+
+    it('should parse "TRUNCATE" statement', function () {
+      const actual = parse('TRUNCATE TABLE Persons;');
+      actual.tokens = aggregateUnkownTokens(actual.tokens);
+
+      const expected = {
+        type: 'Query',
+        start: 0,
+        end: 22,
+        body: [ // nodes
+          {
+            type: 'Truncate',
+            endStatement: ';',
+          },
+        ],
+        tokens: [
+          { type: 'keyword', value: 'TRUNCATE', start: 0, end: 7 },
+          { type: 'whitespace', value: ' ', start: 8, end: 8 },
+          { type: 'keyword', value: 'TABLE', start: 9, end: 13 },
+          { type: 'unkown', value: ' Persons', start: 14, end: 21 },
+          { type: 'semicolon', value: ';', start: 22, end: 22 },
+        ],
+      };
+
+      expect(actual).to.eql(expected);
+    });
   });
 });
 

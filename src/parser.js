@@ -84,6 +84,7 @@ function createStatementParserByToken (token) {
       case 'INSERT': return createInsertStatementParser();
       case 'UPDATE': return createUpdateStatementParser();
       case 'DELETE': return createDeleteStatementParser();
+      case 'TRUNCATE': return createTruncateStatementParser();
       default: break;
     }
   }
@@ -215,6 +216,28 @@ function createCreateStatementParser () {
       },
       add: (token) => {
         statement.type = `Create${types[token.value]}`;
+      },
+      postCanGoToNext: () => true,
+    },
+  ];
+
+  return stateMachineStatementParser(statement, steps);
+}
+
+
+function createTruncateStatementParser () {
+  const statement = {};
+
+  const steps = [
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        acceptTokens: [
+          { type: 'keyword', value: 'TRUNCATE' },
+        ],
+      },
+      add: () => {
+        statement.type = 'Truncate';
       },
       postCanGoToNext: () => true,
     },
