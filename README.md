@@ -2,6 +2,7 @@ sql-query-identifier
 ===================
 
 [![Build Status](https://travis-ci.org/maxcnunes/sql-query-identifier.svg?branch=master)](https://travis-ci.org/sql-query-identifier)
+[![npm version](https://badge.fury.io/js/sql-query-identifier.svg)](http://badge.fury.io/js/sql-query-identifier)
 
 Identifies the types of each statement in a SQL query.
 
