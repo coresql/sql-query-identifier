@@ -55,21 +55,6 @@ export function parse (input) {
 }
 
 
-function createStatementParserByToken (token) {
-  if (token.type === 'keyword') {
-    switch (token.value) {
-      case 'SELECT': return createSelectStatementParser();
-      case 'CREATE': return createCreateStatementParser();
-      case 'INSERT': return createInsertStatementParser();
-      case 'UPDATE': return createUpdateStatementParser();
-      case 'DELETE': return createDeleteStatementParser();
-      default: break;
-    }
-  }
-
-  throw new Error('Invalid statement parser');
-}
-
 function initState ({ input, prevState }) {
   if (prevState) {
     return {
@@ -91,9 +76,23 @@ function initState ({ input, prevState }) {
 }
 
 
+function createStatementParserByToken (token) {
+  if (token.type === 'keyword') {
+    switch (token.value) {
+      case 'SELECT': return createSelectStatementParser();
+      case 'CREATE': return createCreateStatementParser();
+      case 'INSERT': return createInsertStatementParser();
+      case 'UPDATE': return createUpdateStatementParser();
+      case 'DELETE': return createDeleteStatementParser();
+      default: break;
+    }
+  }
+
+  throw new Error('Invalid statement parser');
+}
+
+
 function createSelectStatementParser () {
-  let currentStepIndex = 0;
-  let prevToken;
   const statement = {};
 
   const steps = [
@@ -112,90 +111,11 @@ function createSelectStatementParser () {
     },
   ];
 
-
-  /* eslint arrow-body-style: 0, no-extra-parens: 0 */
-  const isValidToken = (step, token) => {
-    return step
-      .validation
-      .acceptTokens.filter(accept => {
-        const isValidType = token.type === accept.type;
-        const isValidValue = (
-          !accept.value
-          || token.value.toUpperCase() === accept.value
-        );
-
-        return isValidType && isValidValue;
-      }).length > 0;
-  };
-
-  const hasRequiredBefore = (step) => {
-    return (
-      !step.requireBefore
-      || ~step.requireBefore.indexOf(prevToken.type)
-    );
-  };
-
-  return {
-    getStatement () {
-      return statement;
-    },
-
-    addToken (token) {
-      if (statement.endStatement) {
-        throw new Error('This statement has already got to the end.');
-      }
-
-      if (token.type === 'semicolon') {
-        statement.endStatement = ';';
-        return;
-      }
-
-      if (token.type === 'whitespace') {
-        prevToken = token;
-        return;
-      }
-
-      if (statement.type) {
-        // statement has already been identified
-        // just wait until end of the statement
-        return;
-      }
-
-      let currentStep = steps[currentStepIndex];
-      if (currentStep.preCanGoToNext(token)) {
-        currentStepIndex++;
-        currentStep = steps[currentStepIndex];
-      }
-
-      if (!hasRequiredBefore(currentStep)) {
-        const requireds = currentStep.requireBefore.join(' or ');
-        throw new Error(`Expected any of these tokens ${requireds} before "${token.value}" (currentStep=${currentStepIndex}).`);
-      }
-
-      if (!isValidToken(currentStep, token)) {
-        const expecteds = currentStep
-          .validation
-          .acceptTokens
-          .map(accept => `(type="${accept.type}" value="${accept.value}")`)
-          .join(' or ');
-        throw new Error(`Expected any of these tokens ${expecteds} instead of type="${token.type}" value="${token.value}" (currentStep=${currentStepIndex}).`);
-      }
-
-      currentStep.add(token);
-
-      if (currentStep.postCanGoToNext(token)) {
-        currentStepIndex++;
-      }
-
-      prevToken = token;
-    },
-  };
+  return stateMachineStatementParser(statement, steps);
 }
 
 
 function createInsertStatementParser () {
-  let currentStepIndex = 0;
-  let prevToken;
   const statement = {};
 
   const steps = [
@@ -214,90 +134,11 @@ function createInsertStatementParser () {
     },
   ];
 
-
-  /* eslint arrow-body-style: 0, no-extra-parens: 0 */
-  const isValidToken = (step, token) => {
-    return step
-      .validation
-      .acceptTokens.filter(accept => {
-        const isValidType = token.type === accept.type;
-        const isValidValue = (
-          !accept.value
-          || token.value.toUpperCase() === accept.value
-        );
-
-        return isValidType && isValidValue;
-      }).length > 0;
-  };
-
-  const hasRequiredBefore = (step) => {
-    return (
-      !step.requireBefore
-      || ~step.requireBefore.indexOf(prevToken.type)
-    );
-  };
-
-  return {
-    getStatement () {
-      return statement;
-    },
-
-    addToken (token) {
-      if (statement.endStatement) {
-        throw new Error('This statement has already got to the end.');
-      }
-
-      if (token.type === 'semicolon') {
-        statement.endStatement = ';';
-        return;
-      }
-
-      if (token.type === 'whitespace') {
-        prevToken = token;
-        return;
-      }
-
-      if (statement.type) {
-        // statement has already been identified
-        // just wait until end of the statement
-        return;
-      }
-
-      let currentStep = steps[currentStepIndex];
-      if (currentStep.preCanGoToNext(token)) {
-        currentStepIndex++;
-        currentStep = steps[currentStepIndex];
-      }
-
-      if (!hasRequiredBefore(currentStep)) {
-        const requireds = currentStep.requireBefore.join(' or ');
-        throw new Error(`Expected any of these tokens ${requireds} before "${token.value}" (currentStep=${currentStepIndex}).`);
-      }
-
-      if (!isValidToken(currentStep, token)) {
-        const expecteds = currentStep
-          .validation
-          .acceptTokens
-          .map(accept => `(type="${accept.type}" value="${accept.value}")`)
-          .join(' or ');
-        throw new Error(`Expected any of these tokens ${expecteds} instead of type="${token.type}" value="${token.value}" (currentStep=${currentStepIndex}).`);
-      }
-
-      currentStep.add(token);
-
-      if (currentStep.postCanGoToNext(token)) {
-        currentStepIndex++;
-      }
-
-      prevToken = token;
-    },
-  };
+  return stateMachineStatementParser(statement, steps);
 }
 
 
 function createUpdateStatementParser () {
-  let currentStepIndex = 0;
-  let prevToken;
   const statement = {};
 
   const steps = [
@@ -316,90 +157,11 @@ function createUpdateStatementParser () {
     },
   ];
 
-
-  /* eslint arrow-body-style: 0, no-extra-parens: 0 */
-  const isValidToken = (step, token) => {
-    return step
-      .validation
-      .acceptTokens.filter(accept => {
-        const isValidType = token.type === accept.type;
-        const isValidValue = (
-          !accept.value
-          || token.value.toUpperCase() === accept.value
-        );
-
-        return isValidType && isValidValue;
-      }).length > 0;
-  };
-
-  const hasRequiredBefore = (step) => {
-    return (
-      !step.requireBefore
-      || ~step.requireBefore.indexOf(prevToken.type)
-    );
-  };
-
-  return {
-    getStatement () {
-      return statement;
-    },
-
-    addToken (token) {
-      if (statement.endStatement) {
-        throw new Error('This statement has already got to the end.');
-      }
-
-      if (token.type === 'semicolon') {
-        statement.endStatement = ';';
-        return;
-      }
-
-      if (token.type === 'whitespace') {
-        prevToken = token;
-        return;
-      }
-
-      if (statement.type) {
-        // statement has already been identified
-        // just wait until end of the statement
-        return;
-      }
-
-      let currentStep = steps[currentStepIndex];
-      if (currentStep.preCanGoToNext(token)) {
-        currentStepIndex++;
-        currentStep = steps[currentStepIndex];
-      }
-
-      if (!hasRequiredBefore(currentStep)) {
-        const requireds = currentStep.requireBefore.join(' or ');
-        throw new Error(`Expected any of these tokens ${requireds} before "${token.value}" (currentStep=${currentStepIndex}).`);
-      }
-
-      if (!isValidToken(currentStep, token)) {
-        const expecteds = currentStep
-          .validation
-          .acceptTokens
-          .map(accept => `(type="${accept.type}" value="${accept.value}")`)
-          .join(' or ');
-        throw new Error(`Expected any of these tokens ${expecteds} instead of type="${token.type}" value="${token.value}" (currentStep=${currentStepIndex}).`);
-      }
-
-      currentStep.add(token);
-
-      if (currentStep.postCanGoToNext(token)) {
-        currentStepIndex++;
-      }
-
-      prevToken = token;
-    },
-  };
+  return stateMachineStatementParser(statement, steps);
 }
 
 
 function createDeleteStatementParser () {
-  let currentStepIndex = 0;
-  let prevToken;
   const statement = {};
 
   const steps = [
@@ -418,90 +180,11 @@ function createDeleteStatementParser () {
     },
   ];
 
-
-  /* eslint arrow-body-style: 0, no-extra-parens: 0 */
-  const isValidToken = (step, token) => {
-    return step
-      .validation
-      .acceptTokens.filter(accept => {
-        const isValidType = token.type === accept.type;
-        const isValidValue = (
-          !accept.value
-          || token.value.toUpperCase() === accept.value
-        );
-
-        return isValidType && isValidValue;
-      }).length > 0;
-  };
-
-  const hasRequiredBefore = (step) => {
-    return (
-      !step.requireBefore
-      || ~step.requireBefore.indexOf(prevToken.type)
-    );
-  };
-
-  return {
-    getStatement () {
-      return statement;
-    },
-
-    addToken (token) {
-      if (statement.endStatement) {
-        throw new Error('This statement has already got to the end.');
-      }
-
-      if (token.type === 'semicolon') {
-        statement.endStatement = ';';
-        return;
-      }
-
-      if (token.type === 'whitespace') {
-        prevToken = token;
-        return;
-      }
-
-      if (statement.type) {
-        // statement has already been identified
-        // just wait until end of the statement
-        return;
-      }
-
-      let currentStep = steps[currentStepIndex];
-      if (currentStep.preCanGoToNext(token)) {
-        currentStepIndex++;
-        currentStep = steps[currentStepIndex];
-      }
-
-      if (!hasRequiredBefore(currentStep)) {
-        const requireds = currentStep.requireBefore.join(' or ');
-        throw new Error(`Expected any of these tokens ${requireds} before "${token.value}" (currentStep=${currentStepIndex}).`);
-      }
-
-      if (!isValidToken(currentStep, token)) {
-        const expecteds = currentStep
-          .validation
-          .acceptTokens
-          .map(accept => `(type="${accept.type}" value="${accept.value}")`)
-          .join(' or ');
-        throw new Error(`Expected any of these tokens ${expecteds} instead of type="${token.type}" value="${token.value}" (currentStep=${currentStepIndex}).`);
-      }
-
-      currentStep.add(token);
-
-      if (currentStep.postCanGoToNext(token)) {
-        currentStepIndex++;
-      }
-
-      prevToken = token;
-    },
-  };
+  return stateMachineStatementParser(statement, steps);
 }
 
 
 function createCreateStatementParser () {
-  let currentStepIndex = 0;
-  let prevToken;
   const statement = {};
   const types = {
     TABLE: 'Table',
@@ -537,6 +220,13 @@ function createCreateStatementParser () {
     },
   ];
 
+  return stateMachineStatementParser(statement, steps);
+}
+
+
+function stateMachineStatementParser (statement, steps) {
+  let currentStepIndex = 0;
+  let prevToken;
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
   const isValidToken = (step, token) => {
@@ -566,6 +256,7 @@ function createCreateStatementParser () {
     },
 
     addToken (token) {
+      /* eslint no-param-reassign: 0 */
       if (statement.endStatement) {
         throw new Error('This statement has already got to the end.');
       }
