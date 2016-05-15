@@ -215,7 +215,7 @@ function createCreateStatementParser () {
         ],
       },
       add: (token) => {
-        statement.type = `Create${types[token.value]}`;
+        statement.type = `Create${types[token.value.toUpperCase()]}`;
       },
       postCanGoToNext: () => true,
     },
