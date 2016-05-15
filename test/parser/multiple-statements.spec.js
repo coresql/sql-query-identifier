@@ -11,16 +11,16 @@ describe('parser', function () {
       actual.tokens = aggregateUnkownTokens(actual.tokens);
 
       const expected = {
-        type: 'Query',
+        type: 'QUERY',
         start: 0,
         end: 76,
         body: [ // nodes
           {
-            type: 'Insert',
+            type: 'INSERT',
             endStatement: ';',
           },
           {
-            type: 'Select',
+            type: 'SELECT',
           },
         ],
         tokens: [
@@ -46,16 +46,16 @@ describe('parser', function () {
       actual.tokens = aggregateUnkownTokens(actual.tokens);
 
       const expected = {
-        type: 'Query',
+        type: 'QUERY',
         start: 0,
         end: 103,
         body: [ // nodes
           {
-            type: 'Insert',
+            type: 'INSERT',
             endStatement: ';',
           },
           {
-            type: 'Select',
+            type: 'SELECT',
           },
         ],
         tokens: [

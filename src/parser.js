@@ -7,7 +7,7 @@ import { scanToken } from './tokenizer';
 export function parse (input) {
   const topLevelState = initState({ input });
   const topLevelStatement = {
-    type: 'Query',
+    type: 'QUERY',
     start: 0,
     end: input.length - 1,
     body: [],
@@ -107,7 +107,7 @@ function createSelectStatementParser () {
         ],
       },
       add: () => {
-        statement.type = 'Select';
+        statement.type = 'SELECT';
       },
       postCanGoToNext: () => true,
     },
@@ -130,7 +130,7 @@ function createInsertStatementParser () {
         ],
       },
       add: () => {
-        statement.type = 'Insert';
+        statement.type = 'INSERT';
       },
       postCanGoToNext: () => true,
     },
@@ -153,7 +153,7 @@ function createUpdateStatementParser () {
         ],
       },
       add: () => {
-        statement.type = 'Update';
+        statement.type = 'UPDATE';
       },
       postCanGoToNext: () => true,
     },
@@ -176,7 +176,7 @@ function createDeleteStatementParser () {
         ],
       },
       add: () => {
-        statement.type = 'Delete';
+        statement.type = 'DELETE';
       },
       postCanGoToNext: () => true,
     },
@@ -188,10 +188,6 @@ function createDeleteStatementParser () {
 
 function createCreateStatementParser () {
   const statement = {};
-  const types = {
-    TABLE: 'Table',
-    DATABASE: 'Database',
-  };
 
   const steps = [
     // Create
@@ -216,7 +212,7 @@ function createCreateStatementParser () {
         ],
       },
       add: (token) => {
-        statement.type = `Create${types[token.value.toUpperCase()]}`;
+        statement.type = `CREATE_${token.value.toUpperCase()}`;
       },
       postCanGoToNext: () => true,
     },
@@ -228,10 +224,6 @@ function createCreateStatementParser () {
 
 function createDropStatementParser () {
   const statement = {};
-  const types = {
-    TABLE: 'Table',
-    DATABASE: 'Database',
-  };
 
   const steps = [
     // Drop
@@ -256,7 +248,7 @@ function createDropStatementParser () {
         ],
       },
       add: (token) => {
-        statement.type = `Drop${types[token.value.toUpperCase()]}`;
+        statement.type = `DROP_${token.value.toUpperCase()}`;
       },
       postCanGoToNext: () => true,
     },
@@ -278,7 +270,7 @@ function createTruncateStatementParser () {
         ],
       },
       add: () => {
-        statement.type = 'Truncate';
+        statement.type = 'TRUNCATE';
       },
       postCanGoToNext: () => true,
     },

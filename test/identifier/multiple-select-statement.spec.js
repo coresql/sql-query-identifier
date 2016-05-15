@@ -8,8 +8,8 @@ describe('identifier', function () {
     it('should identify a query with different statements in a single line', function () {
       const actual = identify('INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');SELECT * FROM Persons');
       const expected = [
-        'Insert',
-        'Select',
+        'INSERT',
+        'SELECT',
       ];
 
       expect(actual).to.eql(expected);
@@ -22,8 +22,8 @@ describe('identifier', function () {
       `);
 
       const expected = [
-        'Insert',
-        'Select',
+        'INSERT',
+        'SELECT',
       ];
 
       expect(actual).to.eql(expected);

@@ -28,12 +28,15 @@ This way you have sure is a valid query before trying to identify the types.
 
 ## Current Available Types
 
-* Insert
-* Update
-* Delete
-* Select
-* CreateTable
-* CreateDatabase
+* INSERT
+* UPDATE
+* DELETE
+* SELECT
+* TRUNCATE
+* CREATE_TABLE
+* CREATE_DATABASE
+* DROP_TABLE
+* DROP_DATABASE
 
 ## Installation
 
@@ -54,7 +57,7 @@ const types = identify(`
 `);
 
 console.log(types);
-// [ 'Insert', 'Select' ]
+// [ 'INSERT', 'SELECT' ]
 ```
 
 ## Contributing

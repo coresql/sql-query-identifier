@@ -24,12 +24,12 @@ describe('parser', function () {
       actual.tokens = aggregateUnkownTokens(actual.tokens);
 
       const expected = {
-        type: 'Query',
+        type: 'QUERY',
         start: 0,
         end: 20,
         body: [ // nodes
           {
-            type: 'Select',
+            type: 'SELECT',
           },
         ],
         tokens: [
@@ -46,12 +46,12 @@ describe('parser', function () {
       actual.tokens = aggregateUnkownTokens(actual.tokens);
 
       const expected = {
-        type: 'Query',
+        type: 'QUERY',
         start: 0,
         end: 20,
         body: [ // nodes
           {
-            type: 'Select',
+            type: 'SELECT',
           },
         ],
         tokens: [
@@ -68,12 +68,12 @@ describe('parser', function () {
       actual.tokens = aggregateUnkownTokens(actual.tokens);
 
       const expected = {
-        type: 'Query',
+        type: 'QUERY',
         start: 0,
         end: 54,
         body: [ // nodes
           {
-            type: 'CreateTable',
+            type: 'CREATE_TABLE',
             endStatement: ';',
           },
         ],
@@ -94,12 +94,12 @@ describe('parser', function () {
       actual.tokens = aggregateUnkownTokens(actual.tokens);
 
       const expected = {
-        type: 'Query',
+        type: 'QUERY',
         start: 0,
         end: 23,
         body: [ // nodes
           {
-            type: 'CreateDatabase',
+            type: 'CREATE_DATABASE',
             endStatement: ';',
           },
         ],
@@ -120,12 +120,12 @@ describe('parser', function () {
       actual.tokens = aggregateUnkownTokens(actual.tokens);
 
       const expected = {
-        type: 'Query',
+        type: 'QUERY',
         start: 0,
         end: 18,
         body: [ // nodes
           {
-            type: 'DropTable',
+            type: 'DROP_TABLE',
             endStatement: ';',
           },
         ],
@@ -146,12 +146,12 @@ describe('parser', function () {
       actual.tokens = aggregateUnkownTokens(actual.tokens);
 
       const expected = {
-        type: 'Query',
+        type: 'QUERY',
         start: 0,
         end: 21,
         body: [ // nodes
           {
-            type: 'DropDatabase',
+            type: 'DROP_DATABASE',
             endStatement: ';',
           },
         ],
@@ -171,12 +171,12 @@ describe('parser', function () {
       const actual = parse('INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');');
       actual.tokens = aggregateUnkownTokens(actual.tokens);
       const expected = {
-        type: 'Query',
+        type: 'QUERY',
         start: 0,
         end: 55,
         body: [ // nodes
           {
-            type: 'Insert',
+            type: 'INSERT',
             endStatement: ';',
           },
         ],
@@ -195,12 +195,12 @@ describe('parser', function () {
       actual.tokens = aggregateUnkownTokens(actual.tokens);
 
       const expected = {
-        type: 'Query',
+        type: 'QUERY',
         start: 0,
         end: 51,
         body: [ // nodes
           {
-            type: 'Update',
+            type: 'UPDATE',
             endStatement: ';',
           },
         ],
@@ -219,12 +219,12 @@ describe('parser', function () {
       actual.tokens = aggregateUnkownTokens(actual.tokens);
 
       const expected = {
-        type: 'Query',
+        type: 'QUERY',
         start: 0,
         end: 38,
         body: [ // nodes
           {
-            type: 'Delete',
+            type: 'DELETE',
             endStatement: ';',
           },
         ],
@@ -243,12 +243,12 @@ describe('parser', function () {
       actual.tokens = aggregateUnkownTokens(actual.tokens);
 
       const expected = {
-        type: 'Query',
+        type: 'QUERY',
         start: 0,
         end: 22,
         body: [ // nodes
           {
-            type: 'Truncate',
+            type: 'TRUNCATE',
             endStatement: ';',
           },
         ],

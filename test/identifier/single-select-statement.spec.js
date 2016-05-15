@@ -8,42 +8,42 @@ describe('identifier', function () {
   describe('given queries with a single statement', function () {
     it('should identify "SELECT" statement', function () {
       const actual = identify('SELECT * FROM Persons');
-      const expected = ['Select'];
+      const expected = ['SELECT'];
 
       expect(actual).to.eql(expected);
     });
 
     it('should identify "CREATE TABLE" statement', function () {
       const actual = identify('CREATE TABLE Persons (PersonID int, Name varchar(255));');
-      const expected = ['CreateTable'];
+      const expected = ['CREATE_TABLE'];
 
       expect(actual).to.eql(expected);
     });
 
     it('should identify "CREATE DATABASE" statement', function () {
       const actual = identify('CREATE DATABASE Profile;');
-      const expected = ['CreateDatabase'];
+      const expected = ['CREATE_DATABASE'];
 
       expect(actual).to.eql(expected);
     });
 
     it('should identify "INSERT" statement', function () {
       const actual = identify('INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');');
-      const expected = ['Insert'];
+      const expected = ['INSERT'];
 
       expect(actual).to.eql(expected);
     });
 
     it('should identify "UPDATE" statement', function () {
       const actual = identify('UPDATE Persons SET Name = \'John\' WHERE PersonID = 1;');
-      const expected = ['Update'];
+      const expected = ['UPDATE'];
 
       expect(actual).to.eql(expected);
     });
 
     it('should identify "DELETE" statement', function () {
       const actual = identify('DELETE FROM Persons WHERE PersonID = 1;');
-      const expected = ['Delete'];
+      const expected = ['DELETE'];
 
       expect(actual).to.eql(expected);
     });
