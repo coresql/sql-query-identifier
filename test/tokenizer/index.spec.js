@@ -100,6 +100,17 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
+  it('scans DROP keyword', function () {
+    const actual = scanToken(initState('DROP'));
+    const expected = {
+      type: 'keyword',
+      value: 'DROP',
+      start: 0,
+      end: 3,
+    };
+    expect(actual).to.eql(expected);
+  });
+
   it('scans TABLE keyword', function () {
     const actual = scanToken(initState('TABLE'));
     const expected = {

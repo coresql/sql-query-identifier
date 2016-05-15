@@ -81,6 +81,7 @@ function createStatementParserByToken (token) {
     switch (token.value.toUpperCase()) {
       case 'SELECT': return createSelectStatementParser();
       case 'CREATE': return createCreateStatementParser();
+      case 'DROP': return createDropStatementParser();
       case 'INSERT': return createInsertStatementParser();
       case 'UPDATE': return createUpdateStatementParser();
       case 'DELETE': return createDeleteStatementParser();
@@ -216,6 +217,46 @@ function createCreateStatementParser () {
       },
       add: (token) => {
         statement.type = `Create${types[token.value.toUpperCase()]}`;
+      },
+      postCanGoToNext: () => true,
+    },
+  ];
+
+  return stateMachineStatementParser(statement, steps);
+}
+
+
+function createDropStatementParser () {
+  const statement = {};
+  const types = {
+    TABLE: 'Table',
+    DATABASE: 'Database',
+  };
+
+  const steps = [
+    // Drop
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        acceptTokens: [
+          { type: 'keyword', value: 'DROP' },
+        ],
+      },
+      add: () => {},
+      postCanGoToNext: () => true,
+    },
+    // Table/Database
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        requireBefore: ['whitespace'],
+        acceptTokens: [
+          { type: 'keyword', value: 'TABLE' },
+          { type: 'keyword', value: 'DATABASE' },
+        ],
+      },
+      add: (token) => {
+        statement.type = `Drop${types[token.value.toUpperCase()]}`;
       },
       postCanGoToNext: () => true,
     },

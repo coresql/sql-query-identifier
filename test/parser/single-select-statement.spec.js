@@ -115,6 +115,58 @@ describe('parser', function () {
       expect(actual).to.eql(expected);
     });
 
+    it('should parse "DROP TABLE" statement', function () {
+      const actual = parse('DROP TABLE Persons;');
+      actual.tokens = aggregateUnkownTokens(actual.tokens);
+
+      const expected = {
+        type: 'Query',
+        start: 0,
+        end: 18,
+        body: [ // nodes
+          {
+            type: 'DropTable',
+            endStatement: ';',
+          },
+        ],
+        tokens: [
+          { type: 'keyword', value: 'DROP', start: 0, end: 3 },
+          { type: 'whitespace', value: ' ', start: 4, end: 4 },
+          { type: 'keyword', value: 'TABLE', start: 5, end: 9 },
+          { type: 'unkown', value: ' Persons', start: 10, end: 17 },
+          { type: 'semicolon', value: ';', start: 18, end: 18 },
+        ],
+      };
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('should parse "DROP DATABASE" statement', function () {
+      const actual = parse('DROP DATABASE Profile;');
+      actual.tokens = aggregateUnkownTokens(actual.tokens);
+
+      const expected = {
+        type: 'Query',
+        start: 0,
+        end: 21,
+        body: [ // nodes
+          {
+            type: 'DropDatabase',
+            endStatement: ';',
+          },
+        ],
+        tokens: [
+          { type: 'keyword', value: 'DROP', start: 0, end: 3 },
+          { type: 'whitespace', value: ' ', start: 4, end: 4 },
+          { type: 'keyword', value: 'DATABASE', start: 5, end: 12 },
+          { type: 'unkown', value: ' Profile', start: 13, end: 20 },
+          { type: 'semicolon', value: ';', start: 21, end: 21 },
+        ],
+      };
+
+      expect(actual).to.eql(expected);
+    });
+
     it('should parse "INSERT" statement', function () {
       const actual = parse('INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');');
       actual.tokens = aggregateUnkownTokens(actual.tokens);

@@ -9,6 +9,7 @@ const KEYWORDS = [
   'DELETE',
   'UPDATE',
   'CREATE',
+  'DROP',
   'TABLE',
   'DATABASE',
   'TRUNCATE',
