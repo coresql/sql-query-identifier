@@ -5,6 +5,19 @@ import { parse } from '../../src/parser';
 
 /* eslint prefer-arrow-callback: 0 */
 describe('parser', function () {
+  describe('given is a not reconized statement', function () {
+    it('should throw an error including the unkown statement', function () {
+      let hasError = false;
+      try {
+        parse('LIST * FROM Persons');
+      } catch (err) {
+        expect(err.message).to.eql('Invalid statement parser "LIST"');
+        hasError = true;
+      }
+      expect(hasError).to.eql(true);
+    });
+  });
+
   describe('given queries with a single statement', function () {
     it('should parse "SELECT" statement', function () {
       const actual = parse('SELECT * FROM Persons');

@@ -89,7 +89,7 @@ function createStatementParserByToken (token) {
     }
   }
 
-  throw new Error('Invalid statement parser');
+  throw new Error(`Invalid statement parser "${token.value}"`);
 }
 
 
