@@ -1,4 +1,4 @@
-import { scanToken } from '../tokenizer';
+import { scanToken } from './tokenizer';
 
 
 /**
