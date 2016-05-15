@@ -54,7 +54,7 @@ describe('parser', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('parse "CREATE DATABASE" statement', function () {
+    it('should parse "CREATE DATABASE" statement', function () {
       const actual = parse('CREATE DATABASE Profile;');
       actual.tokens = aggregateUnkownTokens(actual.tokens);
 
