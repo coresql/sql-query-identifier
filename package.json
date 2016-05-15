@@ -9,7 +9,8 @@
     "test:watch": "npm run test -- --watch --watch-extensions .spec.js --bail ./test",
     "lint": "eslint src test",
     "build": "babel src --out-dir lib",
-    "watch": "babel src --out-dir lib --watch"
+    "watch": "babel src --out-dir lib --watch",
+    "prepublish": "npm run build"
   },
   "devDependencies": {
     "babel-cli": "^6.8.0",
