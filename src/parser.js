@@ -78,7 +78,7 @@ function initState ({ input, prevState }) {
 
 function createStatementParserByToken (token) {
   if (token.type === 'keyword') {
-    switch (token.value) {
+    switch (token.value.toUpperCase()) {
       case 'SELECT': return createSelectStatementParser();
       case 'CREATE': return createCreateStatementParser();
       case 'INSERT': return createInsertStatementParser();

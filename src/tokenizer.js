@@ -71,7 +71,7 @@ function unread (state) {
 
 
 function isKeyword (word) {
-  return ~KEYWORDS.indexOf(word);
+  return ~KEYWORDS.indexOf(word.toUpperCase());
 }
 
 

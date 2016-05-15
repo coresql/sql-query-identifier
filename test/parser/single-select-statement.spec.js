@@ -41,6 +41,28 @@ describe('parser', function () {
       expect(actual).to.eql(expected);
     });
 
+    it('should parse "select" statement', function () {
+      const actual = parse('select * FROM Persons');
+      actual.tokens = aggregateUnkownTokens(actual.tokens);
+
+      const expected = {
+        type: 'Query',
+        start: 0,
+        end: 20,
+        body: [ // nodes
+          {
+            type: 'Select',
+          },
+        ],
+        tokens: [
+          { type: 'keyword', value: 'select', start: 0, end: 5 },
+          { type: 'unkown', value: ' * FROM Persons', start: 6, end: 20 },
+        ],
+      };
+
+      expect(actual).to.eql(expected);
+    });
+
     it('should parse "CREATE TABLE" statement', function () {
       const actual = parse('CREATE TABLE Persons (PersonID int, Name varchar(255));');
       actual.tokens = aggregateUnkownTokens(actual.tokens);
