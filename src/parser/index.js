@@ -119,7 +119,7 @@ function createInsertStatementParser () {
   const statement = {};
 
   const steps = [
-    // Select
+    // Insert
     {
       preCanGoToNext: () => false,
       validation: {
@@ -142,7 +142,7 @@ function createUpdateStatementParser () {
   const statement = {};
 
   const steps = [
-    // Select
+    // Update
     {
       preCanGoToNext: () => false,
       validation: {
@@ -165,7 +165,7 @@ function createDeleteStatementParser () {
   const statement = {};
 
   const steps = [
-    // Select
+    // Delete
     {
       preCanGoToNext: () => false,
       validation: {
@@ -203,7 +203,7 @@ function createCreateStatementParser () {
       add: () => {},
       postCanGoToNext: () => true,
     },
-    // From keyword
+    // Table/Database
     {
       preCanGoToNext: () => false,
       validation: {
