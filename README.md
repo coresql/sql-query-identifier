@@ -3,6 +3,15 @@ sql-query-identifier
 
 Identifies the types of each statement in a SQL query.
 
+## Current Available Types
+
+* Insert
+* Update
+* Delete
+* Select
+* CreateTable
+* CreateDatabase
+
 ## Installation
 
 Install via npm:
