@@ -39,7 +39,7 @@ describe('parser', function () {
 
     it('should identify a query with different statements in multiple lines', function () {
       const actual = parse(`
-        INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');
+        INSERT INTO Persons (PersonID, Name) VALUES (1, 'Jack');
         SELECT * FROM Persons';
       `);
 
