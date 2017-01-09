@@ -4,7 +4,7 @@ sql-query-identifier
 [![Build Status](https://travis-ci.org/maxcnunes/sql-query-identifier.svg?branch=master)](https://travis-ci.org/sql-query-identifier)
 [![npm version](https://badge.fury.io/js/sql-query-identifier.svg)](http://badge.fury.io/js/sql-query-identifier)
 
-Identifies the types of each statement in a SQL query.
+Identifies the types of each statement in a SQL query (also provide the start, end and the query text).
 
 This uses AST and parser techniques to identify the SQL query type.
 Although it will not validate the whole query as a fully implemented AST+parser would do.
@@ -51,13 +51,26 @@ $ npm install sql-query-identifier
 ```js
 import { identify } from 'sql-query-identifier';
 
-const types = identify(`
+const statements = identify(`
   INSERT INTO Persons (PersonID, Name) VALUES (1, 'Jack');
-  SELECT * FROM Persons';
+  SELECT * FROM Persons;
 `);
 
-console.log(types);
-// [ 'INSERT', 'SELECT' ]
+console.log(statements);
+[ 
+  { 
+    start: 9,
+    end: 64,
+    text: 'INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');',
+    type: 'INSERT' 
+  },
+  { 
+    start: 74,
+    end: 95,
+    text: 'SELECT * FROM Persons;',
+    type: 'SELECT' 
+  } 
+]
 ```
 
 ## Contributing

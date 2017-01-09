@@ -38,6 +38,7 @@ export function parse (input) {
 
     const statement = statementParser.getStatement();
     if (statement.endStatement) {
+      statement.end = token.end;
       topLevelStatement.body.push(statement);
       statementParser = null;
     }
@@ -47,6 +48,7 @@ export function parse (input) {
   if (statementParser) {
     const statement = statementParser.getStatement();
     if (!statement.endStatement) {
+      statement.end = topLevelStatement.end;
       topLevelStatement.body.push(statement);
     }
   }
@@ -106,8 +108,9 @@ function createSelectStatementParser () {
           { type: 'keyword', value: 'SELECT' },
         ],
       },
-      add: () => {
+      add: (token) => {
         statement.type = 'SELECT';
+        statement.start = token.start;
       },
       postCanGoToNext: () => true,
     },
@@ -129,8 +132,9 @@ function createInsertStatementParser () {
           { type: 'keyword', value: 'INSERT' },
         ],
       },
-      add: () => {
+      add: (token) => {
         statement.type = 'INSERT';
+        statement.start = token.start;
       },
       postCanGoToNext: () => true,
     },
@@ -152,8 +156,9 @@ function createUpdateStatementParser () {
           { type: 'keyword', value: 'UPDATE' },
         ],
       },
-      add: () => {
+      add: (token) => {
         statement.type = 'UPDATE';
+        statement.start = token.start;
       },
       postCanGoToNext: () => true,
     },
@@ -175,8 +180,9 @@ function createDeleteStatementParser () {
           { type: 'keyword', value: 'DELETE' },
         ],
       },
-      add: () => {
+      add: (token) => {
         statement.type = 'DELETE';
+        statement.start = token.start;
       },
       postCanGoToNext: () => true,
     },
@@ -198,7 +204,9 @@ function createCreateStatementParser () {
           { type: 'keyword', value: 'CREATE' },
         ],
       },
-      add: () => {},
+      add: (token) => {
+        statement.start = token.start;
+      },
       postCanGoToNext: () => true,
     },
     // Table/Database
@@ -234,7 +242,9 @@ function createDropStatementParser () {
           { type: 'keyword', value: 'DROP' },
         ],
       },
-      add: () => {},
+      add: (token) => {
+        statement.start = token.start;
+      },
       postCanGoToNext: () => true,
     },
     // Table/Database
@@ -269,8 +279,9 @@ function createTruncateStatementParser () {
           { type: 'keyword', value: 'TRUNCATE' },
         ],
       },
-      add: () => {
+      add: (token) => {
         statement.type = 'TRUNCATE';
+        statement.start = token.start;
       },
       postCanGoToNext: () => true,
     },

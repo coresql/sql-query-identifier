@@ -29,6 +29,8 @@ describe('parser', function () {
         end: 20,
         body: [ // nodes
           {
+            start: 0,
+            end: 20,
             type: 'SELECT',
           },
         ],
@@ -51,6 +53,8 @@ describe('parser', function () {
         end: 20,
         body: [ // nodes
           {
+            start: 0,
+            end: 20,
             type: 'SELECT',
           },
         ],
@@ -73,6 +77,8 @@ describe('parser', function () {
         end: 54,
         body: [ // nodes
           {
+            start: 0,
+            end: 54,
             type: 'CREATE_TABLE',
             endStatement: ';',
           },
@@ -99,6 +105,8 @@ describe('parser', function () {
         end: 23,
         body: [ // nodes
           {
+            start: 0,
+            end: 23,
             type: 'CREATE_DATABASE',
             endStatement: ';',
           },
@@ -125,6 +133,8 @@ describe('parser', function () {
         end: 18,
         body: [ // nodes
           {
+            start: 0,
+            end: 18,
             type: 'DROP_TABLE',
             endStatement: ';',
           },
@@ -151,6 +161,8 @@ describe('parser', function () {
         end: 21,
         body: [ // nodes
           {
+            start: 0,
+            end: 21,
             type: 'DROP_DATABASE',
             endStatement: ';',
           },
@@ -176,6 +188,8 @@ describe('parser', function () {
         end: 55,
         body: [ // nodes
           {
+            start: 0,
+            end: 55,
             type: 'INSERT',
             endStatement: ';',
           },
@@ -200,6 +214,8 @@ describe('parser', function () {
         end: 51,
         body: [ // nodes
           {
+            start: 0,
+            end: 51,
             type: 'UPDATE',
             endStatement: ';',
           },
@@ -224,6 +240,8 @@ describe('parser', function () {
         end: 38,
         body: [ // nodes
           {
+            start: 0,
+            end: 38,
             type: 'DELETE',
             endStatement: ';',
           },
@@ -248,6 +266,8 @@ describe('parser', function () {
         end: 22,
         body: [ // nodes
           {
+            start: 0,
+            end: 22,
             type: 'TRUNCATE',
             endStatement: ';',
           },

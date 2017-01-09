@@ -8,7 +8,12 @@ describe('identifier', function () {
     it('should identify a query with inner statements in a single line', function () {
       const actual = identify('INSERT INTO Customers (CustomerName, Country) SELECT SupplierName, Country FROM Suppliers');
       const expected = [
-        'INSERT',
+        {
+          start: 0,
+          end: 88,
+          text: 'INSERT INTO Customers (CustomerName, Country) SELECT SupplierName, Country FROM Suppliers',
+          type: 'INSERT',
+        },
       ];
 
       expect(actual).to.eql(expected);
@@ -17,7 +22,12 @@ describe('identifier', function () {
     it('should identify a query with inner statements in a single line and a comment block in the middle', function () {
       const actual = identify('INSERT INTO Customers (CustomerName, Country) /* comment */ SELECT SupplierName, Country FROM Suppliers');
       const expected = [
-        'INSERT',
+        {
+          start: 0,
+          end: 102,
+          text: 'INSERT INTO Customers (CustomerName, Country) /* comment */ SELECT SupplierName, Country FROM Suppliers',
+          type: 'INSERT',
+        },
       ];
 
       expect(actual).to.eql(expected);
@@ -30,7 +40,12 @@ describe('identifier', function () {
       `);
 
       const expected = [
-        'INSERT',
+        {
+          start: 9,
+          end: 106,
+          text: 'INSERT INTO Customers (CustomerName, Country)\n        SELECT SupplierName, Country FROM Suppliers;',
+          type: 'INSERT',
+        },
       ];
 
       expect(actual).to.eql(expected);
@@ -44,7 +59,12 @@ describe('identifier', function () {
       `);
 
       const expected = [
-        'INSERT',
+        {
+          start: 9,
+          end: 125,
+          text: 'INSERT INTO Customers (CustomerName, Country)\n        -- comment\n        SELECT SupplierName, Country FROM Suppliers;',
+          type: 'INSERT',
+        },
       ];
 
       expect(actual).to.eql(expected);

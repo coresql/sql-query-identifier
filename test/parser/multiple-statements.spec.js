@@ -16,10 +16,14 @@ describe('parser', function () {
         end: 76,
         body: [ // nodes
           {
+            start: 0,
+            end: 55,
             type: 'INSERT',
             endStatement: ';',
           },
           {
+            start: 56,
+            end: 76,
             type: 'SELECT',
           },
         ],
@@ -51,10 +55,14 @@ describe('parser', function () {
         end: 103,
         body: [ // nodes
           {
+            start: 9,
+            end: 64,
             type: 'INSERT',
             endStatement: ';',
           },
           {
+            start: 74,
+            end: 103,
             type: 'SELECT',
           },
         ],
