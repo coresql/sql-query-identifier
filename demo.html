@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+  <head>
+    <title>SQL Query Identifier</title>
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro|Gentium+Book+Basic" rel="stylesheet" type="text/css">
+    <style>
+      html,body{
+        margin:0;
+        padding:0;
+        height: 100%;
+        color: #ecf0f1;
+        background: #2c3e50;
+        background: -moz-linear-gradient(45deg, #2c3e50 0%, #2ecc71 100%);
+        background: -webkit-gradient(left bottom, right top, color-stop(0%, #2c3e50), color-stop(100%, #2ecc71));
+        background: -webkit-linear-gradient(45deg, #2c3e50 0%, #2ecc71 100%);
+        background: -o-linear-gradient(45deg, #2c3e50 0%, #2ecc71 100%);
+        background: -ms-linear-gradient(45deg, #2c3e50 0%, #2ecc71 100%);
+        background: linear-gradient(45deg, #2c3e50 0%, #2ecc71 100%);
+        filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#2c3e50', endColorstr='#2ecc71', GradientType=1 );
+        margin: 0 auto;
+        font-family: 'Source Sans Pro', sans-serif;
+      }
+
+      h1, h2, button {
+        font-family: 'Gentium Book Basic', sans-serif;
+        text-align: center;
+      }
+
+      p {
+        text-align: center;
+      }
+
+      p strong, button {
+        color: #2c3e50;
+      }
+
+      button {
+        font-size: 1.5em;
+      }
+
+      .wrapper {
+        height: 100%;
+        display: flex;
+      }
+
+      #main{
+        display: flex;
+
+        -ms-flex: 0;
+        -webkit-box-flex: 0;
+        -moz-box-flex: 0;
+        -ms-box-flex: 0;
+        box-flex: 0;
+
+        box-sizing: border-box;
+        flex-direction: column;
+        width: 100%;
+      }
+
+      header span {
+        font-family: 'Source Sans Pro', sans-serif;
+        font-size: 0.8em;
+      }
+
+      section{
+        flex:1;
+        display:flex;
+      }
+
+      section>div{
+        width:100%;
+        display:block;
+        margin: 10px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      section>div textarea {
+        box-sizing: border-box;
+        flex: 1;
+        font-family: 'Source Sans Pro', sans-serif;
+      }
+
+      #message {
+        height: 50px;
+        line-height: 50px;
+        text-align: center;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.5.5/clipboard.min.js"></script>
+  </head>
+  <body>
+    <div class="wrapper">
+      <div id="main">
+        <header>
+          <h1>Remove <span>reactid</span> Attributes</h1>
+          <p>
+            <strong>Suggestion:</strong><br />
+            Use it if you want to show a clean up HTML from a generated page with <a href="https://facebook.github.io/react/">React</a> for someone else <br />
+            that does not care which framework/library your are using for building the user interface.
+          </p>
+        </header>
+        <section>
+          <div class="flex-child">
+            <h2>Input</h2>
+            <textarea id="input"></textarea>
+            <button onclick="removeReactIds()">Remove</button>
+          </div>
+          <div class="flex-child">
+            <h2>Output</h2>
+            <textarea id="output"></textarea>
+            <button id="copy">Copy to Clipboard</button>
+          </div>
+        </section>
+        <div id="message"></div>
+      </div>
+    </div>
+    <script>
+      var REGEX_REMOVE_IDS = /\s?data-reactid="[^"]+"/g;
+
+      var input = document.getElementById('input');
+      var output = document.getElementById('output');
+      var message = document.getElementById('message');
+
+      function removeReactIds() {
+        output.value = input.value.replace(REGEX_REMOVE_IDS, '');
+      }
+
+
+      var clipboard = new Clipboard('#copy', {
+        target: function(trigger) {
+          return output;
+        }
+      });
+
+      clipboard.on('success', function(e) {
+        message.innerHTML = '<em>Copied</em>';
+        e.clearSelection();
+      });
+
+      clipboard.on('error', function(e) {
+        message.innerHTML = '<em>Error copying to clipboard. Please press <strong>Ctrl+C</strong> to copy</em>'
+      });
+    </script>
+  </body>
+</html>
