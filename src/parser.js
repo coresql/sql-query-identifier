@@ -17,13 +17,19 @@ export function parse (input) {
   let prevState = topLevelState;
   let statementParser;
 
+  const ignoreOutsideBlankTokens = [
+    'whitespace',
+    'comment-inline',
+    'comment-block',
+  ];
+
   while (prevState.position < topLevelState.end) {
     const tokenState = initState({ prevState });
     const token = scanToken(tokenState);
 
     if (!statementParser) {
-      // ignore white spaces between statements
-      if (token.type === 'whitespace') {
+      // ignore blank tokens that are not in a statement
+      if (~ignoreOutsideBlankTokens.indexOf(token.type)) {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
         continue;

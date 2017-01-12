@@ -104,12 +104,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it.only('should identify "UPDATE" statement', function () {
-      console.log(identify(`
-        INSERT INTO Persons (PersonID, Name) VALUES (1, 'Jack');
-        SELECT * FROM Persons;
-      `));
-
+    it('should identify "UPDATE" statement', function () {
       const actual = identify('UPDATE Persons SET Name = \'John\' WHERE PersonID = 1;');
       const expected = [
         {
@@ -133,6 +128,123 @@ describe('identifier', function () {
           type: 'DELETE',
         },
       ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify statement starting with inline comment', function () {
+      const actual = identify(`
+        -- some comment
+        SELECT * FROM Persons
+      `);
+      const expected = [
+        {
+          start: 33,
+          end: 60,
+          text: 'SELECT * FROM Persons\n      ',
+          type: 'SELECT',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify statement starting with block comment', function () {
+      const actual = identify(`
+        /**
+          * some comment
+          */
+        SELECT * FROM Persons
+      `);
+      const expected = [
+        {
+          start: 59,
+          end: 86,
+          text: 'SELECT * FROM Persons\n      ',
+          type: 'SELECT',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify statement ending with block comment', function () {
+      const actual = identify(`
+        SELECT * FROM Persons
+        /**
+          * some comment
+          */
+      `);
+      const expected = [
+        {
+          start: 9,
+          end: 86,
+          text: 'SELECT * FROM Persons\n        /**\n          * some comment\n          */\n      ',
+          type: 'SELECT',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify statement ending with inline comment', function () {
+      const actual = identify(`
+        SELECT * FROM Persons
+        -- some comment
+      `);
+      const expected = [
+        {
+          start: 9,
+          end: 60,
+          text: 'SELECT * FROM Persons\n        -- some comment\n      ',
+          type: 'SELECT',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify statement with inline comment in the middle', function () {
+      const actual = identify(`
+        SELECT *
+        -- some comment
+        FROM Persons
+      `);
+      const expected = [
+        {
+          start: 9,
+          end: 68,
+          text: 'SELECT *\n        -- some comment\n        FROM Persons\n      ',
+          type: 'SELECT',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify statement with block comment in the middle', function () {
+      const actual = identify(`
+        SELECT *
+        /**
+          * some comment
+          */
+        FROM Persons
+      `);
+      const expected = [
+        {
+          start: 9,
+          end: 94,
+          text: 'SELECT *\n        /**\n          * some comment\n          */\n        FROM Persons\n      ',
+          type: 'SELECT',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify empty statement', function () {
+      const actual = identify('');
+      const expected = [];
 
       expect(actual).to.eql(expected);
     });
