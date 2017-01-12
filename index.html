@@ -100,6 +100,10 @@
             A SQL query identifier (e.g. INSERT, SELECT, CREATE TABLE, and etc.)
             <br />
             <a href="https://github.com/maxcnunes/sql-query-identifier">More details</a>
+            <br />
+            <br />
+            <input id="strict-mode" type="checkbox" checked />
+            <label for="strict-mode">Strict mode</label>
           </p>
         </header>
         <section>
@@ -124,47 +128,53 @@
       var input = document.getElementById('input');
       var output = document.getElementById('output');
       var message = document.getElementById('message');
+      var strictMode = document.getElementById('strict-mode');
 
       function clickIdentify() {
-        const selectionStart = $('#input').prop('selectionStart');
-        const selectionEnd = $('#input').prop('selectionEnd');
-        const position = selectionStart;
-        const statements = SQLQueryIdentifier.identify(input.value);
-        console.log('-->', input.value, statements, selectionStart, selectionEnd);
+        try {
+          const selectionStart = $('#input').prop('selectionStart');
+          const selectionEnd = $('#input').prop('selectionEnd');
+          const position = selectionStart;
+          const statements = SQLQueryIdentifier.identify(input.value, { strict: strictMode.checked });
 
-        const results = statements.map(function (statement, index) {
-          return {
-            statement: statement,
-            output: [
-              '<h3>Query ' + (index + 1) + '</h3>',
-              '<pre>' + JSON.stringify(statement, null, 2) + '</pre>',
-            ].join('')
-          };
-        });
+          $('#message').html('');
 
-        $('#output').html(results.map(function (item) {
-          return item.output;
-        }).join('<br>'));
+          const results = statements.map(function (statement, index) {
+            return {
+              statement: statement,
+              output: [
+                '<h3>Query ' + (index + 1) + '</h3>',
+                '<pre>' + JSON.stringify(statement, null, 2) + '</pre>',
+              ].join('')
+            };
+          });
 
-        if (selectionStart !== selectionEnd) {
-          $('#output-selector').html('Only for not selected area');
-          return;
-        }
-        console.log(results
-          .filter(function (item) {
-            return item.statement.start <= position && item.statement.end >= position;
-          }));
-
-
-        $('#output-selector').html(results
-          .filter(function (item) {
-            return item.statement.start <= position && item.statement.end >= position;
-          })
-          .map(function (item) {
+          $('#output').html(results.map(function (item) {
             return item.output;
-          })
-          .join('<br>')
-        );
+          }).join('<br>'));
+
+          if (selectionStart !== selectionEnd) {
+            $('#output-selector').html('Only for not selected area');
+            return;
+          }
+          console.log(results
+            .filter(function (item) {
+              return item.statement.start <= position && item.statement.end >= position;
+            }));
+
+
+          $('#output-selector').html(results
+            .filter(function (item) {
+              return item.statement.start <= position && item.statement.end >= position;
+            })
+            .map(function (item) {
+              return item.output;
+            })
+            .join('<br>')
+          );
+        } catch (err) {
+          $('#message').html(err.message);
+        }
       }
     </script>
     <a href="https://github.com/maxcnunes/sql-query-identifier"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/52760788cde945287fbb584134c4cbc2bc36f904/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f77686974655f6666666666662e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_white_ffffff.png"></a>
