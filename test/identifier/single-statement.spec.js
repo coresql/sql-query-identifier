@@ -14,6 +14,7 @@ describe('identifier', function () {
           end: 20,
           text: 'SELECT * FROM Persons',
           type: 'SELECT',
+          executionType: 'LISTING',
         },
       ];
 
@@ -28,6 +29,7 @@ describe('identifier', function () {
           end: 54,
           text: 'CREATE TABLE Persons (PersonID int, Name varchar(255));',
           type: 'CREATE_TABLE',
+          executionType: 'MODIFICATION',
         },
       ];
 
@@ -42,6 +44,7 @@ describe('identifier', function () {
           end: 23,
           text: 'CREATE DATABASE Profile;',
           type: 'CREATE_DATABASE',
+          executionType: 'MODIFICATION',
         },
       ];
 
@@ -56,6 +59,7 @@ describe('identifier', function () {
           end: 18,
           text: 'DROP TABLE Persons;',
           type: 'DROP_TABLE',
+          executionType: 'MODIFICATION',
         },
       ];
 
@@ -70,6 +74,7 @@ describe('identifier', function () {
           end: 21,
           text: 'DROP DATABASE Profile;',
           type: 'DROP_DATABASE',
+          executionType: 'MODIFICATION',
         },
       ];
 
@@ -84,6 +89,7 @@ describe('identifier', function () {
           end: 22,
           text: 'TRUNCATE TABLE Persons;',
           type: 'TRUNCATE',
+          executionType: 'MODIFICATION',
         },
       ];
 
@@ -98,6 +104,7 @@ describe('identifier', function () {
           end: 55,
           text: 'INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');',
           type: 'INSERT',
+          executionType: 'MODIFICATION',
         },
       ];
 
@@ -112,6 +119,7 @@ describe('identifier', function () {
           end: 51,
           text: 'UPDATE Persons SET Name = \'John\' WHERE PersonID = 1;',
           type: 'UPDATE',
+          executionType: 'MODIFICATION',
         },
       ];
 
@@ -126,6 +134,7 @@ describe('identifier', function () {
           end: 38,
           text: 'DELETE FROM Persons WHERE PersonID = 1;',
           type: 'DELETE',
+          executionType: 'MODIFICATION',
         },
       ];
 
@@ -143,6 +152,7 @@ describe('identifier', function () {
           end: 60,
           text: 'SELECT * FROM Persons\n      ',
           type: 'SELECT',
+          executionType: 'LISTING',
         },
       ];
 
@@ -162,6 +172,7 @@ describe('identifier', function () {
           end: 86,
           text: 'SELECT * FROM Persons\n      ',
           type: 'SELECT',
+          executionType: 'LISTING',
         },
       ];
 
@@ -181,6 +192,7 @@ describe('identifier', function () {
           end: 86,
           text: 'SELECT * FROM Persons\n        /**\n          * some comment\n          */\n      ',
           type: 'SELECT',
+          executionType: 'LISTING',
         },
       ];
 
@@ -198,6 +210,7 @@ describe('identifier', function () {
           end: 60,
           text: 'SELECT * FROM Persons\n        -- some comment\n      ',
           type: 'SELECT',
+          executionType: 'LISTING',
         },
       ];
 
@@ -216,6 +229,7 @@ describe('identifier', function () {
           end: 68,
           text: 'SELECT *\n        -- some comment\n        FROM Persons\n      ',
           type: 'SELECT',
+          executionType: 'LISTING',
         },
       ];
 
@@ -236,6 +250,7 @@ describe('identifier', function () {
           end: 94,
           text: 'SELECT *\n        /**\n          * some comment\n          */\n        FROM Persons\n      ',
           type: 'SELECT',
+          executionType: 'LISTING',
         },
       ];
 
@@ -257,6 +272,7 @@ describe('identifier', function () {
           end: 28,
           text: 'CREATE INDEX i1 ON t1 (col1);',
           type: 'CREATE_INDEX',
+          executionType: 'UNKNOWN',
         },
       ];
 
@@ -276,6 +292,7 @@ describe('identifier', function () {
           end: 167,
           text: 'WITH employee AS (SELECT * FROM Employees)\n        SELECT * FROM employee WHERE ID < 20\n        UNION ALL\n        SELECT * FROM employee WHERE Sex = \'M\'\n      ',
           type: 'UNKNOWN',
+          executionType: 'UNKNOWN',
         },
       ];
 

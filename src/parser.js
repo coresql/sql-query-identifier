@@ -1,6 +1,26 @@
 import { scanToken } from './tokenizer';
 
 /**
+ * Execution types allow to know what is the query behavior
+ *  - LISTING: is when the query list the data
+ *  - MODIFICATION: is when the query modificate the database somehow (structure or data)
+ *  - INFORMATION: is show some data information such as a profile data
+ *  - UNKNOWN
+ */
+const EXECUTION_TYPES = {
+  SELECT: 'LISTING',
+  INSERT: 'MODIFICATION',
+  DELETE: 'MODIFICATION',
+  UPDATE: 'MODIFICATION',
+  CREATE_DATABASE: 'MODIFICATION',
+  CREATE_TABLE: 'MODIFICATION',
+  DROP_DATABASE: 'MODIFICATION',
+  DROP_TABLE: 'MODIFICATION',
+  TRUNCATE: 'MODIFICATION',
+  UNKNOWN: 'UNKNOWN',
+};
+
+/**
  * Parser
  */
 export function parse (input, isStrict = true) {
@@ -396,6 +416,8 @@ function stateMachineStatementParser (isStrict, statement, steps) {
       }
 
       currentStep.add(token);
+
+      statement.executionType = EXECUTION_TYPES[statement.type] || 'UNKNOWN';
 
       if (currentStep.postCanGoToNext(token)) {
         currentStepIndex++;

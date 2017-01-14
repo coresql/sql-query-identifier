@@ -14,5 +14,6 @@ export function identify (query, options = {}) {
     end: statement.end,
     text: query.substring(statement.start, statement.end + 1),
     type: statement.type,
+    executionType: statement.executionType,
   }));
 }

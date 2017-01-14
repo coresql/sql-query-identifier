@@ -13,12 +13,14 @@ describe('identifier', function () {
           start: 0,
           text: 'INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');',
           type: 'INSERT',
+          executionType: 'MODIFICATION',
         },
         {
           end: 76,
           start: 56,
           text: 'SELECT * FROM Persons',
           type: 'SELECT',
+          executionType: 'LISTING',
         },
       ];
 
@@ -37,12 +39,14 @@ describe('identifier', function () {
           end: 64,
           text: 'INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');',
           type: 'INSERT',
+          executionType: 'MODIFICATION',
         },
         {
           start: 74,
           end: 95,
           text: 'SELECT * FROM Persons;',
           type: 'SELECT',
+          executionType: 'LISTING',
         },
       ];
 
@@ -66,18 +70,21 @@ describe('identifier', function () {
           end: 64,
           text: 'INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');',
           type: 'INSERT',
+          executionType: 'MODIFICATION',
         },
         {
           start: 75,
           end: 227,
           text: 'WITH employee AS (SELECT * FROM Employees)\n        SELECT * FROM employee WHERE ID < 20\n        UNION ALL\n        SELECT * FROM employee WHERE Sex = \'M\';',
           type: 'UNKNOWN',
+          executionType: 'UNKNOWN',
         },
         {
           start: 238,
           end: 259,
           text: 'SELECT * FROM Persons;',
           type: 'SELECT',
+          executionType: 'LISTING',
         },
       ];
 
