@@ -4,8 +4,10 @@ import { parse } from './parser';
 /**
  * Identifier
  */
-export function identify (query) {
-  const result = parse(query);
+export function identify (query, options = {}) {
+  const isStrict = typeof options.strict === 'undefined' ? true : options.strict;
+
+  const result = parse(query, isStrict);
 
   return result.body.map(statement => ({
     start: statement.start,

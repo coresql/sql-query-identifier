@@ -1,10 +1,9 @@
 import { scanToken } from './tokenizer';
 
-
 /**
  * Parser
  */
-export function parse (input) {
+export function parse (input, isStrict = true) {
   const topLevelState = initState({ input });
   const topLevelStatement = {
     type: 'QUERY',
@@ -35,7 +34,7 @@ export function parse (input) {
         continue;
       }
 
-      statementParser = createStatementParserByToken(token);
+      statementParser = createStatementParserByToken(isStrict, token);
     }
 
     statementParser.addToken(token);
@@ -84,25 +83,29 @@ function initState ({ input, prevState }) {
 }
 
 
-function createStatementParserByToken (token) {
+function createStatementParserByToken (isStrict, token) {
   if (token.type === 'keyword') {
     switch (token.value.toUpperCase()) {
-      case 'SELECT': return createSelectStatementParser();
-      case 'CREATE': return createCreateStatementParser();
-      case 'DROP': return createDropStatementParser();
-      case 'INSERT': return createInsertStatementParser();
-      case 'UPDATE': return createUpdateStatementParser();
-      case 'DELETE': return createDeleteStatementParser();
-      case 'TRUNCATE': return createTruncateStatementParser();
+      case 'SELECT': return createSelectStatementParser(isStrict);
+      case 'CREATE': return createCreateStatementParser(isStrict);
+      case 'DROP': return createDropStatementParser(isStrict);
+      case 'INSERT': return createInsertStatementParser(isStrict);
+      case 'UPDATE': return createUpdateStatementParser(isStrict);
+      case 'DELETE': return createDeleteStatementParser(isStrict);
+      case 'TRUNCATE': return createTruncateStatementParser(isStrict);
       default: break;
     }
+  }
+
+  if (!isStrict && token.type === 'unknown') {
+    return createUnknownStatementParser(isStrict);
   }
 
   throw new Error(`Invalid statement parser "${token.value}"`);
 }
 
 
-function createSelectStatementParser () {
+function createSelectStatementParser (isStrict) {
   const statement = {};
 
   const steps = [
@@ -122,11 +125,11 @@ function createSelectStatementParser () {
     },
   ];
 
-  return stateMachineStatementParser(statement, steps);
+  return stateMachineStatementParser(isStrict, statement, steps);
 }
 
 
-function createInsertStatementParser () {
+function createInsertStatementParser (isStrict) {
   const statement = {};
 
   const steps = [
@@ -146,11 +149,11 @@ function createInsertStatementParser () {
     },
   ];
 
-  return stateMachineStatementParser(statement, steps);
+  return stateMachineStatementParser(isStrict, statement, steps);
 }
 
 
-function createUpdateStatementParser () {
+function createUpdateStatementParser (isStrict) {
   const statement = {};
 
   const steps = [
@@ -170,11 +173,11 @@ function createUpdateStatementParser () {
     },
   ];
 
-  return stateMachineStatementParser(statement, steps);
+  return stateMachineStatementParser(isStrict, statement, steps);
 }
 
 
-function createDeleteStatementParser () {
+function createDeleteStatementParser (isStrict) {
   const statement = {};
 
   const steps = [
@@ -194,11 +197,11 @@ function createDeleteStatementParser () {
     },
   ];
 
-  return stateMachineStatementParser(statement, steps);
+  return stateMachineStatementParser(isStrict, statement, steps);
 }
 
 
-function createCreateStatementParser () {
+function createCreateStatementParser (isStrict) {
   const statement = {};
 
   const steps = [
@@ -232,11 +235,11 @@ function createCreateStatementParser () {
     },
   ];
 
-  return stateMachineStatementParser(statement, steps);
+  return stateMachineStatementParser(isStrict, statement, steps);
 }
 
 
-function createDropStatementParser () {
+function createDropStatementParser (isStrict) {
   const statement = {};
 
   const steps = [
@@ -270,11 +273,11 @@ function createDropStatementParser () {
     },
   ];
 
-  return stateMachineStatementParser(statement, steps);
+  return stateMachineStatementParser(isStrict, statement, steps);
 }
 
 
-function createTruncateStatementParser () {
+function createTruncateStatementParser (isStrict) {
   const statement = {};
 
   const steps = [
@@ -293,16 +296,38 @@ function createTruncateStatementParser () {
     },
   ];
 
-  return stateMachineStatementParser(statement, steps);
+  return stateMachineStatementParser(isStrict, statement, steps);
 }
 
 
-function stateMachineStatementParser (statement, steps) {
+function createUnknownStatementParser (isStrict) {
+  const statement = {};
+
+  const steps = [
+    {
+      preCanGoToNext: () => false,
+      add: (token) => {
+        statement.type = 'UNKNOWN';
+        statement.start = token.start;
+      },
+      postCanGoToNext: () => true,
+    },
+  ];
+
+  return stateMachineStatementParser(isStrict, statement, steps);
+}
+
+
+function stateMachineStatementParser (isStrict, statement, steps) {
   let currentStepIndex = 0;
   let prevToken;
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
   const isValidToken = (step, token) => {
+    if (!step.validation) {
+      return true;
+    }
+
     return step
       .validation
       .acceptTokens.filter(accept => {
@@ -361,7 +386,7 @@ function stateMachineStatementParser (statement, steps) {
         throw new Error(`Expected any of these tokens ${requireds} before "${token.value}" (currentStep=${currentStepIndex}).`);
       }
 
-      if (!isValidToken(currentStep, token)) {
+      if (!isValidToken(currentStep, token) && isStrict) {
         const expecteds = currentStep
           .validation
           .acceptTokens

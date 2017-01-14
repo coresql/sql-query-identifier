@@ -248,6 +248,39 @@ describe('identifier', function () {
 
       expect(actual).to.eql(expected);
     });
+
+    it('should able to detect a statement even without know its type when strict is disabled - CREATE INDEX', function () {
+      const actual = identify('CREATE INDEX i1 ON t1 (col1);', { strict: false });
+      const expected = [
+        {
+          start: 0,
+          end: 28,
+          text: 'CREATE INDEX i1 ON t1 (col1);',
+          type: 'CREATE_INDEX',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('should able to detect a statement even without know its type when strict is disabled - WITH', function () {
+      const actual = identify(`
+        WITH employee AS (SELECT * FROM Employees)
+        SELECT * FROM employee WHERE ID < 20
+        UNION ALL
+        SELECT * FROM employee WHERE Sex = 'M'
+      `, { strict: false });
+      const expected = [
+        {
+          start: 9,
+          end: 167,
+          text: 'WITH employee AS (SELECT * FROM Employees)\n        SELECT * FROM employee WHERE ID < 20\n        UNION ALL\n        SELECT * FROM employee WHERE Sex = \'M\'\n      ',
+          type: 'UNKNOWN',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
   });
 });
 
