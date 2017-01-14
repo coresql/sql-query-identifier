@@ -209,7 +209,7 @@ function scanIndividualCharacter (state) {
 
 function skipChar (state) {
   return {
-    type: 'unkown',
+    type: 'unknown',
     value: state.input.slice(state.start, state.position + 1),
     start: state.start,
     end: state.start,
@@ -219,7 +219,7 @@ function skipChar (state) {
 
 function skipWord (state, value) {
   return {
-    type: 'unkown',
+    type: 'unknown',
     value,
     start: state.start,
     end: state.start + value.length - 1,

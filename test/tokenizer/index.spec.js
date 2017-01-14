@@ -155,10 +155,10 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('skips unkown tokens', function () {
+  it('skips unknown tokens', function () {
     const actual = scanToken(initState('*'));
     const expected = {
-      type: 'unkown',
+      type: 'unknown',
       value: '*',
       start: 0,
       end: 0,

@@ -1,34 +1,34 @@
 /**
  * Helper function to make easier check the assert result
  */
-export function aggregateUnkownTokens (tokens) {
+export function aggregateUnknownTokens (tokens) {
   return tokens.reduce((result, token, index) => {
     const prev = result[result.length - 1];
     const next = tokens[index + 1];
-    const isCurrUnkown = token.type === 'unkown';
+    const isCurrUnknown = token.type === 'unknown';
     const isCurrWhitespace = token.type === 'whitespace';
     const isCurrString = token.type === 'string';
-    const isPrevUnkown = prev && prev.type === 'unkown';
-    const isNextUnkown = next && next.type === 'unkown';
-    const isCurrWhitespaceAfterUnkown = isCurrWhitespace && isPrevUnkown;
-    const isCurrWhitespaceBeforeUnkown = isCurrWhitespace && isNextUnkown;
-    const isCurrStringAfterUnkown = isCurrString && isPrevUnkown;
-    const isCurrStringBeforeUnkown = isCurrString && isNextUnkown;
+    const isPrevUnknown = prev && prev.type === 'unknown';
+    const isNextUnknown = next && next.type === 'unknown';
+    const isCurrWhitespaceAfterUnknown = isCurrWhitespace && isPrevUnknown;
+    const isCurrWhitespaceBeforeUnknown = isCurrWhitespace && isNextUnknown;
+    const isCurrStringAfterUnknown = isCurrString && isPrevUnknown;
+    const isCurrStringBeforeUnknown = isCurrString && isNextUnknown;
 
-    const isKnowTokenBeforeUnkown = (
-      isCurrWhitespaceBeforeUnkown || isCurrStringBeforeUnkown
-    ) && !isPrevUnkown;
+    const isKnowTokenBeforeUnknown = (
+      isCurrWhitespaceBeforeUnknown || isCurrStringBeforeUnknown
+    ) && !isPrevUnknown;
 
-    const isNewToken = isKnowTokenBeforeUnkown || (
-      !isCurrWhitespaceAfterUnkown
-      && !isCurrStringAfterUnkown
-      && (!isCurrUnkown || !isPrevUnkown)
+    const isNewToken = isKnowTokenBeforeUnknown || (
+      !isCurrWhitespaceAfterUnknown
+      && !isCurrStringAfterUnknown
+      && (!isCurrUnknown || !isPrevUnknown)
     );
 
     if (isNewToken) {
       result.push({
         ...token,
-        type: isCurrWhitespaceBeforeUnkown ? 'unkown' : token.type,
+        type: isCurrWhitespaceBeforeUnknown ? 'unknown' : token.type,
       });
       return result;
     }
