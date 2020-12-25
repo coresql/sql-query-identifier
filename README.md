@@ -1,7 +1,7 @@
 sql-query-identifier
 ===================
 
-[![Build Status](https://travis-ci.org/maxcnunes/sql-query-identifier.svg?branch=master)](https://travis-ci.org/sql-query-identifier)
+[![Build Status](https://github.com/sqlectron/sql-query-identifier/workflows/Test/badge.svg?branch=master)](https://github.com/sqlectron/sql-query-identifier/actions?query=workflow%3ATest+branch%3Amaster)
 [![npm version](https://badge.fury.io/js/sql-query-identifier.svg)](http://badge.fury.io/js/sql-query-identifier)
 [![view demo](https://img.shields.io/badge/view-demo-blue.svg)](http://maxcnunes.com/sql-query-identifier/)
 
@@ -67,21 +67,21 @@ const statements = identify(`
 `);
 
 console.log(statements);
-[ 
-  { 
+[
+  {
     start: 9,
     end: 64,
     text: 'INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');',
     type: 'INSERT',
     executionType: 'MODIFICATION'
   },
-  { 
+  {
     start: 74,
     end: 95,
     text: 'SELECT * FROM Persons;',
     type: 'SELECT',
     executionType: 'LISTING'
-  } 
+  }
 ]
 ```
 
