@@ -48,7 +48,7 @@ export function parse (input, isStrict = true) {
 
     if (!statementParser) {
       // ignore blank tokens that are not in a statement
-      if (~ignoreOutsideBlankTokens.indexOf(token.type)) {
+      if (ignoreOutsideBlankTokens.includes(token.type)) {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
         continue;
@@ -81,7 +81,6 @@ export function parse (input, isStrict = true) {
   return topLevelStatement;
 }
 
-
 function initState ({ input, prevState }) {
   if (prevState) {
     return {
@@ -101,7 +100,6 @@ function initState ({ input, prevState }) {
     body: [],
   };
 }
-
 
 function createStatementParserByToken (isStrict, token) {
   if (token.type === 'keyword') {
@@ -123,7 +121,6 @@ function createStatementParserByToken (isStrict, token) {
 
   throw new Error(`Invalid statement parser "${token.value}"`);
 }
-
 
 function createSelectStatementParser (isStrict) {
   const statement = {};
@@ -148,7 +145,6 @@ function createSelectStatementParser (isStrict) {
   return stateMachineStatementParser(isStrict, statement, steps);
 }
 
-
 function createInsertStatementParser (isStrict) {
   const statement = {};
 
@@ -171,7 +167,6 @@ function createInsertStatementParser (isStrict) {
 
   return stateMachineStatementParser(isStrict, statement, steps);
 }
-
 
 function createUpdateStatementParser (isStrict) {
   const statement = {};
@@ -196,7 +191,6 @@ function createUpdateStatementParser (isStrict) {
   return stateMachineStatementParser(isStrict, statement, steps);
 }
 
-
 function createDeleteStatementParser (isStrict) {
   const statement = {};
 
@@ -219,7 +213,6 @@ function createDeleteStatementParser (isStrict) {
 
   return stateMachineStatementParser(isStrict, statement, steps);
 }
-
 
 function createCreateStatementParser (isStrict) {
   const statement = {};
@@ -258,7 +251,6 @@ function createCreateStatementParser (isStrict) {
   return stateMachineStatementParser(isStrict, statement, steps);
 }
 
-
 function createDropStatementParser (isStrict) {
   const statement = {};
 
@@ -296,7 +288,6 @@ function createDropStatementParser (isStrict) {
   return stateMachineStatementParser(isStrict, statement, steps);
 }
 
-
 function createTruncateStatementParser (isStrict) {
   const statement = {};
 
@@ -319,7 +310,6 @@ function createTruncateStatementParser (isStrict) {
   return stateMachineStatementParser(isStrict, statement, steps);
 }
 
-
 function createUnknownStatementParser (isStrict) {
   const statement = {};
 
@@ -337,7 +327,6 @@ function createUnknownStatementParser (isStrict) {
   return stateMachineStatementParser(isStrict, statement, steps);
 }
 
-
 function stateMachineStatementParser (isStrict, statement, steps) {
   let currentStepIndex = 0;
   let prevToken;
@@ -350,7 +339,7 @@ function stateMachineStatementParser (isStrict, statement, steps) {
 
     return step
       .validation
-      .acceptTokens.filter(accept => {
+      .acceptTokens.filter((accept) => {
         const isValidType = token.type === accept.type;
         const isValidValue = (
           !accept.value
@@ -364,7 +353,7 @@ function stateMachineStatementParser (isStrict, statement, steps) {
   const hasRequiredBefore = (step) => {
     return (
       !step.requireBefore
-      || ~step.requireBefore.indexOf(prevToken.type)
+      || step.requireBefore.includes(prevToken.type)
     );
   };
 
@@ -410,7 +399,7 @@ function stateMachineStatementParser (isStrict, statement, steps) {
         const expecteds = currentStep
           .validation
           .acceptTokens
-          .map(accept => `(type="${accept.type}" value="${accept.value}")`)
+          .map((accept) => `(type="${accept.type}" value="${accept.value}")`)
           .join(' or ');
         throw new Error(`Expected any of these tokens ${expecteds} instead of type="${token.type}" value="${token.value}" (currentStep=${currentStepIndex}).`);
       }
