@@ -24,7 +24,7 @@ const EXECUTION_TYPES = {
 /**
  * Parser
  */
-export function parse (input, isStrict = true) {
+export function parse (input, isStrict = true, dialect = 'generic') {
   const topLevelState = initState({ input });
   const topLevelStatement = {
     type: 'QUERY',
@@ -55,7 +55,7 @@ export function parse (input, isStrict = true) {
         continue;
       }
 
-      statementParser = createStatementParserByToken(isStrict, token);
+      statementParser = createStatementParserByToken(isStrict, dialect, token);
     }
 
     statementParser.addToken(token);
@@ -104,11 +104,11 @@ function initState ({ input, prevState }) {
 }
 
 
-function createStatementParserByToken (isStrict, token) {
+function createStatementParserByToken (isStrict, dialect, token) {
   if (token.type === 'keyword') {
     switch (token.value.toUpperCase()) {
       case 'SELECT': return createSelectStatementParser(isStrict);
-      case 'CREATE': return createCreateStatementParser(isStrict);
+      case 'CREATE': return createCreateStatementParser(isStrict, dialect);
       case 'DROP': return createDropStatementParser(isStrict);
       case 'INSERT': return createInsertStatementParser(isStrict);
       case 'UPDATE': return createUpdateStatementParser(isStrict);
@@ -222,7 +222,7 @@ function createDeleteStatementParser (isStrict) {
 }
 
 
-function createCreateStatementParser (isStrict) {
+function createCreateStatementParser (isStrict, dialect) {
   const statement = {};
 
   const steps = [
@@ -269,7 +269,7 @@ function createCreateStatementParser (isStrict) {
     // },
   ];
 
-  return stateMachineStatementParser(isStrict, statement, steps);
+  return stateMachineStatementParser(isStrict, statement, steps, dialect);
 }
 
 
@@ -352,7 +352,7 @@ function createUnknownStatementParser (isStrict) {
 }
 
 
-function stateMachineStatementParser (isStrict, statement, steps) {
+function stateMachineStatementParser (isStrict, statement, steps, dialect) {
   let currentStepIndex = 0;
   let prevToken;
 
@@ -393,12 +393,17 @@ function stateMachineStatementParser (isStrict, statement, steps) {
         throw new Error('This statement has already got to the end.');
       }
 
-      if (token.type === 'semicolon' && (statement.type !== 'CREATE_TRIGGER' || statement.canEnd)) {
-        statement.endStatement = ';';
-        return;
+      if (token.type === 'semicolon') {
+        // sqlite triggers have different syntax
+        if (dialect === 'sqlite' && (statement.type === 'CREATE_TRIGGER' && !statement.canEnd)) {
+          // do nothing
+        } else {
+          statement.endStatement = ';';
+          return;
+        }
       }
 
-      if (token.value === 'END' && statement.type === 'CREATE_TRIGGER') {
+      if (token.value === 'END' && statement.type === 'CREATE_TRIGGER' && dialect === 'sqlite') {
         statement.canEnd = true;
         return;
       }

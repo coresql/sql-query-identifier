@@ -93,6 +93,7 @@ console.log(statements);
 1. `input (string)`: the whole SQL script text to be processed
 1. `options (object)`: allow to set different configurations
   1. `strict (bool)`: allow disable strict mode which will ignore unknown types *(default=true)*
+  2. `dialect (string)`: Specify your database dialect, currently behavior only differs for `sqlite`. *(default=generic)*
 
 ## Contributing
 
