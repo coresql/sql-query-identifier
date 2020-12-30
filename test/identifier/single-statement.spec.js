@@ -36,13 +36,27 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify "CREATE TRIGGER" statement', function () {
+    it('should identify sqlite "CREATE TRIGGER" statement', function () {
       const actual = identify('CREATE TRIGGER sqlmods AFTER UPDATE ON bar FOR EACH ROW WHEN old.yay IS NULL BEGIN UPDATE bar SET yay = 1 WHERE rowid = NEW.rowid; END;', { dialect: 'sqlite' });
       const expected = [
         {
           start: 0,
           end: 134,
           text: 'CREATE TRIGGER sqlmods AFTER UPDATE ON bar FOR EACH ROW WHEN old.yay IS NULL BEGIN UPDATE bar SET yay = 1 WHERE rowid = NEW.rowid; END;',
+          type: 'CREATE_TRIGGER',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify postgres "CREATE TRIGGER" statement', function () {
+      const actual = identify('CREATE TRIGGER view_insert INSTEAD OF INSERT ON my_view FOR EACH ROW EXECUTE PROCEDURE view_insert_row();');
+      const expected = [
+        {
+          start: 0,
+          end: 104,
+          text: 'CREATE TRIGGER view_insert INSTEAD OF INSERT ON my_view FOR EACH ROW EXECUTE PROCEDURE view_insert_row();',
           type: 'CREATE_TRIGGER',
           executionType: 'MODIFICATION',
         },
