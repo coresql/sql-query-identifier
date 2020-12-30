@@ -14,6 +14,7 @@ const EXECUTION_TYPES = {
   UPDATE: 'MODIFICATION',
   CREATE_DATABASE: 'MODIFICATION',
   CREATE_TABLE: 'MODIFICATION',
+  CREATE_TRIGGER: 'MODIFICATION',
   DROP_DATABASE: 'MODIFICATION',
   DROP_TABLE: 'MODIFICATION',
   TRUNCATE: 'MODIFICATION',
@@ -246,6 +247,7 @@ function createCreateStatementParser (isStrict) {
         acceptTokens: [
           { type: 'keyword', value: 'TABLE' },
           { type: 'keyword', value: 'DATABASE' },
+          { type: 'keyword', value: 'TRIGGER' },
         ],
       },
       add: (token) => {
@@ -253,6 +255,18 @@ function createCreateStatementParser (isStrict) {
       },
       postCanGoToNext: () => true,
     },
+    // {
+    //   preCanGoToNext: () => false,
+    //   validation: {
+    //     acceptTokens: [
+    //       { type: 'keyword', value: 'END' },
+    //     ],
+    //     add: (token) => {
+    //       statement.endStatement = 'END'
+    //     }
+    //   },
+    //   postCanGoToNext: () => false,
+    // },
   ];
 
   return stateMachineStatementParser(isStrict, statement, steps);
@@ -379,8 +393,13 @@ function stateMachineStatementParser (isStrict, statement, steps) {
         throw new Error('This statement has already got to the end.');
       }
 
-      if (token.type === 'semicolon') {
+      if (token.type === 'semicolon' && (statement.type !== 'CREATE_TRIGGER' || statement.canEnd)) {
         statement.endStatement = ';';
+        return;
+      }
+
+      if (token.value === 'END' && statement.type === 'CREATE_TRIGGER') {
+        statement.canEnd = true;
         return;
       }
 

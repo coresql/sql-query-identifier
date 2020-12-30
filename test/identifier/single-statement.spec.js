@@ -36,6 +36,20 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    it('should identify "CREATE TRIGGER" statement', function () {
+      const actual = identify('CREATE TRIGGER sqlmods AFTER UPDATE ON bar FOR EACH ROW WHEN old.yay IS NULL BEGIN UPDATE bar SET yay = 1 WHERE rowid = NEW.rowid; END;');
+      const expected = [
+        {
+          start: 0,
+          end: 134,
+          text: 'CREATE TRIGGER sqlmods AFTER UPDATE ON bar FOR EACH ROW WHEN old.yay IS NULL BEGIN UPDATE bar SET yay = 1 WHERE rowid = NEW.rowid; END;',
+          type: 'CREATE_TRIGGER',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
     it('should identify "CREATE DATABASE" statement', function () {
       const actual = identify('CREATE DATABASE Profile;');
       const expected = [
