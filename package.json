@@ -4,6 +4,7 @@
   "description": "A SQL query identifier",
   "license": "MIT",
   "main": "lib/index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "npm run lint && mocha --require @babel/register --reporter spec --recursive ./test",
     "test:watch": "npm run test -- --watch --watch-extensions .spec.js --bail ./test",
