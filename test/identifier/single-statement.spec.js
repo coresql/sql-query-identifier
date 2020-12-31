@@ -2,7 +2,6 @@ import { expect } from 'chai';
 
 import { identify } from '../../src';
 
-
 /* eslint prefer-arrow-callback: 0 */
 describe('identifier', function () {
   describe('given queries with a single statement', function () {
@@ -361,4 +360,3 @@ describe('identifier', function () {
     });
   });
 });
-

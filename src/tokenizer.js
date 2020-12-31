@@ -16,11 +16,9 @@ const KEYWORDS = [
   'TRUNCATE',
 ];
 
-
 const INDIVIDUALS = {
   ';': 'semicolon',
 };
-
 
 export function scanToken (state) {
   const ch = read(state);
@@ -53,7 +51,6 @@ export function scanToken (state) {
   return skipChar(state);
 }
 
-
 function read (state) {
   if (state.position === state.input.length - 1) {
     return null;
@@ -71,16 +68,13 @@ function unread (state) {
   state.position--;
 }
 
-
 function isKeyword (word) {
-  return ~KEYWORDS.indexOf(word.toUpperCase());
+  return KEYWORDS.includes(word.toUpperCase());
 }
-
 
 function resolveIndividualTokenType (ch) {
   return INDIVIDUALS[ch];
 }
-
 
 function scanWhitespace (state) {
   let nextChar;
@@ -102,7 +96,6 @@ function scanWhitespace (state) {
   };
 }
 
-
 function scanCommentInline (state) {
   let nextChar;
 
@@ -123,7 +116,6 @@ function scanCommentInline (state) {
   };
 }
 
-
 function scanString (state) {
   let nextChar;
 
@@ -143,7 +135,6 @@ function scanString (state) {
     end: state.start + value.length - 1,
   };
 }
-
 
 function scanCommentBlock (state) {
   let nextChar;
@@ -166,7 +157,6 @@ function scanCommentBlock (state) {
     end: state.start + value.length - 1,
   };
 }
-
 
 function scanWord (state) {
   let nextChar;
@@ -192,7 +182,6 @@ function scanWord (state) {
   };
 }
 
-
 function scanIndividualCharacter (state) {
   const value = state.input.slice(state.start, state.position + 1);
   const type = resolveIndividualTokenType(value);
@@ -217,7 +206,6 @@ function skipChar (state) {
   };
 }
 
-
 function skipWord (state, value) {
   return {
     type: 'unknown',
@@ -227,7 +215,6 @@ function skipWord (state, value) {
   };
 }
 
-
 function isWhitespace (ch) {
   return ch === ' ' || ch === '\t' || ch === '\n';
 }
@@ -235,7 +222,6 @@ function isWhitespace (ch) {
 function isString (ch) {
   return ch === '\'';
 }
-
 
 function isCommentInline (ch, state) {
   let isComment = ch === '-';
@@ -253,7 +239,6 @@ function isCommentInline (ch, state) {
   return isComment;
 }
 
-
 function isCommentBlock (ch, state) {
   let isComment = ch === '/';
   if (!isComment) {
@@ -270,9 +255,7 @@ function isCommentBlock (ch, state) {
   return isComment;
 }
 
-
 function isLetter (ch) {
   return (ch >= 'a' && ch <= 'z')
       || (ch >= 'A' && ch <= 'Z');
 }
-

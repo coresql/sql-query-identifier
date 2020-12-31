@@ -51,7 +51,7 @@ export function parse (input, isStrict = true, dialect = 'generic') {
 
     if (!statementParser) {
       // ignore blank tokens that are not in a statement
-      if (~ignoreOutsideBlankTokens.indexOf(token.type)) {
+      if (ignoreOutsideBlankTokens.includes(token.type)) {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
         continue;
@@ -84,7 +84,6 @@ export function parse (input, isStrict = true, dialect = 'generic') {
   return topLevelStatement;
 }
 
-
 function initState ({ input, prevState }) {
   if (prevState) {
     return {
@@ -104,7 +103,6 @@ function initState ({ input, prevState }) {
     body: [],
   };
 }
-
 
 function createStatementParserByToken (token, options) {
   if (token.type === 'keyword') {
@@ -126,7 +124,6 @@ function createStatementParserByToken (token, options) {
 
   throw new Error(`Invalid statement parser "${token.value}"`);
 }
-
 
 function createSelectStatementParser ({ isStrict }) {
   const statement = {};
@@ -354,7 +351,7 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
 
     return step
       .validation
-      .acceptTokens.filter(accept => {
+      .acceptTokens.filter((accept) => {
         const isValidType = token.type === accept.type;
         const isValidValue = (
           !accept.value
@@ -368,7 +365,7 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
   const hasRequiredBefore = (step) => {
     return (
       !step.requireBefore
-      || ~step.requireBefore.indexOf(prevToken.type)
+      || step.requireBefore.includes(prevToken.type)
     );
   };
 
@@ -427,7 +424,7 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
         const expecteds = currentStep
           .validation
           .acceptTokens
-          .map(accept => `(type="${accept.type}" value="${accept.value}")`)
+          .map((accept) => `(type="${accept.type}" value="${accept.value}")`)
           .join(' or ');
         throw new Error(`Expected any of these tokens ${expecteds} instead of type="${token.type}" value="${token.value}" (currentStep=${currentStepIndex}).`);
       }

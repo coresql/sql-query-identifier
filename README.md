@@ -3,7 +3,7 @@ sql-query-identifier
 
 [![Build Status](https://github.com/sqlectron/sql-query-identifier/workflows/Test/badge.svg?branch=master)](https://github.com/sqlectron/sql-query-identifier/actions?query=workflow%3ATest+branch%3Amaster)
 [![npm version](https://badge.fury.io/js/sql-query-identifier.svg)](http://badge.fury.io/js/sql-query-identifier)
-[![view demo](https://img.shields.io/badge/view-demo-blue.svg)](http://maxcnunes.com/sql-query-identifier/)
+[![view demo](https://img.shields.io/badge/view-demo-blue.svg)](https://sqlectron.github.io/sql-query-identifier/)
 
 Identifies the types of each statement in a SQL query (also provide the start, end and the query text).
 
