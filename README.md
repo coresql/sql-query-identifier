@@ -36,6 +36,7 @@ This way you have sure is a valid query before trying to identify the types.
 * TRUNCATE
 * CREATE_TABLE
 * CREATE_DATABASE
+* CREATE_TRIGGER
 * DROP_TABLE
 * DROP_DATABASE
 * UNKNOWN (only available if strict mode is disabled)
@@ -92,6 +93,7 @@ console.log(statements);
 1. `input (string)`: the whole SQL script text to be processed
 1. `options (object)`: allow to set different configurations
   1. `strict (bool)`: allow disable strict mode which will ignore unknown types *(default=true)*
+  2. `dialect (string)`: Specify your database dialect, values: `generic`, `mysql`, `psql`, `sqlite` and `mssql`. *(default=generic)*
 
 ## Contributing
 
