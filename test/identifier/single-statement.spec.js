@@ -50,6 +50,39 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    it('should identify SQLSERVER "CREATE TRIGGER" statement', function () {
+      const query = `CREATE TRIGGER Purchasing.LowCredit ON Purchasing.PurchaseOrderHeader  
+        AFTER INSERT  
+        AS  
+        IF (ROWCOUNT_BIG() = 0)
+        RETURN;
+        IF EXISTS (SELECT *  
+                  FROM Purchasing.PurchaseOrderHeader AS p   
+                  JOIN inserted AS i   
+                  ON p.PurchaseOrderID = i.PurchaseOrderID   
+                  JOIN Purchasing.Vendor AS v   
+                  ON v.BusinessEntityID = p.VendorID  
+                  WHERE v.CreditRating = 5  
+                  )  
+        BEGIN  
+        RAISERROR ('A vendor''s credit rating is too low to accept new  
+        purchase orders.', 16, 1);  
+        ROLLBACK TRANSACTION;  
+        RETURN   
+        END;`;
+      const actual = identify(query, { dialect: 'mssql' });
+      const expected = [
+        {
+          start: 0,
+          end: 708,
+          text: query,
+          type: 'CREATE_TRIGGER',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
     it('should identify postgres "CREATE TRIGGER" statement', function () {
       const actual = identify('CREATE TRIGGER view_insert INSTEAD OF INSERT ON my_view FOR EACH ROW EXECUTE PROCEDURE view_insert_row();');
       const expected = [

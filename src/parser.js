@@ -21,6 +21,8 @@ const EXECUTION_TYPES = {
   UNKNOWN: 'UNKNOWN',
 };
 
+const dialectsWithEnds = ['sqlite', 'mssql'];
+
 /**
  * Parser
  */
@@ -255,18 +257,6 @@ function createCreateStatementParser (isStrict, dialect) {
       },
       postCanGoToNext: () => true,
     },
-    // {
-    //   preCanGoToNext: () => false,
-    //   validation: {
-    //     acceptTokens: [
-    //       { type: 'keyword', value: 'END' },
-    //     ],
-    //     add: (token) => {
-    //       statement.endStatement = 'END'
-    //     }
-    //   },
-    //   postCanGoToNext: () => false,
-    // },
   ];
 
   return stateMachineStatementParser(isStrict, statement, steps, dialect);
@@ -393,9 +383,11 @@ function stateMachineStatementParser (isStrict, statement, steps, dialect) {
         throw new Error('This statement has already got to the end.');
       }
 
+
       if (token.type === 'semicolon') {
-        // sqlite triggers have different syntax
-        if (dialect === 'sqlite' && (statement.type === 'CREATE_TRIGGER' && !statement.canEnd)) {
+        // SQLite and MSSQL require semi-colons inside the trigger. They signify the end of the trigger creation
+        // with `END;`. This allows detection of that.
+        if (dialectsWithEnds.includes(dialect) && (statement.type === 'CREATE_TRIGGER' && !statement.canEnd)) {
           // do nothing
         } else {
           statement.endStatement = ';';
@@ -403,7 +395,8 @@ function stateMachineStatementParser (isStrict, statement, steps, dialect) {
         }
       }
 
-      if (token.value === 'END' && statement.type === 'CREATE_TRIGGER' && dialect === 'sqlite') {
+      // SQLite and MSSQL triggers use `END;` to signify the end of the statement. The statement can include other semicolons.
+      if (dialectsWithEnds.includes(dialect) && token.value === 'END' && statement.type === 'CREATE_TRIGGER') {
         statement.canEnd = true;
         return;
       }
