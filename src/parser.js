@@ -171,7 +171,6 @@ function createInsertStatementParser ({ isStrict }) {
   return stateMachineStatementParser(statement, steps, { isStrict });
 }
 
-
 function createUpdateStatementParser ({ isStrict }) {
   const statement = {};
 
@@ -372,7 +371,6 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
       if (statement.endStatement) {
         throw new Error('This statement has already got to the end.');
       }
-
 
       if (token.type === 'semicolon') {
         // SQLite and MSSQL require semi-colons inside the trigger. They signify the end of the trigger creation
