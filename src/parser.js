@@ -14,16 +14,19 @@ const EXECUTION_TYPES = {
   UPDATE: 'MODIFICATION',
   CREATE_DATABASE: 'MODIFICATION',
   CREATE_TABLE: 'MODIFICATION',
+  CREATE_TRIGGER: 'MODIFICATION',
   DROP_DATABASE: 'MODIFICATION',
   DROP_TABLE: 'MODIFICATION',
   TRUNCATE: 'MODIFICATION',
   UNKNOWN: 'UNKNOWN',
 };
 
+const dialectsWithEnds = ['sqlite', 'mssql'];
+
 /**
  * Parser
  */
-export function parse (input, isStrict = true) {
+export function parse (input, isStrict = true, dialect = 'generic') {
   const topLevelState = initState({ input });
   const topLevelStatement = {
     type: 'QUERY',
@@ -54,7 +57,7 @@ export function parse (input, isStrict = true) {
         continue;
       }
 
-      statementParser = createStatementParserByToken(isStrict, token);
+      statementParser = createStatementParserByToken(token, { isStrict, dialect });
     }
 
     statementParser.addToken(token);
@@ -101,28 +104,28 @@ function initState ({ input, prevState }) {
   };
 }
 
-function createStatementParserByToken (isStrict, token) {
+function createStatementParserByToken (token, options) {
   if (token.type === 'keyword') {
     switch (token.value.toUpperCase()) {
-      case 'SELECT': return createSelectStatementParser(isStrict);
-      case 'CREATE': return createCreateStatementParser(isStrict);
-      case 'DROP': return createDropStatementParser(isStrict);
-      case 'INSERT': return createInsertStatementParser(isStrict);
-      case 'UPDATE': return createUpdateStatementParser(isStrict);
-      case 'DELETE': return createDeleteStatementParser(isStrict);
-      case 'TRUNCATE': return createTruncateStatementParser(isStrict);
+      case 'SELECT': return createSelectStatementParser(options);
+      case 'CREATE': return createCreateStatementParser(options);
+      case 'DROP': return createDropStatementParser(options);
+      case 'INSERT': return createInsertStatementParser(options);
+      case 'UPDATE': return createUpdateStatementParser(options);
+      case 'DELETE': return createDeleteStatementParser(options);
+      case 'TRUNCATE': return createTruncateStatementParser(options);
       default: break;
     }
   }
 
-  if (!isStrict && token.type === 'unknown') {
-    return createUnknownStatementParser(isStrict);
+  if (!options.isStrict && token.type === 'unknown') {
+    return createUnknownStatementParser(options.isStrict);
   }
 
   throw new Error(`Invalid statement parser "${token.value}"`);
 }
 
-function createSelectStatementParser (isStrict) {
+function createSelectStatementParser ({ isStrict }) {
   const statement = {};
 
   const steps = [
@@ -142,10 +145,10 @@ function createSelectStatementParser (isStrict) {
     },
   ];
 
-  return stateMachineStatementParser(isStrict, statement, steps);
+  return stateMachineStatementParser(statement, steps, { isStrict });
 }
 
-function createInsertStatementParser (isStrict) {
+function createInsertStatementParser ({ isStrict }) {
   const statement = {};
 
   const steps = [
@@ -165,10 +168,10 @@ function createInsertStatementParser (isStrict) {
     },
   ];
 
-  return stateMachineStatementParser(isStrict, statement, steps);
+  return stateMachineStatementParser(statement, steps, { isStrict });
 }
 
-function createUpdateStatementParser (isStrict) {
+function createUpdateStatementParser ({ isStrict }) {
   const statement = {};
 
   const steps = [
@@ -188,10 +191,10 @@ function createUpdateStatementParser (isStrict) {
     },
   ];
 
-  return stateMachineStatementParser(isStrict, statement, steps);
+  return stateMachineStatementParser(statement, steps, { isStrict });
 }
 
-function createDeleteStatementParser (isStrict) {
+function createDeleteStatementParser ({ isStrict }) {
   const statement = {};
 
   const steps = [
@@ -211,10 +214,10 @@ function createDeleteStatementParser (isStrict) {
     },
   ];
 
-  return stateMachineStatementParser(isStrict, statement, steps);
+  return stateMachineStatementParser(statement, steps, { isStrict });
 }
 
-function createCreateStatementParser (isStrict) {
+function createCreateStatementParser ({ isStrict, dialect }) {
   const statement = {};
 
   const steps = [
@@ -239,6 +242,7 @@ function createCreateStatementParser (isStrict) {
         acceptTokens: [
           { type: 'keyword', value: 'TABLE' },
           { type: 'keyword', value: 'DATABASE' },
+          { type: 'keyword', value: 'TRIGGER' },
         ],
       },
       add: (token) => {
@@ -248,10 +252,10 @@ function createCreateStatementParser (isStrict) {
     },
   ];
 
-  return stateMachineStatementParser(isStrict, statement, steps);
+  return stateMachineStatementParser(statement, steps, { isStrict, dialect });
 }
 
-function createDropStatementParser (isStrict) {
+function createDropStatementParser ({ isStrict }) {
   const statement = {};
 
   const steps = [
@@ -285,10 +289,10 @@ function createDropStatementParser (isStrict) {
     },
   ];
 
-  return stateMachineStatementParser(isStrict, statement, steps);
+  return stateMachineStatementParser(statement, steps, { isStrict });
 }
 
-function createTruncateStatementParser (isStrict) {
+function createTruncateStatementParser ({ isStrict }) {
   const statement = {};
 
   const steps = [
@@ -307,10 +311,10 @@ function createTruncateStatementParser (isStrict) {
     },
   ];
 
-  return stateMachineStatementParser(isStrict, statement, steps);
+  return stateMachineStatementParser(statement, steps, { isStrict });
 }
 
-function createUnknownStatementParser (isStrict) {
+function createUnknownStatementParser ({ isStrict }) {
   const statement = {};
 
   const steps = [
@@ -324,10 +328,10 @@ function createUnknownStatementParser (isStrict) {
     },
   ];
 
-  return stateMachineStatementParser(isStrict, statement, steps);
+  return stateMachineStatementParser(statement, steps, { isStrict });
 }
 
-function stateMachineStatementParser (isStrict, statement, steps) {
+function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'generic' }) {
   let currentStepIndex = 0;
   let prevToken;
 
@@ -369,7 +373,19 @@ function stateMachineStatementParser (isStrict, statement, steps) {
       }
 
       if (token.type === 'semicolon') {
-        statement.endStatement = ';';
+        // SQLite and MSSQL require semi-colons inside the trigger. They signify the end of the trigger creation
+        // with `END;`. This allows detection of that.
+        if (dialectsWithEnds.includes(dialect) && (statement.type === 'CREATE_TRIGGER' && !statement.canEnd)) {
+          // do nothing
+        } else {
+          statement.endStatement = ';';
+          return;
+        }
+      }
+
+      // SQLite and MSSQL triggers use `END;` to signify the end of the statement. The statement can include other semicolons.
+      if (dialectsWithEnds.includes(dialect) && token.value === 'END' && statement.type === 'CREATE_TRIGGER') {
+        statement.canEnd = true;
         return;
       }
 

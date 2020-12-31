@@ -11,6 +11,7 @@ const KEYWORDS = [
   'CREATE',
   'DROP',
   'TABLE',
+  'TRIGGER',
   'DATABASE',
   'TRUNCATE',
 ];
