@@ -148,7 +148,6 @@ function createSelectStatementParser ({ isStrict }) {
   return stateMachineStatementParser(statement, steps, { isStrict });
 }
 
-
 function createInsertStatementParser ({ isStrict }) {
   const statement = {};
 
@@ -196,7 +195,6 @@ function createUpdateStatementParser ({ isStrict }) {
   return stateMachineStatementParser(statement, steps, { isStrict });
 }
 
-
 function createDeleteStatementParser ({ isStrict }) {
   const statement = {};
 
@@ -219,7 +217,6 @@ function createDeleteStatementParser ({ isStrict }) {
 
   return stateMachineStatementParser(statement, steps, { isStrict });
 }
-
 
 function createCreateStatementParser ({ isStrict, dialect }) {
   const statement = {};
@@ -259,7 +256,6 @@ function createCreateStatementParser ({ isStrict, dialect }) {
   return stateMachineStatementParser(statement, steps, { isStrict, dialect });
 }
 
-
 function createDropStatementParser ({ isStrict }) {
   const statement = {};
 
@@ -297,7 +293,6 @@ function createDropStatementParser ({ isStrict }) {
   return stateMachineStatementParser(statement, steps, { isStrict });
 }
 
-
 function createTruncateStatementParser ({ isStrict }) {
   const statement = {};
 
@@ -320,7 +315,6 @@ function createTruncateStatementParser ({ isStrict }) {
   return stateMachineStatementParser(statement, steps, { isStrict });
 }
 
-
 function createUnknownStatementParser ({ isStrict }) {
   const statement = {};
 
@@ -337,7 +331,6 @@ function createUnknownStatementParser ({ isStrict }) {
 
   return stateMachineStatementParser(statement, steps, { isStrict });
 }
-
 
 function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'generic' }) {
   let currentStepIndex = 0;
