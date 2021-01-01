@@ -2,7 +2,7 @@ sql-query-identifier
 ===================
 
 [![Build Status](https://github.com/sqlectron/sql-query-identifier/workflows/Test/badge.svg?branch=master)](https://github.com/sqlectron/sql-query-identifier/actions?query=workflow%3ATest+branch%3Amaster)
-[![npm version](https://badge.fury.io/js/sql-query-identifier.svg)](http://badge.fury.io/js/sql-query-identifier)
+[![npm version](https://badge.fury.io/js/sql-query-identifier.svg)](https://badge.fury.io/js/sql-query-identifier)
 [![view demo](https://img.shields.io/badge/view-demo-blue.svg)](https://sqlectron.github.io/sql-query-identifier/)
 
 Identifies the types of each statement in a SQL query (also provide the start, end and the query text).
@@ -97,7 +97,7 @@ console.log(statements);
 
 ## Contributing
 
-It is required to use [editorconfig](http://editorconfig.org/) and please write and run specs before pushing any changes:
+It is required to use [editorconfig](https://editorconfig.org/) and please write and run specs before pushing any changes:
 
 ```js
 npm test
@@ -105,4 +105,4 @@ npm test
 
 ## License
 
-Copyright (c) 2016 Max Claus Nunes. This software is licensed under the [MIT License](http://raw.github.com/maxcnunes/sql-query-identifier/master/LICENSE).
+Copyright (c) 2016 Max Claus Nunes. This software is licensed under the [MIT License](https://github.com/sqlectron/sql-query-identifier/blob/master/LICENSE).
