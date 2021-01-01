@@ -88,8 +88,12 @@
         text-align: center;
       }
     </style>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-    <script src="lib/SQLQueryIdentifier.min.js"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+      integrity="sha256-4+XzXVhsDmqanXGHaHvgh1gMQKX40OUvDEBTu8JcmNs="
+      crossorigin="anonymous"
+    ></script>
+    <script src="webpack/SQLQueryIdentifier.min.js"></script>
   </head>
   <body>
     <div class="wrapper">
@@ -99,11 +103,17 @@
           <p>
             A SQL query identifier (e.g. INSERT, SELECT, CREATE TABLE, and etc.)
             <br />
-            <a href="https://github.com/maxcnunes/sql-query-identifier">More details</a>
+            <a href="https://github.com/sqlectron/sql-query-identifier">More details</a>
             <br />
             <br />
-            <input id="strict-mode" type="checkbox" checked />
-            <label for="strict-mode">Strict mode</label>
+            <label for="strict-mode">Strict mode</label>: <input id="strict-mode" type="checkbox" checked /><br />
+            <label for="dialect">Dialect</label>: <select id="dialect">
+              <option selected>generic</option>
+              <option>mysql</option>
+              <option>psql</option>
+              <option>sqlite</option>
+              <option>mssql</option>
+            </select>
           </p>
         </header>
         <section>
@@ -129,13 +139,14 @@
       var output = document.getElementById('output');
       var message = document.getElementById('message');
       var strictMode = document.getElementById('strict-mode');
+      var dialect = document.getElementById('dialect');
 
       function clickIdentify() {
         try {
           const selectionStart = $('#input').prop('selectionStart');
           const selectionEnd = $('#input').prop('selectionEnd');
           const position = selectionStart;
-          const statements = SQLQueryIdentifier.identify(input.value, { strict: strictMode.checked });
+          const statements = SQLQueryIdentifier.identify(input.value, { strict: strictMode.checked, dialect: dialect.value });
 
           $('#message').html('');
 
