@@ -87,10 +87,14 @@
         line-height: 50px;
         text-align: center;
       }
+
+      #version {
+        text-align: center;
+      }
     </style>
     <script
-      src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
-      integrity="sha256-4+XzXVhsDmqanXGHaHvgh1gMQKX40OUvDEBTu8JcmNs="
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
       crossorigin="anonymous"
     ></script>
     <script src="webpack/SQLQueryIdentifier.min.js"></script>
@@ -100,6 +104,7 @@
       <div id="main">
         <header>
           <h1>SQL Query Identifier</h1>
+          <div id="version">vX.X.X</div>
           <p>
             A SQL query identifier (e.g. INSERT, SELECT, CREATE TABLE, and etc.)
             <br />
@@ -187,6 +192,14 @@
           $('#message').html(err.message);
         }
       }
+
+      (function()  {
+        $.getJSON('webpack/package.json').done(function(json) {
+          document.getElementById('version').textContent = 'v' + json.version;
+        }).fail(function(err) {
+          console.error(err);
+        });
+      })();
     </script>
     <a href="https://github.com/maxcnunes/sql-query-identifier"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/52760788cde945287fbb584134c4cbc2bc36f904/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f77686974655f6666666666662e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_white_ffffff.png"></a>
   </body>
