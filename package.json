@@ -11,7 +11,9 @@
     "lint": "eslint src test",
     "build": "babel src --out-dir lib",
     "watch": "babel src --out-dir lib --watch",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "webpack:prod": "NODE_ENV=production webpack",
+    "webpack:dev": "NODE_ENV=development webpack --progress --color --watch"
   },
   "devDependencies": {
     "@babel/cli": "^7.0.0",
@@ -20,11 +22,16 @@
     "@babel/eslint-plugin": "^7.12.1",
     "@babel/preset-env": "^7.0.0",
     "@babel/register": "^7.12.10",
+    "babel-loader": "^8.2.2",
     "chai": "^4.2.0",
     "eslint": "^7.16.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1",
-    "mocha": "^8.2.1"
+    "eslint-webpack-plugin": "^2.4.1",
+    "mocha": "^8.2.1",
+    "terser-webpack-plugin": "^5.0.3",
+    "webpack": "^5.11.1",
+    "webpack-cli": "^4.3.1"
   },
   "dependencies": {}
 }
