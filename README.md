@@ -105,4 +105,5 @@ npm test
 
 ## License
 
-Copyright (c) 2016 Max Claus Nunes. This software is licensed under the [MIT License](https://github.com/sqlectron/sql-query-identifier/blob/master/LICENSE).
+Copyright (c) 2016-2021 The SQLECTRON Team.
+This software is licensed under the [MIT License](https://github.com/sqlectron/sql-query-identifier/blob/master/LICENSE).
