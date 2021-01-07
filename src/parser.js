@@ -394,27 +394,9 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
         }
       }
 
-      console.log(token);
-      console.log(statement.openBlocks);
-
-      // SQLite and MSSQL triggers use `END;` to signify the end of the statement. The statement can include other semicolons.
-<<<<<<< Updated upstream
-      if (
-        dialectsWithEnds.includes(dialect)
-        && statementsWithEnds.includes(statement.type)
-        && token.value.toUpperCase() === 'END'
-      ) {
-        statement.canEnd = true;
-        return;
-      }
-
-      if (dialect === 'psql' && statement.type === 'CREATE_FUNCTION' && token.value.toUpperCase() === 'LANGUAGE') {
-=======
-<<<<<<< Updated upstream
-      if (dialectsWithEnds.includes(dialect) && token.value === 'END' && statementsWithEnds.includes(statement.type)) {
->>>>>>> Stashed changes
-        statement.canEnd = true;
-=======
+      // SQLite, MSSQL, and PSQL all use END; to signify ends of blocks. SQLite and MSSQL for the end of triggers
+      // and PSQL for end of function definition, but also loops, if statments ,etc. Within the block, it is
+      // expected that there can be semi-colons, but that they do not signify the end of the overall statement.
       if (
         dialectsWithEnds.includes(dialect)
         && statementsWithEnds.includes(statement.type)
@@ -429,7 +411,6 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
 
       if (token.type === 'whitespace') {
         prevToken = token;
->>>>>>> Stashed changes
         return;
       }
 
