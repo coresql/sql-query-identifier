@@ -37,6 +37,7 @@ This way you have sure is a valid query before trying to identify the types.
 * CREATE_TABLE
 * CREATE_DATABASE
 * CREATE_TRIGGER
+* CREATE_FUNCTION
 * DROP_TABLE
 * DROP_DATABASE
 * UNKNOWN (only available if strict mode is disabled)

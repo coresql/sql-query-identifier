@@ -50,30 +50,30 @@ describe('identifier', function () {
     });
 
     it('should identify SQLSERVER "CREATE TRIGGER" statement', function () {
-      const query = `CREATE TRIGGER Purchasing.LowCredit ON Purchasing.PurchaseOrderHeader  
-        AFTER INSERT  
-        AS  
+      const query = `CREATE TRIGGER Purchasing.LowCredit ON Purchasing.PurchaseOrderHeader
+        AFTER INSERT
+        AS
         IF (ROWCOUNT_BIG() = 0)
         RETURN;
-        IF EXISTS (SELECT *  
-                  FROM Purchasing.PurchaseOrderHeader AS p   
-                  JOIN inserted AS i   
-                  ON p.PurchaseOrderID = i.PurchaseOrderID   
-                  JOIN Purchasing.Vendor AS v   
-                  ON v.BusinessEntityID = p.VendorID  
-                  WHERE v.CreditRating = 5  
-                  )  
-        BEGIN  
-        RAISERROR ('A vendor''s credit rating is too low to accept new  
-        purchase orders.', 16, 1);  
-        ROLLBACK TRANSACTION;  
-        RETURN   
+        IF EXISTS (SELECT *
+                  FROM Purchasing.PurchaseOrderHeader AS p
+                  JOIN inserted AS i
+                  ON p.PurchaseOrderID = i.PurchaseOrderID
+                  JOIN Purchasing.Vendor AS v
+                  ON v.BusinessEntityID = p.VendorID
+                  WHERE v.CreditRating = 5
+                  )
+        BEGIN
+        RAISERROR ('A vendor''s credit rating is too low to accept new
+        purchase orders.', 16, 1);
+        ROLLBACK TRANSACTION;
+        RETURN
         END;`;
       const actual = identify(query, { dialect: 'mssql' });
       const expected = [
         {
           start: 0,
-          end: 708,
+          end: 671,
           text: query,
           type: 'CREATE_TRIGGER',
           executionType: 'MODIFICATION',
@@ -90,6 +90,80 @@ describe('identifier', function () {
           end: 104,
           text: 'CREATE TRIGGER view_insert INSTEAD OF INSERT ON my_view FOR EACH ROW EXECUTE PROCEDURE view_insert_row();',
           type: 'CREATE_TRIGGER',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify postgres "CREATE FUNCTION" statement', function () {
+      const actual = identify("CREATE FUNCTION dup(in int, out f1 int, out f2 text) AS $$ SELECT $1, CAST($1 AS text) || ' is text' $$ LANGUAGE SQL;");
+      const expected = [
+        {
+          start: 0,
+          end: 116,
+          text: "CREATE FUNCTION dup(in int, out f1 int, out f2 text) AS $$ SELECT $1, CAST($1 AS text) || ' is text' $$ LANGUAGE SQL;",
+          type: 'CREATE_FUNCTION',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify mysql "CREATE FUNCTION" statement', function () {
+      const actual = identify("CREATE FUNCTION hello (s CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ',s,'!');");
+      const expected = [
+        {
+          start: 0,
+          end: 96,
+          text: "CREATE FUNCTION hello (s CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ',s,'!');",
+          type: 'CREATE_FUNCTION',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify mysql "CREATE FUNCTION" statement with definer', function () {
+      const actual = identify("CREATE DEFINER = 'admin'@'localhost' FUNCTION hello (s CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ',s,'!');", { dialect: 'mysql' });
+      const expected = [
+        {
+          start: 0,
+          end: 126,
+          text: "CREATE DEFINER = 'admin'@'localhost' FUNCTION hello (s CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ',s,'!');",
+          type: 'CREATE_FUNCTION',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify sql server "CREATE FUNCTION" statement', function () {
+      const query = `CREATE FUNCTION dbo.ISOweek (@DATE datetime)
+      RETURNS int
+      WITH EXECUTE AS CALLER
+      AS
+      BEGIN
+          DECLARE @ISOweek int;
+          SET @ISOweek= DATEPART(wk,@DATE)+1
+              -DATEPART(wk,CAST(DATEPART(yy,@DATE) as CHAR(4))+'0104');
+      --Special cases: Jan 1-3 may belong to the previous year
+          IF (@ISOweek=0)
+              SET @ISOweek=dbo.ISOweek(CAST(DATEPART(yy,@DATE)-1
+                  AS CHAR(4))+'12'+ CAST(24+DATEPART(DAY,@DATE) AS CHAR(2)))+1;
+      --Special case: Dec 29-31 may belong to the next year
+          IF ((DATEPART(mm,@DATE)=12) AND
+              ((DATEPART(dd,@DATE)-DATEPART(dw,@DATE))>= 28))
+          SET @ISOweek=1;
+          RETURN(@ISOweek);
+      END;`;
+      const actual = identify(query, { dialect: 'mssql' });
+      const expected = [
+        {
+          start: 0,
+          end: 723,
+          text: query,
+          type: 'CREATE_FUNCTION',
           executionType: 'MODIFICATION',
         },
       ];
