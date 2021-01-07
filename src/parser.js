@@ -22,7 +22,9 @@ const EXECUTION_TYPES = {
   UNKNOWN: 'UNKNOWN',
 };
 
-const dialectsWithEnds = ['sqlite', 'mssql'];
+const dialectsWithOpenBlocks = ['psql'];
+const blockOpeners = ['BEGIN', 'IF', 'LOOP'];
+const dialectsWithEnds = ['sqlite', 'mssql', 'psql'];
 const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION'];
 
 /**
@@ -338,6 +340,10 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
   let currentStepIndex = 0;
   let prevToken;
 
+  if (dialectsWithOpenBlocks.includes(dialect)) {
+    statement.openBlocks = 0;
+  }
+
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
   const isValidToken = (step, token) => {
     if (!step.validation) {
@@ -388,7 +394,11 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
         }
       }
 
+      console.log(token);
+      console.log(statement.openBlocks);
+
       // SQLite and MSSQL triggers use `END;` to signify the end of the statement. The statement can include other semicolons.
+<<<<<<< Updated upstream
       if (
         dialectsWithEnds.includes(dialect)
         && statementsWithEnds.includes(statement.type)
@@ -399,12 +409,39 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
       }
 
       if (dialect === 'psql' && statement.type === 'CREATE_FUNCTION' && token.value.toUpperCase() === 'LANGUAGE') {
+=======
+<<<<<<< Updated upstream
+      if (dialectsWithEnds.includes(dialect) && token.value === 'END' && statementsWithEnds.includes(statement.type)) {
+>>>>>>> Stashed changes
         statement.canEnd = true;
-        return;
+=======
+      if (
+        dialectsWithEnds.includes(dialect)
+        && statementsWithEnds.includes(statement.type)
+        && token.value.toUpperCase() === 'END'
+      ) {
+        statement.openBlocks--;
+        if (!dialectsWithOpenBlocks.includes(dialect) || statement.openBlocks === 0) {
+          statement.canEnd = true;
+          return;
+        }
       }
 
       if (token.type === 'whitespace') {
         prevToken = token;
+>>>>>>> Stashed changes
+        return;
+      }
+
+      // Postgres allows for optional "OR REPLACE" between "CREATE" and "FUNCTION", so we need to ignore
+      // these tokens.
+      if (dialect === 'psql' && ['OR', 'REPLACE'].includes(token.value.toUpperCase())) {
+        prevToken = token;
+        return;
+      }
+
+      if (dialectsWithOpenBlocks.includes(dialect) && blockOpeners.includes(token.value.toUpperCase())) {
+        statement.openBlocks++;
         return;
       }
 

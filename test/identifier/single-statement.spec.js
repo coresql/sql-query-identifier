@@ -96,7 +96,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify postgres "CREATE FUNCTION" statement', function () {
+    it('should identify postgres "CREATE FUNCTION" statement with LANGUAGE at end', function () {
       const sql = `CREATE FUNCTION quarterly_summary_func(start_date date DEFAULT CURRENT_TIMESTAMP)
       RETURNS TABLE (staff_name text, staff_bonus int, quarter tsrange)
       As $$
@@ -129,6 +129,55 @@ describe('identifier', function () {
         {
           start: 0,
           end: 1268,
+          text: sql,
+          type: 'CREATE_FUNCTION',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify postgres "CREATE FUNCTION" statement with language at beginning', function () {
+      const sql = `CREATE OR REPLACE FUNCTION f_grp_prod(text)
+      RETURNS TABLE (
+        name text
+      , result1 double precision
+      , result2 double precision)
+    LANGUAGE plpgsql STABLE
+    AS
+    $BODY$
+    DECLARE
+        r      mytable%ROWTYPE;
+        _round integer;
+    BEGIN
+        -- init vars
+        name    := $1;
+        result2 := 1;       -- abuse result2 as temp var for convenience
+
+    FOR r IN
+        SELECT *
+        FROM   mytable m
+        WHERE  m.name = name
+        ORDER  BY m.round
+    LOOP
+        IF r.round <> _round THEN   -- save result1 before 2nd round
+            result1 := result2;
+            result2 := 1;
+        END IF;
+
+        result2 := result2 * (1 - r.val/100);
+        _round  := r.round;
+    END LOOP;
+
+    RETURN NEXT;
+
+    END;
+    $BODY$;`;
+      const actual = identify(sql, { dialect: 'psql' });
+      const expected = [
+        {
+          start: 0,
+          end: 782,
           text: sql,
           type: 'CREATE_FUNCTION',
           executionType: 'MODIFICATION',
