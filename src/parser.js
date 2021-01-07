@@ -15,6 +15,7 @@ const EXECUTION_TYPES = {
   CREATE_DATABASE: 'MODIFICATION',
   CREATE_TABLE: 'MODIFICATION',
   CREATE_TRIGGER: 'MODIFICATION',
+  CREATE_FUNCTION: 'MODIFICATION',
   DROP_DATABASE: 'MODIFICATION',
   DROP_TABLE: 'MODIFICATION',
   TRUNCATE: 'MODIFICATION',
@@ -243,6 +244,7 @@ function createCreateStatementParser ({ isStrict, dialect }) {
           { type: 'keyword', value: 'TABLE' },
           { type: 'keyword', value: 'DATABASE' },
           { type: 'keyword', value: 'TRIGGER' },
+          { type: 'keyword', value: 'FUNCTION' },
         ],
       },
       add: (token) => {
@@ -375,7 +377,7 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
       if (token.type === 'semicolon') {
         // SQLite and MSSQL require semi-colons inside the trigger. They signify the end of the trigger creation
         // with `END;`. This allows detection of that.
-        if (dialectsWithEnds.includes(dialect) && (statement.type === 'CREATE_TRIGGER' && !statement.canEnd)) {
+        if (dialectsWithEnds.includes(dialect) && (['CREATE_TRIGGER', 'CREATE_FUNCTION'].includes(statement.type) && !statement.canEnd)) {
           // do nothing
         } else {
           statement.endStatement = ';';
@@ -384,7 +386,7 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
       }
 
       // SQLite and MSSQL triggers use `END;` to signify the end of the statement. The statement can include other semicolons.
-      if (dialectsWithEnds.includes(dialect) && token.value === 'END' && statement.type === 'CREATE_TRIGGER') {
+      if (dialectsWithEnds.includes(dialect) && token.value === 'END' && ['CREATE_TRIGGER', 'CREATE_FUNCTION'].includes(statement.type)) {
         statement.canEnd = true;
         return;
       }
@@ -392,6 +394,33 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
       if (token.type === 'whitespace') {
         prevToken = token;
         return;
+      }
+
+      if (dialect === 'mysql' && token.value === 'DEFINER') {
+        statement.definer = 0;
+        prevToken = token;
+        return;
+      }
+
+      if (statement.definer === 0 && token.value === '=') {
+        statement.definer++;
+        prevToken = token;
+        return;
+      }
+
+      if (statement.definer > 0) {
+        if (statement.definer === 1 && prevToken.type === 'whitespace') {
+          statement.definer++;
+          prevToken = token;
+          return;
+        }
+
+        if (statement.definer > 1 && prevToken.type !== 'whitespace') {
+          prevToken = token;
+          return;
+        }
+
+        statement.definer = false;
       }
 
       if (statement.type) {
