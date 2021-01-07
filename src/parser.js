@@ -23,7 +23,7 @@ const EXECUTION_TYPES = {
 };
 
 const dialectsWithOpenBlocks = ['psql'];
-const blockOpeners = ['BEGIN', 'IF', 'LOOP'];
+const blockOpeners = ['BEGIN', 'IF', 'LOOP', 'CASE'];
 const dialectsWithEnds = ['sqlite', 'mssql', 'psql'];
 const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION'];
 
