@@ -380,6 +380,8 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
         // with `END;`. This allows detection of that.
         if (dialectsWithEnds.includes(dialect) && (statementsWithEnds.includes(statement.type) && !statement.canEnd)) {
           // do nothing
+        } else if (dialect === 'psql' && statement.type === 'CREATE_FUNCTION' && !statement.canEnd) {
+          // do nothing
         } else {
           statement.endStatement = ';';
           return;
@@ -387,7 +389,16 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
       }
 
       // SQLite and MSSQL triggers use `END;` to signify the end of the statement. The statement can include other semicolons.
-      if (dialectsWithEnds.includes(dialect) && token.value === 'END' && statementsWithEnds.includes(statement.type)) {
+      if (
+        dialectsWithEnds.includes(dialect)
+        && statementsWithEnds.includes(statement.type)
+        && token.value.toUpperCase() === 'END'
+      ) {
+        statement.canEnd = true;
+        return;
+      }
+
+      if (dialect === 'psql' && statement.type === 'CREATE_FUNCTION' && token.value.toUpperCase() === 'LANGUAGE') {
         statement.canEnd = true;
         return;
       }

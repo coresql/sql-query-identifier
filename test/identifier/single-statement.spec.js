@@ -97,12 +97,39 @@ describe('identifier', function () {
     });
 
     it('should identify postgres "CREATE FUNCTION" statement', function () {
-      const actual = identify("CREATE FUNCTION dup(in int, out f1 int, out f2 text) AS $$ SELECT $1, CAST($1 AS text) || ' is text' $$ LANGUAGE SQL;");
+      const sql = `CREATE FUNCTION quarterly_summary_func(start_date date DEFAULT CURRENT_TIMESTAMP)
+      RETURNS TABLE (staff_name text, staff_bonus int, quarter tsrange)
+      As $$
+      DECLARE
+        employee RECORD;
+        total_bonus int;
+        sales_total int;
+        end_date date := start_date + interval '3 months';
+      BEGIN
+        FOR employee IN SELECT staff_id FROM staff LOOP
+          EXECUTE 'SELECT sum(staff_bonus), sum(sales_price) FROM sales WHERE staff_id = $1
+          AND created_at >= $2 AND created_at < $3'
+             INTO total_bonus, sales_total
+             USING employee.staff_id, start_date, end_date;
+          RAISE NOTICE 'total bonus is % and total sales is %', total_bonus, sales_total;
+         EXECUTE 'INSERT INTO sales_summary (staff_id, bonus, total_sales, period) VALUES
+                    ($1, $2, $3, tsrange($4, $5))'
+             USING employee.staff_id, total_bonus, sales_total, start_date, end_date;
+        END LOOP;
+        DELETE FROM sales WHERE created_at >= start_date
+               AND created_at < end_date;
+        RETURN QUERY SELECT name, bonus, period FROM sales_summary
+                     LEFT JOIN staff on sales_summary.staff_id = staff.staff_id;
+       RETURN;
+      END;
+      $$
+      LANGUAGE plpgsql;`;
+      const actual = identify(sql, { dialect: 'psql' });
       const expected = [
         {
           start: 0,
-          end: 116,
-          text: "CREATE FUNCTION dup(in int, out f1 int, out f2 text) AS $$ SELECT $1, CAST($1 AS text) || ' is text' $$ LANGUAGE SQL;",
+          end: 1268,
+          text: sql,
           type: 'CREATE_FUNCTION',
           executionType: 'MODIFICATION',
         },
