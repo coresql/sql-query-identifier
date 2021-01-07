@@ -175,4 +175,15 @@ describe('scan', function () {
     };
     expect(actual).to.eql(expected);
   });
+
+  it('scans string with underscore as one token', function () {
+    const actual = scanToken(initState('end_date'));
+    const expected = {
+      type: 'unknown',
+      value: 'end_date',
+      start: 0,
+      end: 7,
+    };
+    expect(actual).to.eql(expected);
+  });
 });
