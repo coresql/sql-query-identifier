@@ -23,6 +23,7 @@ const EXECUTION_TYPES = {
 };
 
 const dialectsWithEnds = ['sqlite', 'mssql'];
+const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION'];
 
 /**
  * Parser
@@ -377,7 +378,7 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
       if (token.type === 'semicolon') {
         // SQLite and MSSQL require semi-colons inside the trigger. They signify the end of the trigger creation
         // with `END;`. This allows detection of that.
-        if (dialectsWithEnds.includes(dialect) && (['CREATE_TRIGGER', 'CREATE_FUNCTION'].includes(statement.type) && !statement.canEnd)) {
+        if (dialectsWithEnds.includes(dialect) && (statementsWithEnds.includes(statement.type) && !statement.canEnd)) {
           // do nothing
         } else {
           statement.endStatement = ';';
@@ -386,7 +387,7 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
       }
 
       // SQLite and MSSQL triggers use `END;` to signify the end of the statement. The statement can include other semicolons.
-      if (dialectsWithEnds.includes(dialect) && token.value === 'END' && ['CREATE_TRIGGER', 'CREATE_FUNCTION'].includes(statement.type)) {
+      if (dialectsWithEnds.includes(dialect) && token.value === 'END' && statementsWithEnds.includes(statement.type)) {
         statement.canEnd = true;
         return;
       }
