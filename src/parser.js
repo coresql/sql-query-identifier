@@ -397,7 +397,9 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
         return;
       }
 
-      if (dialect === 'mysql' && token.value === 'DEFINER') {
+      // MySQL allows for setting a definer for a function which specifies who the function is executed as.
+      // This clause is optional, and is defined between the "CREATE" and "FUNCTION" keywords for the statement.
+      if (dialect === 'mysql' && token.value.toUpperCase() === 'DEFINER') {
         statement.definer = 0;
         prevToken = token;
         return;
