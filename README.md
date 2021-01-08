@@ -40,6 +40,7 @@ This way you have sure is a valid query before trying to identify the types.
 * CREATE_FUNCTION
 * DROP_TABLE
 * DROP_DATABASE
+* DROP_TRIGGER
 * UNKNOWN (only available if strict mode is disabled)
 
 ## Execution types
