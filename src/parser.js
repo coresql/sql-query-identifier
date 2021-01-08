@@ -18,6 +18,7 @@ const EXECUTION_TYPES = {
   CREATE_FUNCTION: 'MODIFICATION',
   DROP_DATABASE: 'MODIFICATION',
   DROP_TABLE: 'MODIFICATION',
+  DROP_TRIGGER: 'MODIFICATION',
   TRUNCATE: 'MODIFICATION',
   UNKNOWN: 'UNKNOWN',
 };
@@ -283,6 +284,7 @@ function createDropStatementParser ({ isStrict }) {
         acceptTokens: [
           { type: 'keyword', value: 'TABLE' },
           { type: 'keyword', value: 'DATABASE' },
+          { type: 'keyword', value: 'TRIGGER' },
         ],
       },
       add: (token) => {
