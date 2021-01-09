@@ -186,4 +186,26 @@ describe('scan', function () {
     };
     expect(actual).to.eql(expected);
   });
+
+  it('scans dollar quoted string', function () {
+    const actual = scanToken(initState('$$test$$'));
+    const expected = {
+      type: 'string',
+      value: '$$test$$',
+      start: 0,
+      end: 7,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans dollar quoted string with label', function () {
+    const actual = scanToken(initState('$aaa$test$aaa$'));
+    const expected = {
+      type: 'string',
+      value: '$aaa$test$aaa$',
+      start: 0,
+      end: 13,
+    };
+    expect(actual).to.eql(expected);
+  });
 });
