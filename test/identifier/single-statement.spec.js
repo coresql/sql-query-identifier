@@ -291,6 +291,20 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    it('should identify "DROP TRIGGER" statement', function () {
+      const actual = identify('DROP TRIGGER delete_stu on student_mast;');
+      const expected = [
+        {
+          start: 0,
+          end: 39,
+          text: 'DROP TRIGGER delete_stu on student_mast;',
+          type: 'DROP_TRIGGER',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
     it('should identify "TRUNCATE TABLE" statement', function () {
       const actual = identify('TRUNCATE TABLE Persons;');
       const expected = [
