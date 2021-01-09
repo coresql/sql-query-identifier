@@ -259,7 +259,7 @@ function isString (ch) {
 }
 
 function isDollarQuotedString (state) {
-  return state.input.slice(state.start).match(/^\$[a-zA-Z0-9_]*\$/);
+  return state.input.slice(state.start).match(/^\$[\w]*\$/);
 }
 
 function isCommentInline (ch, state) {
