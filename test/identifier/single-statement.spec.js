@@ -186,6 +186,30 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    it('should identify postgres "CREATE FUNCTION" statement with case', function () {
+      const sql = `CREATE OR REPLACE FUNCTION af_calculate_range(tt TEXT, tc INTEGER)
+      RETURNS INTEGER IMMUTABLE AS $$
+      BEGIN
+          RETURN CASE tt WHEN 'day' THEN tc * 60 * 60
+                         WHEN 'hour' THEN tc * 60
+                 END;
+      END;
+      $$
+      LANGUAGE PLPGSQL;`;
+      const actual = identify(sql, { dialect: 'psql' });
+      const expected = [
+        {
+          start: 0,
+          end: 285,
+          text: sql,
+          type: 'CREATE_FUNCTION',
+          executionType: 'MODIFICATION',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
     it('should identify mysql "CREATE FUNCTION" statement', function () {
       const actual = identify("CREATE FUNCTION hello (s CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ',s,'!');");
       const expected = [

@@ -23,10 +23,14 @@ const EXECUTION_TYPES = {
   UNKNOWN: 'UNKNOWN',
 };
 
-const dialectsWithOpenBlocks = ['psql'];
-const blockOpeners = ['BEGIN', 'IF', 'LOOP', 'CASE'];
-const dialectsWithEnds = ['sqlite', 'mssql', 'psql'];
 const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION'];
+const blockOpeners = {
+  generic: ['BEGIN', 'CASE'],
+  psql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
+  mysql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
+  mssql: ['BEGIN', 'CASE'],
+  sqlite: ['BEGIN', 'CASE'],
+};
 
 /**
  * Parser
@@ -341,10 +345,9 @@ function createUnknownStatementParser ({ isStrict }) {
 function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'generic' }) {
   let currentStepIndex = 0;
   let prevToken;
+  let prevPrevToken;
 
-  if (dialectsWithOpenBlocks.includes(dialect)) {
-    statement.openBlocks = 0;
-  }
+  statement.openBlocks = 0;
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
   const isValidToken = (step, token) => {
@@ -372,6 +375,11 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
     );
   };
 
+  const setPrevToken = (token) => {
+    prevPrevToken = prevToken;
+    prevToken = token;
+  };
+
   return {
     getStatement () {
       return statement;
@@ -383,48 +391,40 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
         throw new Error('This statement has already got to the end.');
       }
 
-      if (token.type === 'semicolon') {
-        // SQLite and MSSQL require semi-colons inside the trigger. They signify the end of the trigger creation
-        // with `END;`. This allows detection of that.
-        if (dialectsWithEnds.includes(dialect) && (statementsWithEnds.includes(statement.type) && !statement.canEnd)) {
-          // do nothing
-        } else if (dialect === 'psql' && statement.type === 'CREATE_FUNCTION' && !statement.canEnd) {
-          // do nothing
-        } else {
-          statement.endStatement = ';';
-          return;
-        }
+      if (
+        token.type === 'semicolon'
+        && (
+          !statementsWithEnds.includes(statement.type)
+          || (statement.openBlocks === 0 && statement.canEnd)
+        )
+      ) {
+        statement.endStatement = ';';
+        return;
       }
 
-      // SQLite, MSSQL, and PSQL all use END; to signify ends of blocks. SQLite and MSSQL for the end of triggers
-      // and PSQL for end of function definition, but also loops, if statments ,etc. Within the block, it is
-      // expected that there can be semi-colons, but that they do not signify the end of the overall statement.
-      if (
-        dialectsWithEnds.includes(dialect)
-        && statementsWithEnds.includes(statement.type)
-        && token.value.toUpperCase() === 'END'
-      ) {
+      if (token.value.toUpperCase() === 'END') {
         statement.openBlocks--;
-        if (!dialectsWithOpenBlocks.includes(dialect) || statement.openBlocks === 0) {
+        if (statement.openBlocks === 0) {
           statement.canEnd = true;
-          return;
         }
+        setPrevToken(token);
+        return;
       }
 
       if (token.type === 'whitespace') {
-        prevToken = token;
+        setPrevToken(token);
         return;
       }
 
       // Postgres allows for optional "OR REPLACE" between "CREATE" and "FUNCTION", so we need to ignore
       // these tokens.
       if (dialect === 'psql' && ['OR', 'REPLACE'].includes(token.value.toUpperCase())) {
-        prevToken = token;
         return;
       }
 
-      if (dialectsWithOpenBlocks.includes(dialect) && blockOpeners.includes(token.value.toUpperCase())) {
+      if (token.type === 'keyword' && blockOpeners[dialect].includes(token.value) && prevPrevToken.value !== 'END') {
         statement.openBlocks++;
+        setPrevToken(token);
         return;
       }
 
@@ -432,25 +432,25 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
       // This clause is optional, and is defined between the "CREATE" and "FUNCTION" keywords for the statement.
       if (dialect === 'mysql' && token.value.toUpperCase() === 'DEFINER') {
         statement.definer = 0;
-        prevToken = token;
+        setPrevToken(token);
         return;
       }
 
       if (statement.definer === 0 && token.value === '=') {
         statement.definer++;
-        prevToken = token;
+        setPrevToken(token);
         return;
       }
 
       if (statement.definer > 0) {
         if (statement.definer === 1 && prevToken.type === 'whitespace') {
           statement.definer++;
-          prevToken = token;
+          setPrevToken(token);
           return;
         }
 
         if (statement.definer > 1 && prevToken.type !== 'whitespace') {
-          prevToken = token;
+          setPrevToken(token);
           return;
         }
 
@@ -491,7 +491,7 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
         currentStepIndex++;
       }
 
-      prevToken = token;
+      setPrevToken(token);
     },
   };
 }
