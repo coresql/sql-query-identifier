@@ -49,6 +49,30 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    it('should identify sqlite "CREATE TRIGGER" statement with case', function () {
+      const sql = `CREATE TRIGGER DeleteProduct
+      BEFORE DELETE ON Product
+      BEGIN
+          SELECT CASE WHEN (SELECT Inventory.InventoryID FROM Inventory WHERE Inventory.ProductID = OLD.ProductID and Inventory.Quantity=0) IS NULL
+          THEN RAISE(ABORT,'Error code 82')
+          END;
+          -- If RAISE was called, next isntructions are not executed.
+          DELETE from inventory where inventory.ProductID=OLD.ProductID;
+      END;`;
+
+      const actual = identify(sql);
+      const expected = [
+        {
+          start: 0,
+          end: 431,
+          text: sql,
+          type: 'CREATE_TRIGGER',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
     it('should identify SQLSERVER "CREATE TRIGGER" statement', function () {
       const query = `CREATE TRIGGER Purchasing.LowCredit ON Purchasing.PurchaseOrderHeader
         AFTER INSERT
@@ -96,17 +120,117 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify postgres "CREATE FUNCTION" statement', function () {
-      const actual = identify("CREATE FUNCTION dup(in int, out f1 int, out f2 text) AS $$ SELECT $1, CAST($1 AS text) || ' is text' $$ LANGUAGE SQL;");
+    it('should identify postgres "CREATE FUNCTION" statement with LANGUAGE at end', function () {
+      const sql = `CREATE FUNCTION quarterly_summary_func(start_date date DEFAULT CURRENT_TIMESTAMP)
+      RETURNS TABLE (staff_name text, staff_bonus int, quarter tsrange)
+      As $$
+      DECLARE
+        employee RECORD;
+        total_bonus int;
+        sales_total int;
+        end_date date := start_date + interval '3 months';
+      BEGIN
+        FOR employee IN SELECT staff_id FROM staff LOOP
+          EXECUTE 'SELECT sum(staff_bonus), sum(sales_price) FROM sales WHERE staff_id = $1
+          AND created_at >= $2 AND created_at < $3'
+             INTO total_bonus, sales_total
+             USING employee.staff_id, start_date, end_date;
+          RAISE NOTICE 'total bonus is % and total sales is %', total_bonus, sales_total;
+         EXECUTE 'INSERT INTO sales_summary (staff_id, bonus, total_sales, period) VALUES
+                    ($1, $2, $3, tsrange($4, $5))'
+             USING employee.staff_id, total_bonus, sales_total, start_date, end_date;
+        END LOOP;
+        DELETE FROM sales WHERE created_at >= start_date
+               AND created_at < end_date;
+        RETURN QUERY SELECT name, bonus, period FROM sales_summary
+                     LEFT JOIN staff on sales_summary.staff_id = staff.staff_id;
+       RETURN;
+      END;
+      $$
+      LANGUAGE plpgsql;`;
+      const actual = identify(sql, { dialect: 'psql' });
       const expected = [
         {
           start: 0,
-          end: 116,
-          text: "CREATE FUNCTION dup(in int, out f1 int, out f2 text) AS $$ SELECT $1, CAST($1 AS text) || ' is text' $$ LANGUAGE SQL;",
+          end: 1268,
+          text: sql,
           type: 'CREATE_FUNCTION',
           executionType: 'MODIFICATION',
         },
       ];
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify postgres "CREATE FUNCTION" statement with LANGUAGE at beginning', function () {
+      const sql = `CREATE OR REPLACE FUNCTION f_grp_prod(text)
+      RETURNS TABLE (
+        name text
+      , result1 double precision
+      , result2 double precision)
+    LANGUAGE plpgsql STABLE
+    AS
+    $BODY$
+    DECLARE
+        r      mytable%ROWTYPE;
+        _round integer;
+    BEGIN
+        -- init vars
+        name    := $1;
+        result2 := 1;       -- abuse result2 as temp var for convenience
+
+    FOR r IN
+        SELECT *
+        FROM   mytable m
+        WHERE  m.name = name
+        ORDER  BY m.round
+    LOOP
+        IF r.round <> _round THEN   -- save result1 before 2nd round
+            result1 := result2;
+            result2 := 1;
+        END IF;
+
+        result2 := result2 * (1 - r.val/100);
+        _round  := r.round;
+    END LOOP;
+
+    RETURN NEXT;
+
+    END;
+    $BODY$;`;
+      const actual = identify(sql, { dialect: 'psql' });
+      const expected = [
+        {
+          start: 0,
+          end: 782,
+          text: sql,
+          type: 'CREATE_FUNCTION',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify postgres "CREATE FUNCTION" statement with case', function () {
+      const sql = `CREATE OR REPLACE FUNCTION af_calculate_range(tt TEXT, tc INTEGER)
+      RETURNS INTEGER IMMUTABLE AS $$
+      BEGIN
+          RETURN CASE tt WHEN 'day' THEN tc * 60 * 60
+                         WHEN 'hour' THEN tc * 60
+                 END;
+      END;
+      $$
+      LANGUAGE PLPGSQL;`;
+      const actual = identify(sql, { dialect: 'psql' });
+      const expected = [
+        {
+          start: 0,
+          end: 285,
+          text: sql,
+          type: 'CREATE_FUNCTION',
+          executionType: 'MODIFICATION',
+        },
+      ];
+
       expect(actual).to.eql(expected);
     });
 
