@@ -36,8 +36,12 @@ export function scanToken (state) {
     return scanCommentBlock(state);
   }
 
-  if (isString(ch, state)) {
+  if (isString(ch)) {
     return scanString(state);
+  }
+
+  if (isDollarQuotedString(state)) {
+    return scanDollarQuotedString(state);
   }
 
   if (isLetter(ch)) {
@@ -111,6 +115,36 @@ function scanCommentInline (state) {
   const value = state.input.slice(state.start, state.position + 1);
   return {
     type: 'comment-inline',
+    value,
+    start: state.start,
+    end: state.start + value.length - 1,
+  };
+}
+
+function scanDollarQuotedString (state) {
+  const label = state.input.slice(state.start).match(/^(\$[a-zA-Z0-9_]*\$)/)[1];
+  for (let i = 0; i < (label.length - 1); i++) {
+    read(state);
+  }
+
+  let nextChar;
+  while (state.input.slice(state.position, state.position + label.length) !== label && nextChar !== null) {
+    do {
+      nextChar = read(state);
+    } while (nextChar !== '$' && nextChar !== null);
+
+    if (nextChar !== '$' && nextChar !== null) {
+      unread(state);
+    }
+  }
+
+  for (let i = 0; i < (label.length - 1); i++) {
+    read(state);
+  }
+
+  const value = state.input.slice(state.start, state.position + 1);
+  return {
+    type: 'string',
     value,
     start: state.start,
     end: state.start + value.length - 1,
@@ -221,7 +255,11 @@ function isWhitespace (ch) {
 }
 
 function isString (ch) {
-  return ch === '\'';
+  return ch === "'";
+}
+
+function isDollarQuotedString (state) {
+  return state.input.slice(state.start).match(/^\$[\w]*\$/);
 }
 
 function isCommentInline (ch, state) {
