@@ -49,6 +49,30 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    it('should identify sqlite "CREATE TRIGGER" statement with case', function () {
+      const sql = `CREATE TRIGGER DeleteProduct
+      BEFORE DELETE ON Product
+      BEGIN
+          SELECT CASE WHEN (SELECT Inventory.InventoryID FROM Inventory WHERE Inventory.ProductID = OLD.ProductID and Inventory.Quantity=0) IS NULL
+          THEN RAISE(ABORT,'Error code 82')
+          END;
+          -- If RAISE was called, next isntructions are not executed.
+          DELETE from inventory where inventory.ProductID=OLD.ProductID;
+      END;`;
+
+      const actual = identify(sql);
+      const expected = [
+        {
+          start: 0,
+          end: 431,
+          text: sql,
+          type: 'CREATE_TRIGGER',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
     it('should identify SQLSERVER "CREATE TRIGGER" statement', function () {
       const query = `CREATE TRIGGER Purchasing.LowCredit ON Purchasing.PurchaseOrderHeader
         AFTER INSERT
