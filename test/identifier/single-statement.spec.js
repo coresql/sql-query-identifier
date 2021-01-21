@@ -353,6 +353,21 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    it('should identify "DROP FUNCTION" statement', function () {
+      const sql = 'DROP FUNCTION sqrt(integer);';
+      const actual = identify(sql);
+      const expected = [
+        {
+          start: 0,
+          end: 27,
+          text: sql,
+          type: 'DROP_FUNCTION',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
     it('should identify "TRUNCATE TABLE" statement', function () {
       const actual = identify('TRUNCATE TABLE Persons;');
       const expected = [
