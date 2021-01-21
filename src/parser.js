@@ -347,7 +347,7 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
   let prevToken;
   let prevPrevToken;
 
-  statement.openBlocks = 0;
+  let openBlocks = 0;
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
   const isValidToken = (step, token) => {
@@ -395,7 +395,7 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
         token.type === 'semicolon'
         && (
           !statementsWithEnds.includes(statement.type)
-          || (statement.openBlocks === 0 && statement.canEnd)
+          || (openBlocks === 0 && statement.canEnd)
         )
       ) {
         statement.endStatement = ';';
@@ -403,8 +403,8 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
       }
 
       if (token.value.toUpperCase() === 'END') {
-        statement.openBlocks--;
-        if (statement.openBlocks === 0) {
+        openBlocks--;
+        if (openBlocks === 0) {
           statement.canEnd = true;
         }
         setPrevToken(token);
@@ -423,7 +423,7 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
       }
 
       if (token.type === 'keyword' && blockOpeners[dialect].includes(token.value) && prevPrevToken.value !== 'END') {
-        statement.openBlocks++;
+        openBlocks++;
         setPrevToken(token);
         return;
       }

@@ -18,7 +18,6 @@ describe('parser', function () {
           {
             start: 0,
             end: 55,
-            openBlocks: 0,
             type: 'INSERT',
             executionType: 'MODIFICATION',
             endStatement: ';',
@@ -26,7 +25,6 @@ describe('parser', function () {
           {
             start: 56,
             end: 76,
-            openBlocks: 0,
             type: 'SELECT',
             executionType: 'LISTING',
           },
@@ -71,7 +69,6 @@ describe('parser', function () {
           {
             start: 9,
             end: 64,
-            openBlocks: 0,
             type: 'INSERT',
             executionType: 'MODIFICATION',
             endStatement: ';',
@@ -79,7 +76,6 @@ describe('parser', function () {
           {
             start: 74,
             end: 103,
-            openBlocks: 0,
             type: 'SELECT',
             executionType: 'LISTING',
           },

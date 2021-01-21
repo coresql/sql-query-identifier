@@ -31,7 +31,6 @@ describe('parser', function () {
           {
             start: 0,
             end: 20,
-            openBlocks: 0,
             type: 'SELECT',
             executionType: 'LISTING',
           },
@@ -61,7 +60,6 @@ describe('parser', function () {
           {
             start: 0,
             end: 20,
-            openBlocks: 0,
             type: 'SELECT',
             executionType: 'LISTING',
           },
@@ -91,7 +89,6 @@ describe('parser', function () {
           {
             start: 0,
             end: 54,
-            openBlocks: 0,
             type: 'CREATE_TABLE',
             executionType: 'MODIFICATION',
             endStatement: ';',
@@ -131,7 +128,6 @@ describe('parser', function () {
           {
             start: 0,
             end: 23,
-            openBlocks: 0,
             type: 'CREATE_DATABASE',
             executionType: 'MODIFICATION',
             endStatement: ';',
@@ -171,7 +167,6 @@ describe('parser', function () {
           {
             start: 0,
             end: 18,
-            openBlocks: 0,
             type: 'DROP_TABLE',
             executionType: 'MODIFICATION',
             endStatement: ';',
@@ -211,7 +206,6 @@ describe('parser', function () {
           {
             start: 0,
             end: 21,
-            openBlocks: 0,
             type: 'DROP_DATABASE',
             executionType: 'MODIFICATION',
             endStatement: ';',
@@ -250,7 +244,6 @@ describe('parser', function () {
           {
             start: 0,
             end: 55,
-            openBlocks: 0,
             type: 'INSERT',
             executionType: 'MODIFICATION',
             endStatement: ';',
@@ -284,7 +277,6 @@ describe('parser', function () {
           {
             start: 0,
             end: 51,
-            openBlocks: 0,
             type: 'UPDATE',
             executionType: 'MODIFICATION',
             endStatement: ';',
@@ -318,7 +310,6 @@ describe('parser', function () {
           {
             start: 0,
             end: 38,
-            openBlocks: 0,
             type: 'DELETE',
             executionType: 'MODIFICATION',
             endStatement: ';',
@@ -352,7 +343,6 @@ describe('parser', function () {
           {
             start: 0,
             end: 22,
-            openBlocks: 0,
             type: 'TRUNCATE',
             executionType: 'MODIFICATION',
             endStatement: ';',

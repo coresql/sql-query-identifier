@@ -137,7 +137,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify postgres "CREATE FUNCTION" statement with language at beginning', function () {
+    it('should identify postgres "CREATE FUNCTION" statement with LANGUAGE at beginning', function () {
       const sql = `CREATE OR REPLACE FUNCTION f_grp_prod(text)
       RETURNS TABLE (
         name text
