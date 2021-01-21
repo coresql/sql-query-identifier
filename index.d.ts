@@ -8,8 +8,11 @@ export type StatementType =
   | 'CREATE_TABLE'
   | 'CREATE_DATABASE'
   | 'CREATE_TRIGGER'
+  | 'CREATE_FUNCTION'
   | 'DROP_TABLE'
   | 'DROP_DATABASE'
+  | 'DROP_TRIGGER'
+  | 'DROP_FUNCTION'
   | 'TRUNCATE'
   | 'UNKNOWN';
 
