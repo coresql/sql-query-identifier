@@ -24,5 +24,8 @@ module.exports = {
     "func-names": 0,
     "id-length": [1, {"exceptions": ["i", "j", "e", "a", "b", "t"]}],
     "import/prefer-default-export": 0
-  }
+  },
+  "ignorePatterns": [
+    "*.js"
+  ]
 }

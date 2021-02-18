@@ -1,4 +1,3 @@
-const webpack = require('webpack');
 const TerserPlugin = require("terser-webpack-plugin");
 const ESLintPlugin = require('eslint-webpack-plugin');
 const path = require('path');
@@ -15,8 +14,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const config = {
-  entry: path.join(__dirname, '/src/index.js'),
-  devtool: 'source-map',
+  entry: path.join(__dirname, '/src/index.ts'),
   output: {
     path: path.join(__dirname, '/webpack'),
     filename: outputFile,
@@ -27,18 +25,14 @@ const config = {
   module: {
     rules: [
       {
-        test: /\.js$/,
-        exclude: /(node_modules|bower_components)/,
-        use: {
-          loader: 'babel-loader',
-        }
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
       },
     ],
   },
   resolve: {
-    modules: [
-      path.resolve('./src'),
-    ],
+    extensions: ['.ts'],
   },
   optimization: {
     minimize: true,
