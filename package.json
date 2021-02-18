@@ -1,6 +1,6 @@
 {
   "name": "sql-query-identifier",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "description": "A SQL query identifier",
   "license": "MIT",
   "main": "lib/index.js",
