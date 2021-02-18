@@ -1,15 +1,16 @@
 import { parse } from './parser';
+import { DIALECTS } from './defines';
+import type { IdentifyOptions, IdentifyResult } from './defines';
 
-const allowedDialects = ['mssql', 'sqlite', 'mysql', 'psql', 'generic'];
 /**
  * Identifier
  */
-export function identify (query, options = {}) {
-  const isStrict = typeof options.strict === 'undefined' ? true : options.strict;
+export function identify (query: string, options: IdentifyOptions = {}): IdentifyResult[] {
+  const isStrict = typeof options.strict === 'undefined' ? true : options.strict === true;
   const dialect = typeof options.dialect === 'undefined' ? 'generic' : options.dialect;
 
-  if (!allowedDialects.includes(dialect)) {
-    throw new Error(`Unknown dialect. Allowed values: ${allowedDialects.join(',')}`);
+  if (!DIALECTS.includes(dialect)) {
+    throw new Error(`Unknown dialect. Allowed values: ${DIALECTS.join(',')}`);
   }
 
   const result = parse(query, isStrict, dialect);

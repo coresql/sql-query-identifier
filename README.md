@@ -47,6 +47,7 @@ This way you have sure is a valid query before trying to identify the types.
 ## Execution types
 
 Execution types allow to know what is the query behavior
+
 * `LISTING:` is when the query list the data
 * `MODIFICATION:` is when the query modificate the database somehow (structure or data)
 * `INFORMATION:` is show some data information such as a profile data

@@ -1,6 +1,17 @@
-{
-  "extends": "airbnb-base",
-  "parser": "@babel/eslint-parser",
+module.exports = {
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint",
+  ],
+  "parserOptions": {
+    "tsconfigRootDir": __dirname,
+    "project": ["./tsconfig.json"]
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+  ],
   "env": {
     "node": true,
     "mocha": true

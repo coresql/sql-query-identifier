@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { aggregateUnknownTokens } from '../spec-helper';
-import { parse } from '../../src/parser';
+import { parse } from '../../lib/parser';
 
 /* eslint prefer-arrow-callback: 0 */
 describe('parser', function () {
