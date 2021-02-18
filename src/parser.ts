@@ -123,7 +123,7 @@ function initState ({ input, prevState }: { input?: string, prevState?: State })
       start: prevState.position + 1,
       end: prevState.input.length - 1,
     };
-  } else if (!input) {
+  } else if (input === undefined) {
     throw new Error('You must define either input or prevState');
   }
 
@@ -508,7 +508,7 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
 
       currentStep.add(token);
 
-      statement.executionType = statement.type ? EXECUTION_TYPES[statement.type] : 'UNKNOWN';
+      statement.executionType = statement.type && EXECUTION_TYPES[statement.type] ? EXECUTION_TYPES[statement.type] : 'UNKNOWN';
 
       if (currentStep.postCanGoToNext(token)) {
         currentStepIndex++;
