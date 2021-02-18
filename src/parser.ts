@@ -460,13 +460,13 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
       }
 
       if (typeof statement.definer === 'number' && statement.definer > 0) {
-        if (prevToken.type === 'whitespace') {
-          if (statement.definer === 1) {
-            statement.definer++;
-            setPrevToken(token);
-            return;
-          }
+        if (statement.definer === 1 && prevToken.type === 'whitespace') {
+          statement.definer++;
+          setPrevToken(token);
+          return;
+        }
 
+        if (statement.definer > 1 && prevToken.type !== 'whitespace') {
           setPrevToken(token);
           return;
         }
