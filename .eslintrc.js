@@ -14,7 +14,6 @@ module.exports = {
   ],
   "env": {
     "node": true,
-    "mocha": true
   },
   "rules": {
     "max-len": 0,
