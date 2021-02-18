@@ -2,6 +2,14 @@ import { parse } from './parser';
 import { DIALECTS } from './defines';
 import type { IdentifyOptions, IdentifyResult } from './defines';
 
+export type {
+  ExecutionType,
+  Dialect,
+  IdentifyOptions as Options,
+  IdentifyResult as Result,
+  StatementType,
+} from './defines';
+
 /**
  * Identifier
  */
