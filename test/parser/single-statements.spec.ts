@@ -11,7 +11,7 @@ describe('parser', function () {
       try {
         parse('LIST * FROM Persons');
       } catch (err) {
-        expect(err.message).to.eql('Invalid statement parser "LIST"');
+        expect((err as Error).message).to.eql('Invalid statement parser "LIST"');
         hasError = true;
       }
       expect(hasError).to.eql(true);

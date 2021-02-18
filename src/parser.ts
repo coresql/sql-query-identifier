@@ -11,6 +11,11 @@ import type {
   ConcreteStatement,
 } from './defines';
 
+interface StatementParser {
+  addToken: (token: Token) => void;
+  getStatement: () => Statement;
+}
+
 /**
  * Execution types allow to know what is the query behavior
  *  - LISTING: is when the query list the data
@@ -68,7 +73,7 @@ export function parse (input: string, isStrict = true, dialect: Dialect = 'gener
   };
 
   let prevState: State = topLevelState;
-  let statementParser;
+  let statementParser: StatementParser | null = null;
 
   const ignoreOutsideBlankTokens = [
     'whitespace',
@@ -135,7 +140,7 @@ function initState ({ input, prevState }: { input?: string, prevState?: State })
   };
 }
 
-function createStatementParserByToken (token: Token, options: ParseOptions) {
+function createStatementParserByToken (token: Token, options: ParseOptions): StatementParser {
   if (token.type === 'keyword') {
     switch (token.value.toUpperCase()) {
       case 'SELECT': return createSelectStatementParser(options);

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { identify } from '../../lib';
+import { identify } from '../../src';
 
 /* eslint prefer-arrow-callback: 0 */
 describe('identifier', function () {
