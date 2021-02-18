@@ -1,9 +1,9 @@
 import { expect } from 'chai';
-import { scanToken } from '../../src/tokenizer';
+import { scanToken } from '../../lib/tokenizer';
 
 /* eslint prefer-arrow-callback: 0 */
 describe('scan', function () {
-  const initState = (input) => ({
+  const initState = (input: string) => ({
     input,
     start: 0,
     end: input.length - 1,

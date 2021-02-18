@@ -551,7 +551,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should able to detect a statement even without know its type when strict is disabled - CREATE INDEX', function () {
+    it('should able to detect a statement even without knowing its type when strict is disabled - CREATE INDEX', function () {
       const actual = identify('CREATE INDEX i1 ON t1 (col1);', { strict: false });
       const expected = [
         {

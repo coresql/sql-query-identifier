@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { aggregateUnknownTokens } from '../spec-helper';
-import { parse } from '../../src/parser';
+import { parse } from '../../lib/parser';
 
 /* eslint prefer-arrow-callback: 0 */
 describe('parser', function () {
@@ -11,7 +11,7 @@ describe('parser', function () {
       try {
         parse('LIST * FROM Persons');
       } catch (err) {
-        expect(err.message).to.eql('Invalid statement parser "LIST"');
+        expect((err as Error).message).to.eql('Invalid statement parser "LIST"');
         hasError = true;
       }
       expect(hasError).to.eql(true);

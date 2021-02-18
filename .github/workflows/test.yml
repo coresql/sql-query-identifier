@@ -10,20 +10,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      redshift-version: redshift
-
     strategy:
       matrix:
-        node-version: [8.x, 10.x, 12.x, 14.x, 15.x]
+        node-version: [10.x, 12.x, 14.x, 15.x]
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - run: npm install
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
 
-    - run: npm run lint
+      - run: npm install
 
-    - run: npm run build
+      - run: npm run lint
 
-    - run: npm run test
+      - run: npm run build
+
+      - run: npm run test

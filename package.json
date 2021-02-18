@@ -4,34 +4,33 @@
   "description": "A SQL query identifier",
   "license": "MIT",
   "main": "lib/index.js",
-  "types": "index.d.ts",
+  "types": "lib/index.d.ts",
   "scripts": {
-    "test": "npm run lint && mocha --require @babel/register --reporter spec --recursive ./test",
-    "test:watch": "npm run test -- --watch --watch-extensions .spec.js --bail ./test",
+    "test": "TS_NODE_PROJECT='./tsconfig.test.json' mocha --require ts-node/register --reporter spec --recursive './test/**/*.ts'",
+    "test:watch": "npm run test -- --watch --watch-extensions .spec.ts --bail ./test",
     "lint": "eslint src test",
-    "build": "babel src --out-dir lib",
-    "watch": "babel src --out-dir lib --watch",
+    "build": "tsc",
+    "watch": "tsc --watch",
     "prepublish": "npm run build",
     "webpack:prod": "NODE_ENV=production webpack",
     "webpack:dev": "NODE_ENV=development webpack --progress --color --watch"
   },
   "devDependencies": {
-    "@babel/cli": "^7.0.0",
-    "@babel/core": "^7.0.0",
-    "@babel/eslint-parser": "^7.12.1",
-    "@babel/eslint-plugin": "^7.12.1",
-    "@babel/preset-env": "^7.0.0",
-    "@babel/register": "^7.12.10",
-    "babel-loader": "^8.2.2",
+    "@types/chai": "^4.2.15",
+    "@types/mocha": "^8.2.1",
+    "@typescript-eslint/eslint-plugin": "^4.15.1",
+    "@typescript-eslint/parser": "^4.15.1",
     "chai": "^4.2.0",
-    "eslint": "^7.16.0",
-    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint": "^7.20.0",
     "eslint-plugin-import": "^2.22.1",
-    "eslint-webpack-plugin": "^2.4.1",
     "mocha": "^8.2.1",
-    "terser-webpack-plugin": "^5.0.3",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.5",
     "webpack": "^5.11.1",
     "webpack-cli": "^4.3.1"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "engines": {
+    "node": ">=10"
+  }
 }

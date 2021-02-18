@@ -1,0 +1,14 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "strict": true,
+        "noImplicitAny": false
+    },
+    "include": [
+        "src",
+        "test"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

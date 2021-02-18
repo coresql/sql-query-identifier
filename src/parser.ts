@@ -1,4 +1,20 @@
 import { scanToken } from './tokenizer';
+import type {
+  ExecutionType,
+  Dialect,
+  State,
+  Statement,
+  StatementType,
+  Token,
+  Step,
+  ParseResult,
+  ConcreteStatement,
+} from './defines';
+
+interface StatementParser {
+  addToken: (token: Token) => void;
+  getStatement: () => Statement;
+}
 
 /**
  * Execution types allow to know what is the query behavior
@@ -7,7 +23,7 @@ import { scanToken } from './tokenizer';
  *  - INFORMATION: is show some data information such as a profile data
  *  - UNKNOWN
  */
-const EXECUTION_TYPES = {
+const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   SELECT: 'LISTING',
   INSERT: 'MODIFICATION',
   DELETE: 'MODIFICATION',
@@ -25,7 +41,7 @@ const EXECUTION_TYPES = {
 };
 
 const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION'];
-const blockOpeners = {
+const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
   psql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
   mysql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
@@ -33,12 +49,22 @@ const blockOpeners = {
   sqlite: ['BEGIN', 'CASE'],
 };
 
+const INITIAL_STATEMENT: Statement = {
+  start: 0,
+  end: 0,
+}
+
+interface ParseOptions {
+  isStrict: boolean;
+  dialect: Dialect;
+}
+
 /**
  * Parser
  */
-export function parse (input, isStrict = true, dialect = 'generic') {
+export function parse (input: string, isStrict = true, dialect: Dialect = 'generic'): ParseResult {
   const topLevelState = initState({ input });
-  const topLevelStatement = {
+  const topLevelStatement: ParseResult = {
     type: 'QUERY',
     start: 0,
     end: input.length - 1,
@@ -46,8 +72,8 @@ export function parse (input, isStrict = true, dialect = 'generic') {
     tokens: [],
   };
 
-  let prevState = topLevelState;
-  let statementParser;
+  let prevState: State = topLevelState;
+  let statementParser: StatementParser | null = null;
 
   const ignoreOutsideBlankTokens = [
     'whitespace',
@@ -77,7 +103,7 @@ export function parse (input, isStrict = true, dialect = 'generic') {
     const statement = statementParser.getStatement();
     if (statement.endStatement) {
       statement.end = token.end;
-      topLevelStatement.body.push(statement);
+      topLevelStatement.body.push(statement as ConcreteStatement);
       statementParser = null;
     }
   }
@@ -87,22 +113,23 @@ export function parse (input, isStrict = true, dialect = 'generic') {
     const statement = statementParser.getStatement();
     if (!statement.endStatement) {
       statement.end = topLevelStatement.end;
-      topLevelStatement.body.push(statement);
+      topLevelStatement.body.push(statement as ConcreteStatement);
     }
   }
 
   return topLevelStatement;
 }
 
-function initState ({ input, prevState }) {
+function initState ({ input, prevState }: { input?: string, prevState?: State }): State {
   if (prevState) {
     return {
       input: prevState.input,
       position: prevState.position,
       start: prevState.position + 1,
       end: prevState.input.length - 1,
-      body: [],
     };
+  } else if (input === undefined) {
+    throw new Error('You must define either input or prevState');
   }
 
   return {
@@ -110,11 +137,10 @@ function initState ({ input, prevState }) {
     position: -1,
     start: 0,
     end: input.length - 1,
-    body: [],
   };
 }
 
-function createStatementParserByToken (token, options) {
+function createStatementParserByToken (token: Token, options: ParseOptions): StatementParser {
   if (token.type === 'keyword') {
     switch (token.value.toUpperCase()) {
       case 'SELECT': return createSelectStatementParser(options);
@@ -129,16 +155,16 @@ function createStatementParserByToken (token, options) {
   }
 
   if (!options.isStrict && token.type === 'unknown') {
-    return createUnknownStatementParser(options.isStrict);
+    return createUnknownStatementParser(options);
   }
 
   throw new Error(`Invalid statement parser "${token.value}"`);
 }
 
-function createSelectStatementParser ({ isStrict }) {
-  const statement = {};
+function createSelectStatementParser (options: ParseOptions) {
+  const statement = { ...INITIAL_STATEMENT };
 
-  const steps = [
+  const steps: Step[] = [
     // Select
     {
       preCanGoToNext: () => false,
@@ -155,13 +181,13 @@ function createSelectStatementParser ({ isStrict }) {
     },
   ];
 
-  return stateMachineStatementParser(statement, steps, { isStrict });
+  return stateMachineStatementParser(statement, steps, options);
 }
 
-function createInsertStatementParser ({ isStrict }) {
-  const statement = {};
+function createInsertStatementParser (options: ParseOptions) {
+  const statement = { ...INITIAL_STATEMENT };
 
-  const steps = [
+  const steps: Step[] = [
     // Insert
     {
       preCanGoToNext: () => false,
@@ -178,13 +204,13 @@ function createInsertStatementParser ({ isStrict }) {
     },
   ];
 
-  return stateMachineStatementParser(statement, steps, { isStrict });
+  return stateMachineStatementParser(statement, steps, options);
 }
 
-function createUpdateStatementParser ({ isStrict }) {
-  const statement = {};
+function createUpdateStatementParser (options: ParseOptions) {
+  const statement = { ...INITIAL_STATEMENT };
 
-  const steps = [
+  const steps: Step[] = [
     // Update
     {
       preCanGoToNext: () => false,
@@ -201,13 +227,13 @@ function createUpdateStatementParser ({ isStrict }) {
     },
   ];
 
-  return stateMachineStatementParser(statement, steps, { isStrict });
+  return stateMachineStatementParser(statement, steps, options);
 }
 
-function createDeleteStatementParser ({ isStrict }) {
-  const statement = {};
+function createDeleteStatementParser (options: ParseOptions) {
+  const statement = { ...INITIAL_STATEMENT };
 
-  const steps = [
+  const steps: Step[] = [
     // Delete
     {
       preCanGoToNext: () => false,
@@ -224,13 +250,13 @@ function createDeleteStatementParser ({ isStrict }) {
     },
   ];
 
-  return stateMachineStatementParser(statement, steps, { isStrict });
+  return stateMachineStatementParser(statement, steps, options);
 }
 
-function createCreateStatementParser ({ isStrict, dialect }) {
-  const statement = {};
+function createCreateStatementParser (options: ParseOptions) {
+  const statement = { ...INITIAL_STATEMENT };
 
-  const steps = [
+  const steps: Step[] = [
     // Create
     {
       preCanGoToNext: () => false,
@@ -257,19 +283,19 @@ function createCreateStatementParser ({ isStrict, dialect }) {
         ],
       },
       add: (token) => {
-        statement.type = `CREATE_${token.value.toUpperCase()}`;
+        statement.type = `CREATE_${token.value.toUpperCase()}` as StatementType;
       },
       postCanGoToNext: () => true,
     },
   ];
 
-  return stateMachineStatementParser(statement, steps, { isStrict, dialect });
+  return stateMachineStatementParser(statement, steps, options);
 }
 
-function createDropStatementParser ({ isStrict }) {
-  const statement = {};
+function createDropStatementParser (options: ParseOptions) {
+  const statement = { ...INITIAL_STATEMENT };
 
-  const steps = [
+  const steps: Step[] = [
     // Drop
     {
       preCanGoToNext: () => false,
@@ -296,19 +322,19 @@ function createDropStatementParser ({ isStrict }) {
         ],
       },
       add: (token) => {
-        statement.type = `DROP_${token.value.toUpperCase()}`;
+        statement.type = `DROP_${token.value.toUpperCase()}` as StatementType;
       },
       postCanGoToNext: () => true,
     },
   ];
 
-  return stateMachineStatementParser(statement, steps, { isStrict });
+  return stateMachineStatementParser(statement, steps, options);
 }
 
-function createTruncateStatementParser ({ isStrict }) {
-  const statement = {};
+function createTruncateStatementParser (options: ParseOptions) {
+  const statement = { ...INITIAL_STATEMENT };
 
-  const steps = [
+  const steps: Step[] = [
     {
       preCanGoToNext: () => false,
       validation: {
@@ -324,13 +350,13 @@ function createTruncateStatementParser ({ isStrict }) {
     },
   ];
 
-  return stateMachineStatementParser(statement, steps, { isStrict });
+  return stateMachineStatementParser(statement, steps, options);
 }
 
-function createUnknownStatementParser ({ isStrict }) {
-  const statement = {};
+function createUnknownStatementParser (options: ParseOptions) {
+  const statement = { ...INITIAL_STATEMENT };
 
-  const steps = [
+  const steps: Step[] = [
     {
       preCanGoToNext: () => false,
       add: (token) => {
@@ -341,18 +367,18 @@ function createUnknownStatementParser ({ isStrict }) {
     },
   ];
 
-  return stateMachineStatementParser(statement, steps, { isStrict });
+  return stateMachineStatementParser(statement, steps, options);
 }
 
-function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'generic' }) {
+function stateMachineStatementParser (statement: Statement, steps: Step[], { isStrict, dialect }: ParseOptions) {
   let currentStepIndex = 0;
-  let prevToken;
-  let prevPrevToken;
+  let prevToken: Token;
+  let prevPrevToken: Token;
 
   let openBlocks = 0;
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
-  const isValidToken = (step, token) => {
+  const isValidToken = (step: Step, token: Token) => {
     if (!step.validation) {
       return true;
     }
@@ -370,14 +396,7 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
       }).length > 0;
   };
 
-  const hasRequiredBefore = (step) => {
-    return (
-      !step.requireBefore
-      || step.requireBefore.includes(prevToken.type)
-    );
-  };
-
-  const setPrevToken = (token) => {
+  const setPrevToken = (token: Token) => {
     prevPrevToken = prevToken;
     prevToken = token;
   };
@@ -387,14 +406,15 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
       return statement;
     },
 
-    addToken (token) {
+    addToken (token: Token) {
       /* eslint no-param-reassign: 0 */
       if (statement.endStatement) {
         throw new Error('This statement has already got to the end.');
       }
 
       if (
-        token.type === 'semicolon'
+        statement.type
+        && token.type === 'semicolon'
         && (
           !statementsWithEnds.includes(statement.type)
           || (openBlocks === 0 && statement.canEnd)
@@ -444,7 +464,7 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
         return;
       }
 
-      if (statement.definer > 0) {
+      if (typeof statement.definer === 'number' && statement.definer > 0) {
         if (statement.definer === 1 && prevToken.type === 'whitespace') {
           statement.definer++;
           setPrevToken(token);
@@ -471,23 +491,29 @@ function stateMachineStatementParser (statement, steps, { isStrict, dialect = 'g
         currentStep = steps[currentStepIndex];
       }
 
-      if (!hasRequiredBefore(currentStep)) {
-        const requireds = currentStep.requireBefore.join(' or ');
+      if (
+        currentStep.validation
+        && currentStep.validation.requireBefore
+        && !currentStep.validation.requireBefore.includes(prevToken.type)
+      ) {
+        const requireds = currentStep.validation.requireBefore.join(' or ');
         throw new Error(`Expected any of these tokens ${requireds} before "${token.value}" (currentStep=${currentStepIndex}).`);
       }
 
       if (!isValidToken(currentStep, token) && isStrict) {
-        const expecteds = currentStep
-          .validation
-          .acceptTokens
-          .map((accept) => `(type="${accept.type}" value="${accept.value}")`)
-          .join(' or ');
+        const expecteds = currentStep.validation ?
+          currentStep
+            .validation
+            .acceptTokens
+            .map((accept) => `(type="${accept.type}" value="${accept.value}")`)
+            .join(' or ') :
+          '()';
         throw new Error(`Expected any of these tokens ${expecteds} instead of type="${token.type}" value="${token.value}" (currentStep=${currentStepIndex}).`);
       }
 
       currentStep.add(token);
 
-      statement.executionType = EXECUTION_TYPES[statement.type] || 'UNKNOWN';
+      statement.executionType = statement.type && EXECUTION_TYPES[statement.type] ? EXECUTION_TYPES[statement.type] : 'UNKNOWN';
 
       if (currentStep.postCanGoToNext(token)) {
         currentStepIndex++;

@@ -1,8 +1,10 @@
+import { Token } from "../src/defines";
+
 /**
  * Helper function to make easier check the assert result
  */
-export function aggregateUnknownTokens (tokens) {
-  return tokens.reduce((result, token, index) => {
+export function aggregateUnknownTokens (tokens: Token[]): Token[] {
+  return tokens.reduce((result: Token[], token, index) => {
     const prev = result[result.length - 1];
     const next = tokens[index + 1];
     const isCurrUnknown = token.type === 'unknown';
