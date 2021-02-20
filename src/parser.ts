@@ -139,6 +139,9 @@ export function parse (input: string, isStrict = true, dialect: Dialect = 'gener
       statementParser = createStatementParserByToken(token, { isStrict, dialect });
       if (cteState.isCte) {
         statementParser.getStatement().start = cteState.state.start;
+        cteState.isCte = false;
+        cteState.asSeen = false;
+        cteState.statementEnd = false;
       }
     }
 
