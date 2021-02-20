@@ -18,6 +18,7 @@ const KEYWORDS = [
   'FUNCTION',
   'DATABASE',
   'TRUNCATE',
+  'WITH',
 ];
 
 const INDIVIDUALS: Record<string, string> = {

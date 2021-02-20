@@ -74,6 +74,23 @@ export function parse (input: string, isStrict = true, dialect: Dialect = 'gener
 
   let prevState: State = topLevelState;
   let statementParser: StatementParser | null = null;
+  let cteState: {
+    isCte: boolean;
+    columnsStart: boolean;
+    columnsEnd: boolean;
+    statementStart: boolean;
+    statementEnd: boolean;
+    parens: 0;
+    cteTokens: Token[]
+  } = {
+    isCte: false,
+    columnsStart: false,
+    columnsEnd: false,
+    statementStart: false,
+    statementEnd: false,
+    parens: 0,
+    cteTokens: [],
+  };
 
   const ignoreOutsideBlankTokens = [
     'whitespace',
@@ -91,9 +108,40 @@ export function parse (input: string, isStrict = true, dialect: Dialect = 'gener
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
         continue;
+      } else if (token.type === 'keyword' && token.value === 'WITH') {
+        cteState.isCte = true;
+        topLevelStatement.tokens.push(token);
+        prevState = tokenState;
+        continue;
+      } else if (cteState.isCte && !cteState.statementEnd) {
+        if (token.value === '(') {
+          cteState.parens++;
+          if (!cteState.columnsStart) {
+            cteState.columnsStart = true;
+          } else if (cteState.columnsEnd && !cteState.statementStart) {
+            cteState.statementStart = true;
+          }
+        } else if (token.value === ')') {
+          cteState.parens--;
+          if (cteState.parens === 0) {
+            if (cteState.columnsStart && !cteState.columnsEnd) {
+              cteState.columnsEnd = true;
+            } else if (cteState.columnsEnd && !cteState.statementEnd) {
+              cteState.statementEnd = true;
+            }
+          }
+        }
+
+        cteState.tokens.push(token);
+        topLevelStatement.tokens.push(token);
+        prevState = tokenState;
+        continue;
       }
 
       statementParser = createStatementParserByToken(token, { isStrict, dialect });
+      if (cteState.isCte) {
+        statementParser.prependTokens(cteState.tokens);
+      }
     }
 
     statementParser.addToken(token);
@@ -406,6 +454,10 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
       return statement;
     },
 
+    prependTokens (tokens: Token[]) {
+      statement.
+    }
+
     addToken (token: Token) {
       /* eslint no-param-reassign: 0 */
       if (statement.endStatement) {
@@ -441,6 +493,7 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
       // Postgres allows for optional "OR REPLACE" between "CREATE" and "FUNCTION", so we need to ignore
       // these tokens.
       if (dialect === 'psql' && ['OR', 'REPLACE'].includes(token.value.toUpperCase())) {
+        setPrevToken(token);
         return;
       }
 

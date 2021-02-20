@@ -566,21 +566,18 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should able to detect a statement even without know its type when strict is disabled - WITH', function () {
-      const actual = identify(`
-        WITH employee AS (SELECT * FROM Employees)
-        SELECT * FROM employee WHERE ID < 20
-        UNION ALL
-        SELECT * FROM employee WHERE Sex = 'M'
-      `, { strict: false });
+    it('should identify statement using CTE - WITH', () => {
+      const sql = `WITH cte_name (column1, column2) AS (
+        SELECT * FROM table
+      )
+      SELECT * FROM cte_name;`;
+
+      const actual = identify(sql);
       const expected = [
         {
-          start: 9,
-          end: 167,
-          text: 'WITH employee AS (SELECT * FROM Employees)\n        SELECT * FROM employee WHERE ID < 20\n        UNION ALL\n        SELECT * FROM employee WHERE Sex = \'M\'\n      ',
-          type: 'UNKNOWN',
-          executionType: 'UNKNOWN',
-        },
+          start: 0,
+          end: 28
+        }
       ];
 
       expect(actual).to.eql(expected);
