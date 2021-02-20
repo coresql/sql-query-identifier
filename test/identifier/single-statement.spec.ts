@@ -566,7 +566,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify statement using CTE - WITH', () => {
+    it('should identify statement using CTE with column list', () => {
       const sql = `WITH cte_name (column1, column2) AS (
         SELECT * FROM table
       )
@@ -576,11 +576,51 @@ describe('identifier', function () {
       const expected = [
         {
           start: 0,
-          end: 28
-        }
+          end: 102,
+          text: sql,
+          type: 'SELECT',
+          executionType: 'LISTING',
+        },
       ];
 
       expect(actual).to.eql(expected);
     });
+
+    it('should identify statement using multiple CTE and no column list', () => {
+      const sql = `WITH
+      cte1 AS
+      (
+        SELECT 1 AS id
+      ),
+      cte2 AS
+      (
+        SELECT 2 AS id
+      ),
+      cte3 AS
+      (
+        SELECT 3 as id
+      )
+      SELECT  *
+      FROM    cte1
+      UNION ALL
+      SELECT  *
+      FROM    cte2
+      UNION ALL
+      SELECT  *
+      FROM    cte3`;
+
+      const actual = identify(sql);
+      const expected = [
+        {
+          start: 0,
+          end: 301,
+          text: sql,
+          type: 'SELECT',
+          executionType: 'LISTING',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    })
   });
 });
