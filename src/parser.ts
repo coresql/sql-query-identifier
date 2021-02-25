@@ -50,7 +50,7 @@ const blockOpeners: Record<Dialect, string[]> = {
 };
 
 const INITIAL_STATEMENT: Statement = {
-  start: 0,
+  start: -1,
   end: 0,
 }
 
@@ -74,6 +74,19 @@ export function parse (input: string, isStrict = true, dialect: Dialect = 'gener
 
   let prevState: State = topLevelState;
   let statementParser: StatementParser | null = null;
+  const cteState: {
+    isCte: boolean;
+    asSeen: boolean;
+    statementEnd: boolean;
+    parens: 0;
+    state: State;
+  } = {
+    isCte: false,
+    asSeen: false,
+    statementEnd: false,
+    parens: 0,
+    state: topLevelState,
+  };
 
   const ignoreOutsideBlankTokens = [
     'whitespace',
@@ -91,9 +104,45 @@ export function parse (input: string, isStrict = true, dialect: Dialect = 'gener
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
         continue;
+      } else if (token.type === 'keyword' && token.value === 'WITH') {
+        cteState.isCte = true;
+        topLevelStatement.tokens.push(token);
+        cteState.state = tokenState;
+        prevState = tokenState;
+        continue;
+      } else if (cteState.isCte && !cteState.statementEnd) {
+        if (cteState.asSeen) {
+          if (token.value === '(') {
+            cteState.parens++;
+          } else if (token.value === ')') {
+            cteState.parens--;
+            if (cteState.parens === 0) {
+              cteState.statementEnd = true;
+            }
+          }
+        } else if (token.value === 'AS') {
+          cteState.asSeen = true;
+        }
+
+        topLevelStatement.tokens.push(token);
+        prevState = tokenState;
+        continue;
+      } else if (cteState.isCte && cteState.statementEnd && token.value === ',') {
+        cteState.asSeen = false;
+        cteState.statementEnd = false;
+
+        topLevelStatement.tokens.push(token);
+        prevState = tokenState;
+        continue;
       }
 
       statementParser = createStatementParserByToken(token, { isStrict, dialect });
+      if (cteState.isCte) {
+        statementParser.getStatement().start = cteState.state.start;
+        cteState.isCte = false;
+        cteState.asSeen = false;
+        cteState.statementEnd = false;
+      }
     }
 
     statementParser.addToken(token);
@@ -175,7 +224,9 @@ function createSelectStatementParser (options: ParseOptions) {
       },
       add: (token) => {
         statement.type = 'SELECT';
-        statement.start = token.start;
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
       },
       postCanGoToNext: () => true,
     },
@@ -198,7 +249,9 @@ function createInsertStatementParser (options: ParseOptions) {
       },
       add: (token) => {
         statement.type = 'INSERT';
-        statement.start = token.start;
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
       },
       postCanGoToNext: () => true,
     },
@@ -221,7 +274,9 @@ function createUpdateStatementParser (options: ParseOptions) {
       },
       add: (token) => {
         statement.type = 'UPDATE';
-        statement.start = token.start;
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
       },
       postCanGoToNext: () => true,
     },
@@ -244,7 +299,9 @@ function createDeleteStatementParser (options: ParseOptions) {
       },
       add: (token) => {
         statement.type = 'DELETE';
-        statement.start = token.start;
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
       },
       postCanGoToNext: () => true,
     },
@@ -266,7 +323,9 @@ function createCreateStatementParser (options: ParseOptions) {
         ],
       },
       add: (token) => {
-        statement.start = token.start;
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
       },
       postCanGoToNext: () => true,
     },
@@ -305,7 +364,9 @@ function createDropStatementParser (options: ParseOptions) {
         ],
       },
       add: (token) => {
-        statement.start = token.start;
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
       },
       postCanGoToNext: () => true,
     },
@@ -344,7 +405,9 @@ function createTruncateStatementParser (options: ParseOptions) {
       },
       add: (token) => {
         statement.type = 'TRUNCATE';
-        statement.start = token.start;
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
       },
       postCanGoToNext: () => true,
     },
@@ -361,7 +424,9 @@ function createUnknownStatementParser (options: ParseOptions) {
       preCanGoToNext: () => false,
       add: (token) => {
         statement.type = 'UNKNOWN';
-        statement.start = token.start;
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
       },
       postCanGoToNext: () => true,
     },
@@ -370,7 +435,7 @@ function createUnknownStatementParser (options: ParseOptions) {
   return stateMachineStatementParser(statement, steps, options);
 }
 
-function stateMachineStatementParser (statement: Statement, steps: Step[], { isStrict, dialect }: ParseOptions) {
+function stateMachineStatementParser (statement: Statement, steps: Step[], { isStrict, dialect }: ParseOptions): StatementParser {
   let currentStepIndex = 0;
   let prevToken: Token;
   let prevPrevToken: Token;
@@ -441,6 +506,7 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
       // Postgres allows for optional "OR REPLACE" between "CREATE" and "FUNCTION", so we need to ignore
       // these tokens.
       if (dialect === 'psql' && ['OR', 'REPLACE'].includes(token.value.toUpperCase())) {
+        setPrevToken(token);
         return;
       }
 
