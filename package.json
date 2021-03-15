@@ -11,7 +11,7 @@
     "lint": "eslint src test",
     "build": "tsc",
     "watch": "tsc --watch",
-    "prepublish": "npm run build",
+    "prepublishOnly": "npm run build",
     "webpack:prod": "NODE_ENV=production webpack",
     "webpack:dev": "NODE_ENV=development webpack --progress --color --watch"
   },
