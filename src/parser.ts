@@ -96,7 +96,7 @@ export function parse (input: string, isStrict = true, dialect: Dialect = 'gener
 
   while (prevState.position < topLevelState.end) {
     const tokenState = initState({ prevState });
-    const token = scanToken(tokenState);
+    const token = scanToken(tokenState, dialect);
 
     if (!statementParser) {
       // ignore blank tokens that are not in a statement

@@ -2,7 +2,7 @@
  * Tokenizer
  */
 
-import type { Token, State } from './defines';
+import type { Token, State, Dialect } from './defines';
 
 type Char = string | null;
 
@@ -26,7 +26,14 @@ const INDIVIDUALS: Record<string, string> = {
   ';': 'semicolon',
 };
 
-export function scanToken (state: State): Token {
+const ENDTOKENS: Record<string, Char> = {
+  '"': '"',
+  "'": "'",
+  "`": "`",
+  "[": "]"
+}
+
+export function scanToken (state: State, dialect: Dialect = 'generic'): Token {
   const ch = read(state);
 
   if (isWhitespace(ch)) {
@@ -41,12 +48,16 @@ export function scanToken (state: State): Token {
     return scanCommentBlock(state);
   }
 
-  if (isString(ch)) {
-    return scanString(state);
+  if (isString(ch, dialect) && ch !== null) {
+    return scanString(state, ENDTOKENS[ch]);
   }
 
   if (isDollarQuotedString(state)) {
     return scanDollarQuotedString(state);
+  }
+
+  if (isQuotedIdentifier(ch, dialect) && ch !== null) {
+    return scanQuotedIdentifier(state, ENDTOKENS[ch]);
   }
 
   if (isLetter(ch)) {
@@ -61,12 +72,12 @@ export function scanToken (state: State): Token {
   return skipChar(state);
 }
 
-function read (state: State): Char {
-  if (state.position === state.input.length - 1) {
+function read (state: State, skip = 0): Char {
+  if (state.position + skip === state.input.length - 1) {
     return null;
   }
 
-  state.position++;
+  state.position += (1 + skip);
   return state.input[state.position];
 }
 
@@ -76,6 +87,13 @@ function unread (state: State): void {
   }
 
   state.position--;
+}
+
+function peek (state: State): Char {
+  if (state.position + 1 === state.input.length - 1) {
+    return null;
+  }
+  return state.input[state.position + 1];
 }
 
 function isKeyword (word: string): boolean {
@@ -160,14 +178,19 @@ function scanDollarQuotedString (state: State): Token {
   };
 }
 
-function scanString (state: State): Token {
+function scanString (state: State, endToken: Char): Token {
   let nextChar: Char;
-
   do {
     nextChar = read(state);
-  } while (nextChar !== '\'' && nextChar !== null);
+    // supporting double quote escaping: 'str''ing'
+    if (nextChar === endToken) {
+      if (peek(state) === endToken) {
+        nextChar = read(state, 1);
+      }
+    }
+  } while (nextChar !== endToken && nextChar !== null);
 
-  if (nextChar !== null && nextChar !== '\'') {
+  if (nextChar !== null && endToken !== nextChar) {
     unread(state);
   }
 
@@ -196,6 +219,25 @@ function scanCommentBlock (state: State): Token {
   const value = state.input.slice(state.start, state.position + 1);
   return {
     type: 'comment-block',
+    value,
+    start: state.start,
+    end: state.start + value.length - 1,
+  };
+}
+
+function scanQuotedIdentifier (state: State, endToken: Char): Token {
+  let nextChar: Char;
+  do {
+    nextChar = read(state);
+  } while (endToken !== nextChar && nextChar !== null);
+
+  if (nextChar !== null && endToken !== nextChar) {
+    unread(state);
+  }
+
+  const value = state.input.slice(state.start, state.position + 1);
+  return {
+    type: 'keyword',
     value,
     start: state.start,
     end: state.start + value.length - 1,
@@ -263,12 +305,19 @@ function isWhitespace (ch: Char): boolean {
   return ch === ' ' || ch === '\t' || ch === '\n';
 }
 
-function isString (ch: Char): boolean {
-  return ch === "'";
+function isString (ch: Char, dialect: Dialect): boolean {
+  const stringStart: Char[] = dialect === 'mysql' ? ["'", '"'] : ["'"]
+  return stringStart.includes(ch);
 }
 
 function isDollarQuotedString (state: State): boolean {
   return /^\$[\w]*\$/.exec(state.input.slice(state.start)) !== null;
+}
+
+function isQuotedIdentifier (ch: Char, dialect: Dialect): boolean {
+
+  const startQuoteChars: Char[] = dialect === 'mssql' ? ['"', '['] : ['"', '`'];
+  return startQuoteChars.includes(ch);
 }
 
 function isCommentInline (ch: Char, state: State): boolean {

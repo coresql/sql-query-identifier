@@ -6,7 +6,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "test": "TS_NODE_PROJECT='./tsconfig.test.json' mocha --require ts-node/register --reporter spec --recursive './test/**/*.ts'",
+    "test": "yarn build && TS_NODE_PROJECT='./tsconfig.test.json' mocha --require ts-node/register --reporter spec --recursive './test/**/*.ts'",
     "test:watch": "npm run test -- --watch --watch-extensions .spec.ts --bail ./test",
     "lint": "eslint src test",
     "build": "tsc",

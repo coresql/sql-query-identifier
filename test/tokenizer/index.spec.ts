@@ -55,6 +55,39 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
+  it('scans quoted keyword', function () {
+    const actual = scanToken(initState('"ta;\'`ble"'));
+    const expected = {
+      type: 'keyword',
+      value: '"ta;\'`ble"',
+      start: 0,
+      end: 9,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans quoted string', function () {
+    const actual = scanToken(initState("'some string; I \"love it\"'"), "mysql");
+    const expected = {
+      type: 'string',
+      value: "'some string; I \"love it\"'",
+      start: 0,
+      end: 25,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans quoted string', function () {
+    const actual = scanToken(initState("'''foo'' bar'"), "mysql");
+    const expected = {
+      type: 'string',
+      value: "'''foo'' bar'",
+      start: 0,
+      end: 12,
+    };
+    expect(actual).to.eql(expected);
+  });
+
   it('scans INSERT keyword', function () {
     const actual = scanToken(initState('INSERT'));
     const expected = {
