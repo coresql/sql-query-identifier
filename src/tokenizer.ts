@@ -26,7 +26,6 @@ const INDIVIDUALS: Record<string, string> = {
   ';': 'semicolon',
 };
 
-
 const ENDTOKENS: Record<string, Char> = {
   '"': '"',
   "'": "'",
@@ -60,7 +59,6 @@ export function scanToken (state: State, dialect: Dialect = 'generic'): Token {
   if (isQuotedIdentifier(ch, dialect) && ch !== null) {
     return scanQuotedIdentifier(state, ENDTOKENS[ch]);
   }
-
 
   if (isLetter(ch)) {
     return scanWord(state);
@@ -227,7 +225,6 @@ function scanCommentBlock (state: State): Token {
   };
 }
 
-
 function scanQuotedIdentifier (state: State, endToken: Char): Token {
   let nextChar: Char;
   do {
@@ -246,7 +243,6 @@ function scanQuotedIdentifier (state: State, endToken: Char): Token {
     end: state.start + value.length - 1,
   };
 }
-
 
 function scanWord (state: State): Token {
   let nextChar: Char;

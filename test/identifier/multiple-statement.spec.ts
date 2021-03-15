@@ -53,6 +53,32 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    it('should identify two queries with one using quoted identifier', function () {
+      const actual = identify(`
+        SELECT "foo'bar";
+        SELECT * FROM table;
+      `, { dialect: 'mysql' });
+
+      const expected = [
+        {
+          start: 9,
+          end: 25,
+          text: 'SELECT "foo\'bar";',
+          type: 'SELECT',
+          executionType: 'LISTING',
+        },
+        {
+          start: 35,
+          end: 54,
+          text: 'SELECT * FROM table;',
+          type: 'SELECT',
+          executionType: 'LISTING',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
     it('should able to detect queries with a CTE in middle query', function () {
       const actual = identify(`
         INSERT INTO Persons (PersonID, Name) VALUES (1, 'Jack');

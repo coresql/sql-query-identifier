@@ -65,7 +65,6 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-
     it('should identify "CREATE TABLE" statement', function () {
       const actual = identify('CREATE TABLE Persons (PersonID int, Name varchar(255));');
       const expected = [
@@ -472,7 +471,6 @@ describe('identifier', function () {
       ];
       expect(actual).to.eql(expected);
     });
-
 
     it('should identify "DELETE" statement', function () {
       const actual = identify('DELETE FROM Persons WHERE PersonID = 1;');
