@@ -40,6 +40,10 @@ export function scanToken (state) {
     return scanString(state);
   }
 
+  if (isQuotedIdentifier(ch)) {
+    return scanQuotedIdentifier(state);
+  }
+
   if (isLetter(ch)) {
     return scanWord(state);
   }
@@ -143,6 +147,24 @@ function scanString (state) {
   };
 }
 
+function scanQuotedIdentifier (state) {
+  let nextChar;
+  do {
+    nextChar = read(state);
+  } while (nextChar !== '"' && nextChar !== null);
+
+  if (nextChar !== null && nextChar !== '"') {
+    unread(state);
+  }
+
+  const value = state.input.slice(state.start, state.position + 1);
+  return {
+    type: 'keyword',
+    value,
+    start: state.start,
+    end: state.start + value.length - 1,
+  };
+}
 
 function scanCommentBlock (state) {
   let nextChar;
@@ -233,6 +255,10 @@ function isWhitespace (ch) {
 
 function isString (ch) {
   return ch === '\'';
+}
+
+function isQuotedIdentifier (ch) {
+  return ch === '"';
 }
 
 
