@@ -2,7 +2,7 @@
  * Tokenizer
  */
 
-import type { Token, State } from './defines';
+import type { Token, State, Dialect } from './defines';
 
 type Char = string | null;
 
@@ -26,7 +26,7 @@ const INDIVIDUALS: Record<string, string> = {
   ';': 'semicolon',
 };
 
-export function scanToken (state: State): Token {
+export function scanToken (state: State, dialect: Dialect = 'generic'): Token {
   const ch = read(state);
 
   if (isWhitespace(ch)) {
@@ -48,6 +48,11 @@ export function scanToken (state: State): Token {
   if (isDollarQuotedString(state)) {
     return scanDollarQuotedString(state);
   }
+
+  if (isQuotedIdentifier(ch, dialect)) {
+    return scanQuotedIdentifier(state, dialect);
+  }
+
 
   if (isLetter(ch)) {
     return scanWord(state);
@@ -202,6 +207,28 @@ function scanCommentBlock (state: State): Token {
   };
 }
 
+
+function scanQuotedIdentifier (state: State, dialect: Dialect): Token {
+  const endQuoteChar: Char[] = dialect === 'mssql' ? [']', '"'] : ['"']
+  let nextChar: Char;
+  do {
+    nextChar = read(state);
+  } while (!endQuoteChar.includes(nextChar) && nextChar !== null);
+
+  if (nextChar !== null && !endQuoteChar.includes(nextChar)) {
+    unread(state);
+  }
+
+  const value = state.input.slice(state.start, state.position + 1);
+  return {
+    type: 'keyword',
+    value,
+    start: state.start,
+    end: state.start + value.length - 1,
+  };
+}
+
+
 function scanWord (state: State): Token {
   let nextChar: Char;
 
@@ -269,6 +296,12 @@ function isString (ch: Char): boolean {
 
 function isDollarQuotedString (state: State): boolean {
   return /^\$[\w]*\$/.exec(state.input.slice(state.start)) !== null;
+}
+
+function isQuotedIdentifier(ch: Char, dialect: Dialect): boolean {
+
+  const startQuoteChars: Char[] = dialect === 'mssql' ? ['"', '['] : ['"']
+  return startQuoteChars.includes(ch);
 }
 
 function isCommentInline (ch: Char, state: State): boolean {

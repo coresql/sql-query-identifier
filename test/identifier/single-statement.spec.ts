@@ -20,6 +20,37 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    it('should identify "SELECT" statement with quoted table', function () {
+      const actual = identify('SELECT * FROM "Pers;\'ons"');
+      const expected = [
+        {
+          start: 0,
+          end: 24,
+          text: 'SELECT * FROM "Pers;\'ons"',
+          type: 'SELECT',
+          executionType: 'LISTING',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify "SELECT" statement with quoted table in mssql', function () {
+      const actual = identify('SELECT * FROM [Pers;\'ons]', { dialect: "mssql"});
+      const expected = [
+        {
+          start: 0,
+          end: 24,
+          text: 'SELECT * FROM [Pers;\'ons]',
+          type: 'SELECT',
+          executionType: 'LISTING',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+
     it('should identify "CREATE TABLE" statement', function () {
       const actual = identify('CREATE TABLE Persons (PersonID int, Name varchar(255));');
       const expected = [
@@ -412,6 +443,21 @@ describe('identifier', function () {
 
       expect(actual).to.eql(expected);
     });
+
+    it('should identify more complex "UPDATE" statement with a weird string/keyword', function () {
+      const actual = identify('UPDATE customers SET a = 0, note = CONCAT(note, "abc;def") WHERE a = 10;');
+      const expected = [
+        {
+          start: 0,
+          end: 71,
+          text: 'UPDATE customers SET a = 0, note = CONCAT(note, "abc;def") WHERE a = 10;',
+          type: 'UPDATE',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
 
     it('should identify "DELETE" statement', function () {
       const actual = identify('DELETE FROM Persons WHERE PersonID = 1;');
