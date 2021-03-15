@@ -26,6 +26,14 @@ const INDIVIDUALS: Record<string, string> = {
   ';': 'semicolon',
 };
 
+
+const ENDTOKENS: Record<string, Char> = {
+  '"': '"',
+  "'": "'",
+  "`": "`",
+  "[": "]"
+}
+
 export function scanToken (state: State, dialect: Dialect = 'generic'): Token {
   const ch = read(state);
 
@@ -41,16 +49,16 @@ export function scanToken (state: State, dialect: Dialect = 'generic'): Token {
     return scanCommentBlock(state);
   }
 
-  if (isString(ch, dialect)) {
-    return scanString(state, dialect);
+  if (isString(ch, dialect) && ch !== null) {
+    return scanString(state, ENDTOKENS[ch]);
   }
 
   if (isDollarQuotedString(state)) {
     return scanDollarQuotedString(state);
   }
 
-  if (isQuotedIdentifier(ch, dialect)) {
-    return scanQuotedIdentifier(state, dialect);
+  if (isQuotedIdentifier(ch, dialect) && ch !== null) {
+    return scanQuotedIdentifier(state, ENDTOKENS[ch]);
   }
 
 
@@ -165,14 +173,13 @@ function scanDollarQuotedString (state: State): Token {
   };
 }
 
-function scanString (state: State, dialect: Dialect): Token {
+function scanString (state: State, endToken: Char): Token {
   let nextChar: Char;
-  const endString: Char[] = dialect === 'mysql' ? ['"', "'"] : ["'"]
   do {
     nextChar = read(state);
-  } while (!endString.includes(nextChar) && nextChar !== null);
+  } while (nextChar !== endToken && nextChar !== null);
 
-  if (nextChar !== null && !endString.includes(nextChar)) {
+  if (nextChar !== null && endToken !== nextChar) {
     unread(state);
   }
 
@@ -208,14 +215,13 @@ function scanCommentBlock (state: State): Token {
 }
 
 
-function scanQuotedIdentifier (state: State, dialect: Dialect): Token {
-  const endQuoteChar: Char[] = dialect === 'mssql' ? [']', '"'] : ['"', '`'];
+function scanQuotedIdentifier (state: State, endToken: Char): Token {
   let nextChar: Char;
   do {
     nextChar = read(state);
-  } while (!endQuoteChar.includes(nextChar) && nextChar !== null);
+  } while (endToken !== nextChar && nextChar !== null);
 
-  if (nextChar !== null && !endQuoteChar.includes(nextChar)) {
+  if (nextChar !== null && endToken !== nextChar) {
     unread(state);
   }
 
