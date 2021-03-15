@@ -80,6 +80,17 @@ describe('scan', function () {
   });
 
 
+  it('scans quoted string', function () {
+    const actual = scanToken(initState("'''foo'' bar'"), "mysql");
+    const expected = {
+      type: 'string',
+      value: "'''foo'' bar'",
+      start: 0,
+      end: 12,
+    };
+    expect(actual).to.eql(expected);
+  });
+
 
   it('scans INSERT keyword', function () {
     const actual = scanToken(initState('INSERT'));

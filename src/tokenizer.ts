@@ -74,12 +74,12 @@ export function scanToken (state: State, dialect: Dialect = 'generic'): Token {
   return skipChar(state);
 }
 
-function read (state: State): Char {
-  if (state.position === state.input.length - 1) {
+function read (state: State, skip = 0): Char {
+  if (state.position + skip === state.input.length - 1) {
     return null;
   }
 
-  state.position++;
+  state.position += (1 + skip);
   return state.input[state.position];
 }
 
@@ -89,6 +89,13 @@ function unread (state: State): void {
   }
 
   state.position--;
+}
+
+function peek (state: State): Char {
+  if (state.position + 1 === state.input.length - 1) {
+    return null;
+  }
+  return state.input[state.position + 1];
 }
 
 function isKeyword (word: string): boolean {
@@ -177,6 +184,12 @@ function scanString (state: State, endToken: Char): Token {
   let nextChar: Char;
   do {
     nextChar = read(state);
+    // supporting double quote escaping: 'str''ing'
+    if (nextChar === endToken) {
+      if (peek(state) === endToken) {
+        nextChar = read(state, 1);
+      }
+    }
   } while (nextChar !== endToken && nextChar !== null);
 
   if (nextChar !== null && endToken !== nextChar) {
