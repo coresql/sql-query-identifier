@@ -2,8 +2,8 @@ sql-query-identifier
 ===================
 
 [![Build Status](https://github.com/sqlectron/sql-query-identifier/workflows/Test/badge.svg?branch=master)](https://github.com/sqlectron/sql-query-identifier/actions?query=workflow%3ATest+branch%3Amaster)
-[![npm version](https://badge.fury.io/js/sql-query-identifier.svg)](http://badge.fury.io/js/sql-query-identifier)
-[![view demo](https://img.shields.io/badge/view-demo-blue.svg)](http://maxcnunes.com/sql-query-identifier/)
+[![npm version](https://badge.fury.io/js/sql-query-identifier.svg)](https://badge.fury.io/js/sql-query-identifier)
+[![view demo](https://img.shields.io/badge/view-demo-blue.svg)](https://sqlectron.github.io/sql-query-identifier/)
 
 Identifies the types of each statement in a SQL query (also provide the start, end and the query text).
 
@@ -36,13 +36,18 @@ This way you have sure is a valid query before trying to identify the types.
 * TRUNCATE
 * CREATE_TABLE
 * CREATE_DATABASE
+* CREATE_TRIGGER
+* CREATE_FUNCTION
 * DROP_TABLE
 * DROP_DATABASE
+* DROP_TRIGGER
+* DROP_FUNCTION
 * UNKNOWN (only available if strict mode is disabled)
 
 ## Execution types
 
 Execution types allow to know what is the query behavior
+
 * `LISTING:` is when the query list the data
 * `MODIFICATION:` is when the query modificate the database somehow (structure or data)
 * `INFORMATION:` is show some data information such as a profile data
@@ -92,10 +97,11 @@ console.log(statements);
 1. `input (string)`: the whole SQL script text to be processed
 1. `options (object)`: allow to set different configurations
   1. `strict (bool)`: allow disable strict mode which will ignore unknown types *(default=true)*
+  2. `dialect (string)`: Specify your database dialect, values: `generic`, `mysql`, `psql`, `sqlite` and `mssql`. *(default=generic)*
 
 ## Contributing
 
-It is required to use [editorconfig](http://editorconfig.org/) and please write and run specs before pushing any changes:
+It is required to use [editorconfig](https://editorconfig.org/) and please write and run specs before pushing any changes:
 
 ```js
 npm test
@@ -103,4 +109,5 @@ npm test
 
 ## License
 
-Copyright (c) 2016 Max Claus Nunes. This software is licensed under the [MIT License](http://raw.github.com/maxcnunes/sql-query-identifier/master/LICENSE).
+Copyright (c) 2016-2021 The SQLECTRON Team.
+This software is licensed under the [MIT License](https://github.com/sqlectron/sql-query-identifier/blob/master/LICENSE).

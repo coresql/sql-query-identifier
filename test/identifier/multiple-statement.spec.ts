@@ -53,7 +53,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should able to detect a statement even without know its type when strict is disabled', function () {
+    it('should able to detect queries with a CTE in middle query', function () {
       const actual = identify(`
         INSERT INTO Persons (PersonID, Name) VALUES (1, 'Jack');
 
@@ -76,8 +76,8 @@ describe('identifier', function () {
           start: 75,
           end: 227,
           text: 'WITH employee AS (SELECT * FROM Employees)\n        SELECT * FROM employee WHERE ID < 20\n        UNION ALL\n        SELECT * FROM employee WHERE Sex = \'M\';',
-          type: 'UNKNOWN',
-          executionType: 'UNKNOWN',
+          type: 'SELECT',
+          executionType: 'LISTING',
         },
         {
           start: 238,

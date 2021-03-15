@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { aggregateUnknownTokens } from '../spec-helper';
-import { parse } from '../../src/parser';
+import { parse } from '../../lib/parser';
 
 /* eslint prefer-arrow-callback: 0 */
 describe('parser', function () {
@@ -11,7 +11,7 @@ describe('parser', function () {
       try {
         parse('LIST * FROM Persons');
       } catch (err) {
-        expect(err.message).to.eql('Invalid statement parser "LIST"');
+        expect((err as Error).message).to.eql('Invalid statement parser "LIST"');
         hasError = true;
       }
       expect(hasError).to.eql(true);
@@ -36,8 +36,12 @@ describe('parser', function () {
           },
         ],
         tokens: [
-          { type: 'keyword', value: 'SELECT', start: 0, end: 5 },
-          { type: 'unknown', value: ' * FROM Persons', start: 6, end: 20 },
+          {
+            type: 'keyword', value: 'SELECT', start: 0, end: 5,
+          },
+          {
+            type: 'unknown', value: ' * FROM Persons', start: 6, end: 20,
+          },
         ],
       };
 
@@ -61,8 +65,12 @@ describe('parser', function () {
           },
         ],
         tokens: [
-          { type: 'keyword', value: 'select', start: 0, end: 5 },
-          { type: 'unknown', value: ' * FROM Persons', start: 6, end: 20 },
+          {
+            type: 'keyword', value: 'select', start: 0, end: 5,
+          },
+          {
+            type: 'unknown', value: ' * FROM Persons', start: 6, end: 20,
+          },
         ],
       };
 
@@ -87,11 +95,21 @@ describe('parser', function () {
           },
         ],
         tokens: [
-          { type: 'keyword', value: 'CREATE', start: 0, end: 5 },
-          { type: 'whitespace', value: ' ', start: 6, end: 6 },
-          { type: 'keyword', value: 'TABLE', start: 7, end: 11 },
-          { type: 'unknown', value: ' Persons (PersonID int, Name varchar(255))', start: 12, end: 53 },
-          { type: 'semicolon', value: ';', start: 54, end: 54 },
+          {
+            type: 'keyword', value: 'CREATE', start: 0, end: 5,
+          },
+          {
+            type: 'whitespace', value: ' ', start: 6, end: 6,
+          },
+          {
+            type: 'keyword', value: 'TABLE', start: 7, end: 11,
+          },
+          {
+            type: 'unknown', value: ' Persons (PersonID int, Name varchar(255))', start: 12, end: 53,
+          },
+          {
+            type: 'semicolon', value: ';', start: 54, end: 54,
+          },
         ],
       };
 
@@ -116,11 +134,21 @@ describe('parser', function () {
           },
         ],
         tokens: [
-          { type: 'keyword', value: 'CREATE', start: 0, end: 5 },
-          { type: 'whitespace', value: ' ', start: 6, end: 6 },
-          { type: 'keyword', value: 'DATABASE', start: 7, end: 14 },
-          { type: 'unknown', value: ' Profile', start: 15, end: 22 },
-          { type: 'semicolon', value: ';', start: 23, end: 23 },
+          {
+            type: 'keyword', value: 'CREATE', start: 0, end: 5,
+          },
+          {
+            type: 'whitespace', value: ' ', start: 6, end: 6,
+          },
+          {
+            type: 'keyword', value: 'DATABASE', start: 7, end: 14,
+          },
+          {
+            type: 'unknown', value: ' Profile', start: 15, end: 22,
+          },
+          {
+            type: 'semicolon', value: ';', start: 23, end: 23,
+          },
         ],
       };
 
@@ -145,11 +173,21 @@ describe('parser', function () {
           },
         ],
         tokens: [
-          { type: 'keyword', value: 'DROP', start: 0, end: 3 },
-          { type: 'whitespace', value: ' ', start: 4, end: 4 },
-          { type: 'keyword', value: 'TABLE', start: 5, end: 9 },
-          { type: 'unknown', value: ' Persons', start: 10, end: 17 },
-          { type: 'semicolon', value: ';', start: 18, end: 18 },
+          {
+            type: 'keyword', value: 'DROP', start: 0, end: 3,
+          },
+          {
+            type: 'whitespace', value: ' ', start: 4, end: 4,
+          },
+          {
+            type: 'keyword', value: 'TABLE', start: 5, end: 9,
+          },
+          {
+            type: 'unknown', value: ' Persons', start: 10, end: 17,
+          },
+          {
+            type: 'semicolon', value: ';', start: 18, end: 18,
+          },
         ],
       };
 
@@ -174,11 +212,21 @@ describe('parser', function () {
           },
         ],
         tokens: [
-          { type: 'keyword', value: 'DROP', start: 0, end: 3 },
-          { type: 'whitespace', value: ' ', start: 4, end: 4 },
-          { type: 'keyword', value: 'DATABASE', start: 5, end: 12 },
-          { type: 'unknown', value: ' Profile', start: 13, end: 20 },
-          { type: 'semicolon', value: ';', start: 21, end: 21 },
+          {
+            type: 'keyword', value: 'DROP', start: 0, end: 3,
+          },
+          {
+            type: 'whitespace', value: ' ', start: 4, end: 4,
+          },
+          {
+            type: 'keyword', value: 'DATABASE', start: 5, end: 12,
+          },
+          {
+            type: 'unknown', value: ' Profile', start: 13, end: 20,
+          },
+          {
+            type: 'semicolon', value: ';', start: 21, end: 21,
+          },
         ],
       };
 
@@ -202,9 +250,15 @@ describe('parser', function () {
           },
         ],
         tokens: [
-          { type: 'keyword', value: 'INSERT', start: 0, end: 5 },
-          { type: 'unknown', value: ' INTO Persons (PersonID, Name) VALUES (1, \'Jack\')', start: 6, end: 54 },
-          { type: 'semicolon', value: ';', start: 55, end: 55 },
+          {
+            type: 'keyword', value: 'INSERT', start: 0, end: 5,
+          },
+          {
+            type: 'unknown', value: ' INTO Persons (PersonID, Name) VALUES (1, \'Jack\')', start: 6, end: 54,
+          },
+          {
+            type: 'semicolon', value: ';', start: 55, end: 55,
+          },
         ],
       };
 
@@ -229,9 +283,15 @@ describe('parser', function () {
           },
         ],
         tokens: [
-          { type: 'keyword', value: 'UPDATE', start: 0, end: 5 },
-          { type: 'unknown', value: ' Persons SET Name = \'John\' WHERE PersonID = 1', start: 6, end: 50 },
-          { type: 'semicolon', value: ';', start: 51, end: 51 },
+          {
+            type: 'keyword', value: 'UPDATE', start: 0, end: 5,
+          },
+          {
+            type: 'unknown', value: ' Persons SET Name = \'John\' WHERE PersonID = 1', start: 6, end: 50,
+          },
+          {
+            type: 'semicolon', value: ';', start: 51, end: 51,
+          },
         ],
       };
 
@@ -256,9 +316,15 @@ describe('parser', function () {
           },
         ],
         tokens: [
-          { type: 'keyword', value: 'DELETE', start: 0, end: 5 },
-          { type: 'unknown', value: ' FROM Persons WHERE PersonID = 1', start: 6, end: 37 },
-          { type: 'semicolon', value: ';', start: 38, end: 38 },
+          {
+            type: 'keyword', value: 'DELETE', start: 0, end: 5,
+          },
+          {
+            type: 'unknown', value: ' FROM Persons WHERE PersonID = 1', start: 6, end: 37,
+          },
+          {
+            type: 'semicolon', value: ';', start: 38, end: 38,
+          },
         ],
       };
 
@@ -283,11 +349,21 @@ describe('parser', function () {
           },
         ],
         tokens: [
-          { type: 'keyword', value: 'TRUNCATE', start: 0, end: 7 },
-          { type: 'whitespace', value: ' ', start: 8, end: 8 },
-          { type: 'keyword', value: 'TABLE', start: 9, end: 13 },
-          { type: 'unknown', value: ' Persons', start: 14, end: 21 },
-          { type: 'semicolon', value: ';', start: 22, end: 22 },
+          {
+            type: 'keyword', value: 'TRUNCATE', start: 0, end: 7,
+          },
+          {
+            type: 'whitespace', value: ' ', start: 8, end: 8,
+          },
+          {
+            type: 'keyword', value: 'TABLE', start: 9, end: 13,
+          },
+          {
+            type: 'unknown', value: ' Persons', start: 14, end: 21,
+          },
+          {
+            type: 'semicolon', value: ';', start: 22, end: 22,
+          },
         ],
       };
 
@@ -295,4 +371,3 @@ describe('parser', function () {
     });
   });
 });
-

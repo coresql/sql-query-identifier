@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { aggregateUnknownTokens } from '../spec-helper';
-import { parse } from '../../src/parser';
+import { parse } from '../../lib/parser';
 
 /* eslint prefer-arrow-callback: 0 */
 describe('parser', function () {
@@ -30,13 +30,23 @@ describe('parser', function () {
           },
         ],
         tokens: [
-          { type: 'keyword', value: 'INSERT', start: 0, end: 5 },
-          { type: 'unknown', value: ' INTO Persons (PersonID, Name) VALUES (1, \'Jack\')', start: 6, end: 54 },
+          {
+            type: 'keyword', value: 'INSERT', start: 0, end: 5,
+          },
+          {
+            type: 'unknown', value: ' INTO Persons (PersonID, Name) VALUES (1, \'Jack\')', start: 6, end: 54,
+          },
 
-          { type: 'semicolon', value: ';', start: 55, end: 55 },
+          {
+            type: 'semicolon', value: ';', start: 55, end: 55,
+          },
 
-          { type: 'keyword', value: 'SELECT', start: 56, end: 61 },
-          { type: 'unknown', value: ' * FROM Persons', start: 62, end: 76 },
+          {
+            type: 'keyword', value: 'SELECT', start: 56, end: 61,
+          },
+          {
+            type: 'unknown', value: ' * FROM Persons', start: 62, end: 76,
+          },
         ],
       };
 
@@ -71,13 +81,27 @@ describe('parser', function () {
           },
         ],
         tokens: [
-          { type: 'whitespace', value: '\n        ', start: 0, end: 8 },
-          { type: 'keyword', value: 'INSERT', start: 9, end: 14 },
-          { type: 'unknown', value: ' INTO Persons (PersonID, Name) VALUES (1, \'Jack\')', start: 15, end: 63 },
-          { type: 'semicolon', value: ';', start: 64, end: 64 },
-          { type: 'whitespace', value: '\n        ', start: 65, end: 73 },
-          { type: 'keyword', value: 'SELECT', start: 74, end: 79 },
-          { type: 'unknown', value: ' * FROM Persons\';\n      ', start: 80, end: 103 },
+          {
+            type: 'whitespace', value: '\n        ', start: 0, end: 8,
+          },
+          {
+            type: 'keyword', value: 'INSERT', start: 9, end: 14,
+          },
+          {
+            type: 'unknown', value: ' INTO Persons (PersonID, Name) VALUES (1, \'Jack\')', start: 15, end: 63,
+          },
+          {
+            type: 'semicolon', value: ';', start: 64, end: 64,
+          },
+          {
+            type: 'whitespace', value: '\n        ', start: 65, end: 73,
+          },
+          {
+            type: 'keyword', value: 'SELECT', start: 74, end: 79,
+          },
+          {
+            type: 'unknown', value: ' * FROM Persons\';\n      ', start: 80, end: 103,
+          },
         ],
       };
 
@@ -85,4 +109,3 @@ describe('parser', function () {
     });
   });
 });
-

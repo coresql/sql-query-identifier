@@ -1,10 +1,9 @@
 import { expect } from 'chai';
-import { scanToken } from '../../src/tokenizer';
-
+import { scanToken } from '../../lib/tokenizer';
 
 /* eslint prefer-arrow-callback: 0 */
 describe('scan', function () {
-  const initState = (input) => ({
+  const initState = (input: string) => ({
     input,
     start: 0,
     end: input.length - 1,
@@ -173,6 +172,39 @@ describe('scan', function () {
       value: ';',
       start: 0,
       end: 0,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans string with underscore as one token', function () {
+    const actual = scanToken(initState('end_date'));
+    const expected = {
+      type: 'unknown',
+      value: 'end_date',
+      start: 0,
+      end: 7,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans dollar quoted string', function () {
+    const actual = scanToken(initState('$$test$$'));
+    const expected = {
+      type: 'string',
+      value: '$$test$$',
+      start: 0,
+      end: 7,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('scans dollar quoted string with label', function () {
+    const actual = scanToken(initState('$aaa$test$aaa$'));
+    const expected = {
+      type: 'string',
+      value: '$aaa$test$aaa$',
+      start: 0,
+      end: 13,
     };
     expect(actual).to.eql(expected);
   });

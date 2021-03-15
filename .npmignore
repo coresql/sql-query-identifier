@@ -1,1 +1,8 @@
+.github/
 src/
+test/
+webpack/
+.babelrc
+.editorconfig
+.eslintrc.json
+webpack.config.js
