@@ -1,6 +1,6 @@
 {
   "name": "sql-query-identifier",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A SQL query identifier",
   "license": "MIT",
   "main": "lib/index.js",
@@ -11,9 +11,13 @@
     "lint": "eslint src test",
     "build": "tsc",
     "watch": "tsc --watch",
-    "prepublish": "npm run build",
+    "prepublishOnly": "npm run build",
     "webpack:prod": "NODE_ENV=production webpack",
     "webpack:dev": "NODE_ENV=development webpack --progress --color --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sqlectron/sql-query-identifier.git"
   },
   "devDependencies": {
     "@types/chai": "^4.2.15",
