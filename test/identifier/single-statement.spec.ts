@@ -20,6 +20,21 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    it('should identify "SELECT" statement with quoted string', function () {
+      const actual = identify("SELECT 'This is a ''quoted string' FROM Persons");
+      const expected = [
+        {
+          start: 0,
+          end: 46,
+          text: "SELECT 'This is a ''quoted string' FROM Persons",
+          type: 'SELECT',
+          executionType: 'LISTING',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
     it('should identify "SELECT" statement with quoted table', function () {
       const actual = identify('SELECT * FROM "Pers;\'ons"');
       const expected = [
