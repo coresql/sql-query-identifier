@@ -41,8 +41,8 @@ export function scanToken (state: State, dialect: Dialect = 'generic'): Token {
     return scanCommentBlock(state);
   }
 
-  if (isString(ch)) {
-    return scanString(state);
+  if (isString(ch, dialect)) {
+    return scanString(state, dialect);
   }
 
   if (isDollarQuotedString(state)) {
@@ -165,14 +165,14 @@ function scanDollarQuotedString (state: State): Token {
   };
 }
 
-function scanString (state: State): Token {
+function scanString (state: State, dialect: Dialect): Token {
   let nextChar: Char;
-
+  const endString: Char[] = dialect === 'mysql' ? ['"', "'"] : ["'"]
   do {
     nextChar = read(state);
-  } while (nextChar !== '\'' && nextChar !== null);
+  } while (!endString.includes(nextChar) && nextChar !== null);
 
-  if (nextChar !== null && nextChar !== '\'') {
+  if (nextChar !== null && !endString.includes(nextChar)) {
     unread(state);
   }
 
@@ -209,7 +209,7 @@ function scanCommentBlock (state: State): Token {
 
 
 function scanQuotedIdentifier (state: State, dialect: Dialect): Token {
-  const endQuoteChar: Char[] = dialect === 'mssql' ? [']', '"'] : ['"']
+  const endQuoteChar: Char[] = dialect === 'mssql' ? [']', '"'] : ['"', '`'];
   let nextChar: Char;
   do {
     nextChar = read(state);
@@ -290,17 +290,18 @@ function isWhitespace (ch: Char): boolean {
   return ch === ' ' || ch === '\t' || ch === '\n';
 }
 
-function isString (ch: Char): boolean {
-  return ch === "'";
+function isString (ch: Char, dialect: Dialect): boolean {
+  const stringStart: Char[] = dialect === 'mysql' ? ["'", '"'] : ["'"]
+  return stringStart.includes(ch);
 }
 
 function isDollarQuotedString (state: State): boolean {
   return /^\$[\w]*\$/.exec(state.input.slice(state.start)) !== null;
 }
 
-function isQuotedIdentifier(ch: Char, dialect: Dialect): boolean {
+function isQuotedIdentifier (ch: Char, dialect: Dialect): boolean {
 
-  const startQuoteChars: Char[] = dialect === 'mssql' ? ['"', '['] : ['"']
+  const startQuoteChars: Char[] = dialect === 'mssql' ? ['"', '['] : ['"', '`'];
   return startQuoteChars.includes(ch);
 }
 
