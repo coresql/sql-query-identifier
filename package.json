@@ -15,6 +15,10 @@
     "webpack:prod": "NODE_ENV=production webpack",
     "webpack:dev": "NODE_ENV=development webpack --progress --color --watch"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sqlectron/sql-query-identifier.git"
+  },
   "devDependencies": {
     "@types/chai": "^4.2.15",
     "@types/mocha": "^8.2.1",
