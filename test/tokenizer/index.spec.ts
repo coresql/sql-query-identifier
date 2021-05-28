@@ -34,12 +34,12 @@ describe('scan', function () {
   });
 
   it('scans white spaces', function () {
-    const actual = scanToken(initState('   \n\t  '));
+    const actual = scanToken(initState('   \n\t\r  '));
     const expected = {
       type: 'whitespace',
-      value: '   \n\t  ',
+      value: '   \n\t\r  ',
       start: 0,
-      end: 6,
+      end: 7,
     };
     expect(actual).to.eql(expected);
   });

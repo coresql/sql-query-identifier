@@ -302,7 +302,7 @@ function skipWord (state: State, value: string): Token {
 }
 
 function isWhitespace (ch: Char): boolean {
-  return ch === ' ' || ch === '\t' || ch === '\n';
+  return ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r';
 }
 
 function isString (ch: Char, dialect: Dialect): boolean {
