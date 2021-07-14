@@ -30,10 +30,12 @@ const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   UPDATE: 'MODIFICATION',
   CREATE_DATABASE: 'MODIFICATION',
   CREATE_TABLE: 'MODIFICATION',
+  CREATE_VIEW: 'MODIFICATION',
   CREATE_TRIGGER: 'MODIFICATION',
   CREATE_FUNCTION: 'MODIFICATION',
   DROP_DATABASE: 'MODIFICATION',
   DROP_TABLE: 'MODIFICATION',
+  DROP_VIEW: 'MODIFICATION',
   DROP_TRIGGER: 'MODIFICATION',
   DROP_FUNCTION: 'MODIFICATION',
   TRUNCATE: 'MODIFICATION',
@@ -335,8 +337,9 @@ function createCreateStatementParser (options: ParseOptions) {
       validation: {
         requireBefore: ['whitespace'],
         acceptTokens: [
-          { type: 'keyword', value: 'TABLE' },
           { type: 'keyword', value: 'DATABASE' },
+          { type: 'keyword', value: 'TABLE' },
+          { type: 'keyword', value: 'VIEW' },
           { type: 'keyword', value: 'TRIGGER' },
           { type: 'keyword', value: 'FUNCTION' },
         ],
@@ -376,8 +379,9 @@ function createDropStatementParser (options: ParseOptions) {
       validation: {
         requireBefore: ['whitespace'],
         acceptTokens: [
-          { type: 'keyword', value: 'TABLE' },
           { type: 'keyword', value: 'DATABASE' },
+          { type: 'keyword', value: 'TABLE' },
+          { type: 'keyword', value: 'VIEW' },
           { type: 'keyword', value: 'TRIGGER' },
           { type: 'keyword', value: 'FUNCTION' },
         ],

@@ -80,6 +80,21 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    it('should identify "CREATE VIEW" statement', () => {
+      const actual = identify("CREATE VIEW vista AS SELECT 'Hello World';");
+      const expected = [
+        {
+          start: 0,
+          end: 41,
+          text: "CREATE VIEW vista AS SELECT 'Hello World';",
+          type: 'CREATE_VIEW',
+          executionType: 'MODIFICATION',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
     it('should identify sqlite "CREATE TRIGGER" statement', function () {
       const actual = identify('CREATE TRIGGER sqlmods AFTER UPDATE ON bar FOR EACH ROW WHEN old.yay IS NULL BEGIN UPDATE bar SET yay = 1 WHERE rowid = NEW.rowid; END;', { dialect: 'sqlite' });
       const expected = [
@@ -362,6 +377,21 @@ describe('identifier', function () {
           end: 18,
           text: 'DROP TABLE Persons;',
           type: 'DROP_TABLE',
+          executionType: 'MODIFICATION',
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify "DROP VIEW" statement', () => {
+      const actual = identify('DROP VIEW kinds;');
+      const expected = [
+        {
+          start: 0,
+          end: 15,
+          text: 'DROP VIEW kinds;',
+          type: 'DROP_VIEW',
           executionType: 'MODIFICATION',
         },
       ];

@@ -14,6 +14,7 @@ const KEYWORDS = [
   'CREATE',
   'DROP',
   'TABLE',
+  'VIEW',
   'TRIGGER',
   'FUNCTION',
   'DATABASE',
