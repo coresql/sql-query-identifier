@@ -21,6 +21,7 @@ const KEYWORDS = [
   'TRUNCATE',
   'WITH',
   'AS',
+  'MATERIALIZED',
 ];
 
 const INDIVIDUALS: Record<string, string> = {

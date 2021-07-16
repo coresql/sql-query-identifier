@@ -507,6 +507,11 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
         return;
       }
 
+      if (['psql', 'mssql'].includes(dialect) && token.value.toUpperCase() === 'MATERIALIZED') {
+        setPrevToken(token);
+        return;
+      }
+
       // Postgres allows for optional "OR REPLACE" between "CREATE" and "FUNCTION", so we need to ignore
       // these tokens.
       if (dialect === 'psql' && ['OR', 'REPLACE'].includes(token.value.toUpperCase())) {

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { identify } from '../../src';
+import { Dialect, identify } from '../../src';
 
 /* eslint prefer-arrow-callback: 0 */
 describe('identifier', function () {
@@ -93,6 +93,34 @@ describe('identifier', function () {
       ];
 
       expect(actual).to.eql(expected);
+    });
+
+    describe('identifying "CREATE MATERIALIZED VIEW" statement', () => {
+      const query = "CREATE MATERIALIZED VIEW vista AS SELECT 'Hello World';";
+      (['psql', 'mssql'] as Dialect[]).forEach((dialect) => {
+        it(`should identify for ${dialect}`, () => {
+          const actual = identify(query, { dialect });
+          const expected = [
+            {
+              start: 0,
+              end: 54,
+              text: query,
+              type: 'CREATE_VIEW',
+              executionType: 'MODIFICATION',
+            },
+          ];
+
+          expect(actual).to.eql(expected);
+        });
+      });
+
+      (['generic', 'mysql', 'sqlite'] as Dialect[]).forEach((dialect) => {
+        it(`should throw error for ${dialect}`, () => {
+          expect(() => identify(query, { dialect })).to.throw(
+            /^Expected any of these tokens .* instead of type="keyword" value="MATERIALIZED" \(currentStep=1\)/
+          )
+        });
+      });
     });
 
     it('should identify sqlite "CREATE TRIGGER" statement', function () {
