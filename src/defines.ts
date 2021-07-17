@@ -38,7 +38,9 @@ export interface Statement {
   executionType?: ExecutionType;
   endStatement?: string;
   canEnd?: boolean;
-  definer?: number | false;
+  definer?: number;
+  algorithm?: number;
+  sqlSecurity?: number;
 }
 
 export interface ConcreteStatement extends Statement {

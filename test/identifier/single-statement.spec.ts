@@ -161,7 +161,7 @@ describe('identifier', function () {
               const expected = [
                 {
                   start: 0,
-                  end: temp === 'TEMP' ? 46 : 51,
+                  end:  42 + temp.length,
                   text: query,
                   type: 'CREATE_VIEW',
                   executionType: 'MODIFICATION',
@@ -180,6 +180,46 @@ describe('identifier', function () {
           });
         });
       });
+
+      describe('identify "CREATE VIEW" with algorithm for mysql', () => {
+        ['UNDEFINED', 'MERGE', 'TEMPTABLE'].forEach((algo) => {
+          it(`should identify "CREATE ALGORITHM = ${algo}"`, () => {
+            const query = `CREATE ALGORITHM = ${algo} VIEW vista AS SELECT 'Hello World';`;
+            const actual = identify(query, { dialect: 'mysql' });
+            const expected = [
+              {
+                start: 0,
+                end: 54 + algo.length,
+                text: query,
+                type: 'CREATE_VIEW',
+                executionType: 'MODIFICATION',
+              },
+            ];
+
+            expect(actual).to.eql(expected);
+          });
+        });
+      });
+
+      describe('identify "CREATE VIEW" with SQL SECURITY for mysql', () => {
+        ['DEFINER', 'INVOKER'].forEach((type) => {
+          it(`should identify "SQL SECURITY ${type}"`, () => {
+            const query = `CREATE SQL SECURITY ${type} VIEW vista AS SELECT 'Hello World';`;
+            const actual = identify(query, { dialect: 'mysql' });
+            const expected = [
+              {
+                start: 0,
+                end: 55 + type.length,
+                text: query,
+                type: 'CREATE_VIEW',
+                executionType: 'MODIFICATION',
+              },
+            ];
+
+            expect(actual).to.eql(expected);
+          });
+        });
+      })
     });
 
     it('should identify sqlite "CREATE TRIGGER" statement', function () {
