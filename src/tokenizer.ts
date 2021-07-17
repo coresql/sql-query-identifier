@@ -22,7 +22,7 @@ const KEYWORDS = [
   'AS',
 ];
 
-const INDIVIDUALS: Record<string, string> = {
+const INDIVIDUALS: Record<string, Token['type']> = {
   ';': 'semicolon',
 };
 
@@ -100,7 +100,7 @@ function isKeyword (word: string): boolean {
   return KEYWORDS.includes(word.toUpperCase());
 }
 
-function resolveIndividualTokenType (ch: string): string | undefined {
+function resolveIndividualTokenType (ch: string): Token['type'] | undefined {
   return INDIVIDUALS[ch];
 }
 

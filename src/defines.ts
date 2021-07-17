@@ -52,7 +52,14 @@ export interface State {
 }
 
 export interface Token {
-  type: string;
+  type:
+    'whitespace'
+    | 'comment-inline'
+    | 'comment-block'
+    | 'string'
+    | 'semicolon'
+    | 'keyword'
+    | 'unknown';
   value: string;
   start: number;
   end: number;
