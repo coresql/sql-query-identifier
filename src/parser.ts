@@ -512,9 +512,14 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
         return;
       }
 
-      // Postgres allows for optional "OR REPLACE" between "CREATE" and "FUNCTION", so we need to ignore
-      // these tokens.
-      if (dialect === 'psql' && ['OR', 'REPLACE'].includes(token.value.toUpperCase())) {
+      // psql allows for optional "OR REPLACE" between "CREATE" and "FUNCTION"
+      // mysql and psql allow it between "CREATE" and "VIEW"
+      if (['psql', 'mysql'].includes(dialect) && ['OR', 'REPLACE'].includes(token.value.toUpperCase())) {
+        setPrevToken(token);
+        return;
+      }
+
+      if (['psql', 'sqlite'].includes(dialect) && ['TEMP', 'TEMPORARY'].includes(token.value.toUpperCase())) {
         setPrevToken(token);
         return;
       }

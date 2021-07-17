@@ -80,45 +80,104 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify "CREATE VIEW" statement', () => {
-      const actual = identify("CREATE VIEW vista AS SELECT 'Hello World';");
-      const expected = [
-        {
-          start: 0,
-          end: 41,
-          text: "CREATE VIEW vista AS SELECT 'Hello World';",
-          type: 'CREATE_VIEW',
-          executionType: 'MODIFICATION',
-        },
-      ];
+    describe('identify "CREATE VIEW" statements', () => {
+      it('should identify "CREATE VIEW" statement', () => {
+        const actual = identify("CREATE VIEW vista AS SELECT 'Hello World';");
+        const expected = [
+          {
+            start: 0,
+            end: 41,
+            text: "CREATE VIEW vista AS SELECT 'Hello World';",
+            type: 'CREATE_VIEW',
+            executionType: 'MODIFICATION',
+          },
+        ];
 
-      expect(actual).to.eql(expected);
-    });
+        expect(actual).to.eql(expected);
+      });
 
-    describe('identifying "CREATE MATERIALIZED VIEW" statement', () => {
-      const query = "CREATE MATERIALIZED VIEW vista AS SELECT 'Hello World';";
-      (['psql', 'mssql'] as Dialect[]).forEach((dialect) => {
-        it(`should identify for ${dialect}`, () => {
-          const actual = identify(query, { dialect });
-          const expected = [
-            {
-              start: 0,
-              end: 54,
-              text: query,
-              type: 'CREATE_VIEW',
-              executionType: 'MODIFICATION',
-            },
-          ];
+      describe('identifying "CREATE MATERIALIZED VIEW" statement', () => {
+        const query = "CREATE MATERIALIZED VIEW vista AS SELECT 'Hello World';";
+        (['psql', 'mssql'] as Dialect[]).forEach((dialect) => {
+          it(`should identify for ${dialect}`, () => {
+            const actual = identify(query, { dialect });
+            const expected = [
+              {
+                start: 0,
+                end: 54,
+                text: query,
+                type: 'CREATE_VIEW',
+                executionType: 'MODIFICATION',
+              },
+            ];
 
-          expect(actual).to.eql(expected);
+            expect(actual).to.eql(expected);
+          });
+        });
+
+        (['generic', 'mysql', 'sqlite'] as Dialect[]).forEach((dialect) => {
+          it(`should throw error for ${dialect}`, () => {
+            expect(() => identify(query, { dialect })).to.throw(
+              /^Expected any of these tokens .* instead of type="keyword" value="MATERIALIZED" \(currentStep=1\)/
+            );
+          });
         });
       });
 
-      (['generic', 'mysql', 'sqlite'] as Dialect[]).forEach((dialect) => {
-        it(`should throw error for ${dialect}`, () => {
-          expect(() => identify(query, { dialect })).to.throw(
-            /^Expected any of these tokens .* instead of type="keyword" value="MATERIALIZED" \(currentStep=1\)/
-          )
+      describe('identify "CREATE OR REPLACE VIEW" statement', () => {
+        const query = "CREATE OR REPLACE VIEW vista AS SELECT 'Hello world';";
+        (['mysql', 'psql'] as Dialect[]).forEach((dialect) => {
+          it(`should identify for ${dialect}`, () => {
+            const actual = identify(query, { dialect });
+            const expected = [
+              {
+                start: 0,
+                end: 52,
+                text: query,
+                type: 'CREATE_VIEW',
+                executionType: 'MODIFICATION',
+              },
+            ];
+
+            expect(actual).to.eql(expected);
+          });
+        });
+
+        (['generic', 'sqlite', 'mssql'] as Dialect[]).forEach((dialect) => {
+          it(`should throw error for ${dialect}`, () => {
+            expect(() => identify(query, { dialect })).to.throw(
+              /^Expected any of these tokens .* instead of type="unknown" value="OR" \(currentStep=1\)/
+            )
+          });
+        });
+      });
+
+      ['TEMP', 'TEMPORARY'].forEach((temp) => {
+        describe(`identify "CREATE ${temp} VIEW" statement`, () => {
+          const query = `CREATE ${temp} VIEW vista AS SELECT 'Hello world';`;
+          (['sqlite', 'psql'] as Dialect[]).forEach((dialect) => {
+            it(`should identify for ${dialect}`, () => {
+              const actual = identify(query, { dialect });
+              const expected = [
+                {
+                  start: 0,
+                  end: temp === 'TEMP' ? 46 : 51,
+                  text: query,
+                  type: 'CREATE_VIEW',
+                  executionType: 'MODIFICATION',
+                },
+              ];
+
+              expect(actual).to.eql(expected);
+            });
+          });
+
+          (['generic', 'mysql', 'mssql'] as Dialect[]).forEach((dialect) => {
+            it(`should throw error for ${dialect}`, () => {
+              const regex = new RegExp(`Expected any of these tokens .* instead of type="unknown" value="${temp}" \\(currentStep=1\\)`);
+              expect(() => identify(query, { dialect })).to.throw(regex);
+            });
+          });
         });
       });
     });
