@@ -1,6 +1,6 @@
-import { parse } from './parser';
+import { parse, EXECUTION_TYPES } from './parser';
 import { DIALECTS } from './defines';
-import type { IdentifyOptions, IdentifyResult } from './defines';
+import type { ExecutionType, IdentifyOptions, IdentifyResult, StatementType } from './defines';
 
 export type {
   ExecutionType,
@@ -30,4 +30,8 @@ export function identify (query: string, options: IdentifyOptions = {}): Identif
     type: statement.type,
     executionType: statement.executionType,
   }));
+}
+
+export function getExecutionType (command: string): ExecutionType {
+  return EXECUTION_TYPES[command as StatementType] || 'UNKNOWN';
 }

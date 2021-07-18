@@ -23,7 +23,7 @@ interface StatementParser {
  *  - INFORMATION: is show some data information such as a profile data
  *  - UNKNOWN
  */
-const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
+export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   SELECT: 'LISTING',
   INSERT: 'MODIFICATION',
   DELETE: 'MODIFICATION',
