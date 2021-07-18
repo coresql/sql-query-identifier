@@ -10,11 +10,13 @@ export type StatementType = 'INSERT'
   | 'CREATE_VIEW'
   | 'CREATE_TRIGGER'
   | 'CREATE_FUNCTION'
+  | 'CREATE_INDEX'
   | 'DROP_DATABASE'
   | 'DROP_TABLE'
   | 'DROP_VIEW'
   | 'DROP_TRIGGER'
   | 'DROP_FUNCTION'
+  | 'DROP_INDEX'
   | 'UNKNOWN';
 export type ExecutionType = 'LISTING' | 'MODIFICATION' | 'UNKNOWN';
 

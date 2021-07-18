@@ -496,6 +496,76 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    describe('should identify "CREATE INDEX" statements', () => {
+      it('should identify "CREATE INDEX" statement', () => {
+        const sql = `CREATE INDEX foo ON bar (baz)`;
+        const actual = identify(sql, { dialect: 'mysql' });
+        const expected = [
+          {
+            start: 0,
+            end: 28,
+            text: sql,
+            type: 'CREATE_INDEX',
+            executionType: 'MODIFICATION',
+          },
+        ];
+        expect(actual).to.eql(expected);
+      });
+
+      it('should identify "CREATE UNIQUE INDEX" statement', () => {
+        const sql = `CREATE UNIQUE INDEX foo ON bar (baz)`;
+        const actual = identify(sql, { dialect: 'mysql' });
+        const expected = [
+          {
+            start: 0,
+            end: 35,
+            text: sql,
+            type: 'CREATE_INDEX',
+            executionType: 'MODIFICATION',
+          },
+        ];
+        expect(actual).to.eql(expected);
+      });
+
+      describe('mysql options', () => {
+        ['FULLTEXT', 'SPATIAL'].forEach((type) => {
+          it(`should identify "CREATE ${type} INDEX" statement`, () => {
+            const sql = `CREATE ${type} INDEX foo ON bar (baz)`;
+            const actual = identify(sql, { dialect: 'mysql' });
+            const expected = [
+              {
+                start: 0,
+                end: 29 + type.length,
+                text: sql,
+                type: 'CREATE_INDEX',
+                executionType: 'MODIFICATION',
+              },
+            ];
+            expect(actual).to.eql(expected);
+          });
+        });
+      });
+
+      describe('mssql options', () => {
+        ['CLUSTERED', 'NONCLUSTERED'].forEach((type) => {
+          it(`should identify "CREATE ${type} INDEX" statement`, () => {
+            const sql = `CREATE ${type} INDEX foo ON bar (baz)`;
+            const actual = identify(sql, { dialect: 'mssql' });
+            const expected = [
+              {
+                start: 0,
+                end: 29 + type.length,
+                text: sql,
+                type: 'CREATE_INDEX',
+                executionType: 'MODIFICATION',
+              },
+            ];
+            expect(actual).to.eql(expected);
+          });
+        });
+      });
+    });
+
     it('should identify "DROP TABLE" statement', function () {
       const actual = identify('DROP TABLE Persons;');
       const expected = [
@@ -564,6 +634,21 @@ describe('identifier', function () {
           end: 27,
           text: sql,
           type: 'DROP_FUNCTION',
+          executionType: 'MODIFICATION',
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
+    it('should identify "DROP INDEX" statement', () => {
+      const sql = 'DROP INDEX foo;';
+      const actual = identify(sql);
+      const expected = [
+        {
+          start: 0,
+          end: 14,
+          text: sql,
+          type: 'DROP_INDEX',
           executionType: 'MODIFICATION',
         },
       ];
@@ -767,14 +852,15 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should able to detect a statement even without knowing its type when strict is disabled - CREATE INDEX', function () {
-      const actual = identify('CREATE INDEX i1 ON t1 (col1);', { strict: false });
+    it('should able to detect a statement even without knowing its type when strict is disabled - CREATE LOGFILE', function () {
+      const sql = "CREATE LOGFILE GROUP lg1 ADD UNDOFILE 'undo.dat' INITIAL_SIZE = 10M;";
+      const actual = identify(sql, { strict: false });
       const expected = [
         {
           start: 0,
-          end: 28,
-          text: 'CREATE INDEX i1 ON t1 (col1);',
-          type: 'CREATE_INDEX',
+          end: 67,
+          text: sql,
+          type: 'CREATE_LOGFILE',
           executionType: 'UNKNOWN',
         },
       ];
