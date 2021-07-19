@@ -39,11 +39,13 @@ This way you have sure is a valid query before trying to identify the types.
 * CREATE_VIEW
 * CREATE_TRIGGER
 * CREATE_FUNCTION
+* CREATE_INDEX
 * DROP_DATABASE
 * DROP_TABLE
 * DROP_VIEW
 * DROP_TRIGGER
 * DROP_FUNCTION
+* DROP_INDEX
 * UNKNOWN (only available if strict mode is disabled)
 
 ## Execution types

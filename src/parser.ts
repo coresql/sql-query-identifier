@@ -33,11 +33,13 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   CREATE_VIEW: 'MODIFICATION',
   CREATE_TRIGGER: 'MODIFICATION',
   CREATE_FUNCTION: 'MODIFICATION',
+  CREATE_INDEX: 'MODIFICATION',
   DROP_DATABASE: 'MODIFICATION',
   DROP_TABLE: 'MODIFICATION',
   DROP_VIEW: 'MODIFICATION',
   DROP_TRIGGER: 'MODIFICATION',
   DROP_FUNCTION: 'MODIFICATION',
+  DROP_INDEX: 'MODIFICATION',
   TRUNCATE: 'MODIFICATION',
   UNKNOWN: 'UNKNOWN',
 };
@@ -342,6 +344,7 @@ function createCreateStatementParser (options: ParseOptions) {
           { type: 'keyword', value: 'VIEW' },
           { type: 'keyword', value: 'TRIGGER' },
           { type: 'keyword', value: 'FUNCTION' },
+          { type: 'keyword', value: 'INDEX' },
         ],
       },
       add: (token) => {
@@ -384,6 +387,7 @@ function createDropStatementParser (options: ParseOptions) {
           { type: 'keyword', value: 'VIEW' },
           { type: 'keyword', value: 'TRIGGER' },
           { type: 'keyword', value: 'FUNCTION' },
+          { type: 'keyword', value: 'INDEX' },
         ],
       },
       add: (token) => {
@@ -516,6 +520,16 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
       if (statement.type) {
         // statement has already been identified
         // just wait until end of the statement
+        return;
+      }
+
+      // index modifiers
+      if (
+        token.value.toUpperCase() === 'UNIQUE'
+        || (dialect === 'mysql' && ['FULLTEXT', 'SPATIAL'].includes(token.value.toUpperCase()))
+        || (dialect === 'mssql' && ['CLUSTERED', 'NONCLUSTERED'].includes(token.value.toUpperCase()))
+      ) {
+        setPrevToken(token);
         return;
       }
 
