@@ -28,6 +28,7 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   INSERT: 'MODIFICATION',
   DELETE: 'MODIFICATION',
   UPDATE: 'MODIFICATION',
+  TRUNCATE: 'MODIFICATION',
   CREATE_DATABASE: 'MODIFICATION',
   CREATE_TABLE: 'MODIFICATION',
   CREATE_VIEW: 'MODIFICATION',
@@ -40,7 +41,12 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   DROP_TRIGGER: 'MODIFICATION',
   DROP_FUNCTION: 'MODIFICATION',
   DROP_INDEX: 'MODIFICATION',
-  TRUNCATE: 'MODIFICATION',
+  ALTER_DATABASE: 'MODIFICATION',
+  ALTER_TABLE: 'MODIFICATION',
+  ALTER_VIEW: 'MODIFICATION',
+  ALTER_TRIGGER: 'MODIFICATION',
+  ALTER_FUNCTION: 'MODIFICATION',
+  ALTER_INDEX: 'MODIFICATION',
   UNKNOWN: 'UNKNOWN',
 };
 
@@ -199,6 +205,7 @@ function createStatementParserByToken (token: Token, options: ParseOptions): Sta
       case 'SELECT': return createSelectStatementParser(options);
       case 'CREATE': return createCreateStatementParser(options);
       case 'DROP': return createDropStatementParser(options);
+      case 'ALTER': return createAlterStatementParser(options);
       case 'INSERT': return createInsertStatementParser(options);
       case 'UPDATE': return createUpdateStatementParser(options);
       case 'DELETE': return createDeleteStatementParser(options);
@@ -399,6 +406,48 @@ function createDropStatementParser (options: ParseOptions) {
 
   return stateMachineStatementParser(statement, steps, options);
 }
+
+function createAlterStatementParser (options: ParseOptions) {
+  const statement = { ...INITIAL_STATEMENT };
+
+  const steps: Step[] = [
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        acceptTokens: [
+          { type: 'keyword', value: 'ALTER' },
+        ],
+      },
+      add: (token) => {
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
+      },
+      postCanGoToNext: () => true,
+    },
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        requireBefore: ['whitespace'],
+        acceptTokens: [
+          { type: 'keyword', value: 'DATABASE' },
+          { type: 'keyword', value: 'SCHEMA' },
+          { type: 'keyword', value: 'TABLE' },
+          { type: 'keyword', value: 'VIEW' },
+          { type: 'keyword', value: 'TRIGGER' },
+          { type: 'keyword', value: 'FUNCTION' },
+        ],
+      },
+      add: (token) => {
+        statement.type = `ALTER_${token.value.toUpperCase()}` as StatementType;
+      },
+      postCanGoToNext: () => true,
+    },
+  ];
+
+  return stateMachineStatementParser(statement, steps, options);
+}
+
 
 function createTruncateStatementParser (options: ParseOptions) {
   const statement = { ...INITIAL_STATEMENT };
