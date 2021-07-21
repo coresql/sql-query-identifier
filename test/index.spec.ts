@@ -1,5 +1,13 @@
-import { getExecutionType } from '../src/index';
+import { Dialect, getExecutionType, identify } from '../src/index';
 import { expect } from 'chai';
+
+describe('identify', () => {
+  it('should throw error for invalid dialect', () => {
+    expect(() => identify('SELECT * FROM foo', { dialect: 'invalid' as Dialect })).to.throw(
+      'Unknown dialect. Allowed values: mssql, sqlite, mysql, psql, generic'
+    );
+  });
+});
 
 describe('getExecutionType', () => {
   it('should return LISTING for SELECT', () => {

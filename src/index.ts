@@ -18,7 +18,7 @@ export function identify (query: string, options: IdentifyOptions = {}): Identif
   const dialect = typeof options.dialect === 'undefined' ? 'generic' : options.dialect;
 
   if (!DIALECTS.includes(dialect)) {
-    throw new Error(`Unknown dialect. Allowed values: ${DIALECTS.join(',')}`);
+    throw new Error(`Unknown dialect. Allowed values: ${DIALECTS.join(', ')}`);
   }
 
   const result = parse(query, isStrict, dialect);
