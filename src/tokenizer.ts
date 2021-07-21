@@ -19,6 +19,7 @@ const KEYWORDS = [
   'TRIGGER',
   'FUNCTION',
   'INDEX',
+  'ALTER',
   'TRUNCATE',
   'WITH',
   'AS',

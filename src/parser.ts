@@ -430,12 +430,16 @@ function createAlterStatementParser (options: ParseOptions) {
       validation: {
         requireBefore: ['whitespace'],
         acceptTokens: [
-          { type: 'keyword', value: 'DATABASE' },
-          { type: 'keyword', value: 'SCHEMA' },
+          ...(options.dialect !== 'sqlite'
+            ? [
+              { type: 'keyword', value: 'DATABASE' },
+              { type: 'keyword', value: 'TRIGGER' },
+              { type: 'keyword', value: 'FUNCTION' },
+              { type: 'keyword', value: 'INDEX' },
+            ]
+            : []),
           { type: 'keyword', value: 'TABLE' },
           { type: 'keyword', value: 'VIEW' },
-          { type: 'keyword', value: 'TRIGGER' },
-          { type: 'keyword', value: 'FUNCTION' },
         ],
       },
       add: (token) => {
