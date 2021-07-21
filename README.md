@@ -46,6 +46,12 @@ This way you have sure is a valid query before trying to identify the types.
 * DROP_TRIGGER
 * DROP_FUNCTION
 * DROP_INDEX
+* ALTER_DATABASE
+* ALTER_TABLE
+* ALTER_VIEW
+* ALTER_TRIGGER
+* ALTER_FUNCTION
+* ALTER_INDEX
 * UNKNOWN (only available if strict mode is disabled)
 
 ## Execution types

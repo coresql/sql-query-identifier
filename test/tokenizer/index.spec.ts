@@ -187,6 +187,17 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
+  it('scans ALTER keyword', () => {
+    const actual = scanToken(initState('ALTER'));
+    const expected = {
+      type: 'keyword',
+      value: 'ALTER',
+      start: 0,
+      end: 4,
+    };
+    expect(actual).to.eql(expected);
+  });
+
   it('scans \'Hello World\' as string value', function () {
     const actual = scanToken(initState('\'Hello World\''));
     const expected = {

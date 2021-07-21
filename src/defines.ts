@@ -17,6 +17,12 @@ export type StatementType = 'INSERT'
   | 'DROP_TRIGGER'
   | 'DROP_FUNCTION'
   | 'DROP_INDEX'
+  | 'ALTER_DATABASE'
+  | 'ALTER_TABLE'
+  | 'ALTER_VIEW'
+  | 'ALTER_TRIGGER'
+  | 'ALTER_FUNCTION'
+  | 'ALTER_INDEX'
   | 'UNKNOWN';
 export type ExecutionType = 'LISTING' | 'MODIFICATION' | 'UNKNOWN';
 

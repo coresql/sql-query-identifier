@@ -729,6 +729,47 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    describe('should identify "ALTER" statements', () => {
+      [
+        ['DATABASE', 'ALTER DATABASE foo RENAME TO bar'],
+        ['TABLE', 'ALTER TABLE foo RENAME TO bar'],
+        ['VIEW', 'ALTER VIEW foo RENAME TO bar'],
+        ['TRIGGER', 'ALTER TRIGGER foo ON bar RENAME TO baz'],
+        ['FUNCTION', 'ALTER FUNCTION sqrt(integer) RENAME TO square_root'],
+        ['INDEX', 'ALTER INDEX foo RENAME to bar'],
+      ].forEach(([type, sql]) => {
+        it(`should identify "ALTER_${type}" statement`, () => {
+          const actual = identify(sql);
+          const expected = [
+            {
+              start: 0,
+              end: sql.length - 1,
+              text: sql,
+              type: `ALTER_${type}`,
+              executionType: 'MODIFICATION',
+            },
+          ];
+
+          expect(actual).to.eql(expected);
+        });
+      });
+
+      describe('sqlite', () => {
+        [
+          ['DATABASE', 'ALTER DATABASE foo RENAME TO bar'],
+          ['TRIGGER', 'ALTER TRIGGER foo ON bar RENAME TO baz'],
+          ['FUNCTION', 'ALTER FUNCTION sqrt(integer) RENAME TO square_root'],
+          ['INDEX', 'ALTER INDEX foo RENAME to bar'],
+        ].forEach(([type, sql]) => {
+          it(`should throw error for "ALTER_${type}" statement`, () => {
+            expect(() => identify(sql, { dialect: 'sqlite' })).to.throw(
+              `Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") instead of type="keyword" value="${type}" (currentStep=1).`
+            );
+          });
+        });
+      });
+    });
+
     it('should identify statement starting with inline comment', function () {
       const actual = identify(`
         -- some comment
