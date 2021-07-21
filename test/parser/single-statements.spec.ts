@@ -7,14 +7,7 @@ import { parse } from '../../src/parser';
 describe('parser', function () {
   describe('given is a not reconized statement', function () {
     it('should throw an error including the unknown statement', function () {
-      let hasError = false;
-      try {
-        parse('LIST * FROM Persons');
-      } catch (err) {
-        expect((err as Error).message).to.eql('Invalid statement parser "LIST"');
-        hasError = true;
-      }
-      expect(hasError).to.eql(true);
+      expect(() => parse('LIST * FROM Persons')).to.throw('Invalid statement parser "LIST"');
     });
   });
 
