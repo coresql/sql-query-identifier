@@ -65,6 +65,32 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
+    ['DATABASE', 'SCHEMA'].forEach((type) => {
+      describe(`identify "CREATE ${type}" statements`, () => {
+        const sql = `CREATE ${type} Profile;`;
+        it('should identify statement', function () {
+          const actual = identify(sql);
+          const expected = [
+            {
+              start: 0,
+              end: sql.length - 1,
+              text: sql,
+              type: `CREATE_${type}`,
+              executionType: 'MODIFICATION',
+            },
+          ];
+
+          expect(actual).to.eql(expected);
+        });
+
+        it('should throw error for sqlite', () => {
+          expect(() => identify(sql, { dialect: 'sqlite' })).to.throw(
+            `Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") instead of type="keyword" value="${type}" (currentStep=1)`
+          );
+        });
+      });
+    });
+
     it('should identify "CREATE TABLE" statement', function () {
       const actual = identify('CREATE TABLE Persons (PersonID int, Name varchar(255));');
       const expected = [
@@ -556,6 +582,32 @@ describe('identifier', function () {
       });
     });
 
+    ['DATABASE', 'SCHEMA'].forEach((type) => {
+      describe(`identify "DROP ${type}" statements`, () => {
+        const sql = `DROP ${type} Profile;`;
+        it('should identify statement', function () {
+          const actual = identify(sql);
+          const expected = [
+            {
+              start: 0,
+              end: sql.length - 1,
+              text: sql,
+              type: `DROP_${type}`,
+              executionType: 'MODIFICATION',
+            },
+          ];
+
+          expect(actual).to.eql(expected);
+        });
+
+        it('should throw error for sqlite', () => {
+          expect(() => identify(sql, { dialect: 'sqlite' })).to.throw(
+            `Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") instead of type="keyword" value="${type}" (currentStep=1).`
+          );
+        });
+      });
+    });
+
     it('should identify "DROP TABLE" statement', function () {
       const actual = identify('DROP TABLE Persons;');
       const expected = [
@@ -579,21 +631,6 @@ describe('identifier', function () {
           end: 15,
           text: 'DROP VIEW kinds;',
           type: 'DROP_VIEW',
-          executionType: 'MODIFICATION',
-        },
-      ];
-
-      expect(actual).to.eql(expected);
-    });
-
-    it('should identify "DROP DATABASE" statement', function () {
-      const actual = identify('DROP DATABASE Profile;');
-      const expected = [
-        {
-          start: 0,
-          end: 21,
-          text: 'DROP DATABASE Profile;',
-          type: 'DROP_DATABASE',
           executionType: 'MODIFICATION',
         },
       ];
@@ -722,6 +759,7 @@ describe('identifier', function () {
     describe('should identify "ALTER" statements', () => {
       [
         ['DATABASE', 'ALTER DATABASE foo RENAME TO bar'],
+        ['SCHEMA', 'ALTER SCHEMA foo RENAME to bar'],
         ['TABLE', 'ALTER TABLE foo RENAME TO bar'],
         ['VIEW', 'ALTER VIEW foo RENAME TO bar'],
         ['TRIGGER', 'ALTER TRIGGER foo ON bar RENAME TO baz'],
@@ -747,6 +785,7 @@ describe('identifier', function () {
       describe('sqlite', () => {
         [
           ['DATABASE', 'ALTER DATABASE foo RENAME TO bar'],
+          ['SCHEMA', 'ALTER SCHEMA foo RENAME to bar'],
           ['TRIGGER', 'ALTER TRIGGER foo ON bar RENAME TO baz'],
           ['FUNCTION', 'ALTER FUNCTION sqrt(integer) RENAME TO square_root'],
           ['INDEX', 'ALTER INDEX foo RENAME to bar'],
