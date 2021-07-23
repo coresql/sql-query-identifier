@@ -211,7 +211,7 @@ function scanString (state: State, endToken: Char): Token {
   };
 }
 
-function scanParameter(state: State, dialect: Dialect): Token {
+function scanParameter (state: State, dialect: Dialect): Token {
   
   if (['mysql', 'generic', 'sqlite'].includes(dialect)) {
     return {
