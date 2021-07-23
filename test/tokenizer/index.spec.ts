@@ -263,4 +263,16 @@ describe('scan', function () {
     };
     expect(actual).to.eql(expected);
   });
+
+  it("scans generic parameters", function () {
+    const input = "?"
+    const actual = scanToken(initState(input))
+    const expected = {
+      type: 'parameter',
+      value: '?',
+      start: 0,
+      end: 0
+    }
+    expect(actual).to.eql(expected)
+  })
 });

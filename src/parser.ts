@@ -176,6 +176,8 @@ export function parse (input: string, isStrict = true, dialect: Dialect = 'gener
     }
   }
 
+
+
   return topLevelStatement;
 }
 
@@ -568,6 +570,11 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
         openBlocks++;
         setPrevToken(token);
         return;
+      }
+
+      if (token.type === 'parameter') {
+        statement.parameters ||= []
+        statement.parameters.push(token.value)
       }
 
       if (statement.type) {

@@ -56,6 +56,10 @@ export function scanToken (state: State, dialect: Dialect = 'generic'): Token {
     return scanString(state, ENDTOKENS[ch]);
   }
 
+  if (isParameter(ch, state, dialect)) {
+    return scanParameter(state, dialect)
+  }
+
   if (isDollarQuotedString(state)) {
     return scanDollarQuotedString(state);
   }
@@ -207,6 +211,62 @@ function scanString (state: State, endToken: Char): Token {
   };
 }
 
+function scanParameter(state: State, dialect: Dialect): Token {
+  
+  if (['mysql', 'generic', 'sqlite'].includes(dialect)) {
+    return {
+      type: 'parameter',
+      value: state.input.slice(state.start, state.position + 1),
+      start: state.start,
+      end: state.start,
+    }
+  }
+
+  if (dialect === 'psql') {
+    let nextChar: Char
+
+    do {
+      nextChar = read(state)
+    } while (!isNaN(Number(nextChar)) && !isWhitespace(nextChar) && nextChar !== null)
+
+    if (isWhitespace(nextChar)) unread(state);
+
+    const value = state.input.slice(state.start, state.position + 1)
+
+    return {
+      type: 'parameter',
+      value,
+      start: state.start,
+      end: state.start + value.length - 1
+    }
+  }
+
+  if (dialect === 'mssql') {
+    let nextChar: Char
+    do {
+      nextChar = read(state)
+    } while (!isWhitespace(nextChar) && nextChar !== null)
+
+    if(isWhitespace(nextChar)) unread(state);
+
+    const value = state.input.slice(state.start, state.position + 1)
+    return {
+      type: 'parameter',
+      value,
+      start: state.start,
+      end: state.start + value.length - 1
+    }
+  }
+
+  return {
+    type: 'parameter',
+    value: 'unknown',
+    start: state.start,
+    end: state.end
+  }
+
+}
+
 function scanCommentBlock (state: State): Token {
   let nextChar: Char = '';
   let prevChar: Char;
@@ -312,6 +372,19 @@ function isWhitespace (ch: Char): boolean {
 function isString (ch: Char, dialect: Dialect): boolean {
   const stringStart: Char[] = dialect === 'mysql' ? ["'", '"'] : ["'"]
   return stringStart.includes(ch);
+}
+
+function isParameter (ch: Char, state: State, dialect: Dialect): boolean {
+  let pStart = "?"; // ansi standard - sqlite, mysql
+  if (dialect === 'psql') {
+    pStart = '$'
+    if (isNaN(Number(peek(state)))) {
+      return false
+    }
+  }
+  if (dialect === 'mssql') pStart = ':'
+
+  return ch === pStart
 }
 
 function isDollarQuotedString (state: State): boolean {

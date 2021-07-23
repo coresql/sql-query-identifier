@@ -23,13 +23,19 @@ export function identify (query: string, options: IdentifyOptions = {}): Identif
 
   const result = parse(query, isStrict, dialect);
 
-  return result.body.map((statement) => ({
-    start: statement.start,
-    end: statement.end,
-    text: query.substring(statement.start, statement.end + 1),
-    type: statement.type,
-    executionType: statement.executionType,
-  }));
+  return result.body.map((statement) => {
+    const result: IdentifyResult = {
+      start: statement.start,
+      end: statement.end,
+      text: query.substring(statement.start, statement.end + 1),
+      type: statement.type,
+      executionType: statement.executionType,
+    };
+    if (statement.parameters) {
+      result.parameters = statement.parameters;
+    }
+    return result;
+  });
 }
 
 export function getExecutionType (command: string): ExecutionType {
