@@ -443,6 +443,33 @@ describe('parser', function () {
         expect(actual.body[0].parameters).to.eql([':foo']);
       });
 
+      it('should not identify params in a comment', function () {
+        const actual = parse("-- comment ?")
+        const expected: Token[] = [
+          {
+            type: 'comment-inline', value: '-- comment ?', start: 0, end: 11
+          }
+        ]
+        expect(actual.tokens).to.eql(expected)
+      })
+
+      it('should not identify params in a string', function () {
+        const actual = parse("select '$1'", true, 'psql')
+        const expected: Token[] = [
+          {
+            type: 'keyword', value: 'select', start: 0, end: 5
+          },
+          {
+            type: 'whitespace', value: " ", start: 6, end: 6
+          },
+          {
+            type: 'string', value: "'$1'", start: 7, end: 10
+          }
+        ]
+        expect(actual.tokens).to.eql(expected)
+      })
+
+
       it('should extract multiple mssql parameters', function () {
         const actual = parse("select x from a where x = :foo and y = :bar", true, 'mssql')
         actual.tokens = aggregateUnknownTokens(actual.tokens)
