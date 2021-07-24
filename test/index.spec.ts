@@ -20,8 +20,8 @@ describe('getExecutionType', () => {
     });
   });
 
-  ['CREATE', 'DROP'].forEach((action) => {
-    ['DATABASE', 'TABLE', 'VIEW', 'FUNCTION', 'TRIGGER'].forEach((type) => {
+  ['CREATE', 'DROP', 'ALTER'].forEach((action) => {
+    ['DATABASE', 'SCHEMA', 'TABLE', 'VIEW', 'FUNCTION', 'TRIGGER'].forEach((type) => {
       it(`should return MODIFICATION for ${action}_${type}`, () => {
         expect(getExecutionType(`${action}_${type}`)).to.equal('MODIFICATION');
       });

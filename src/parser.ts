@@ -30,18 +30,21 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   UPDATE: 'MODIFICATION',
   TRUNCATE: 'MODIFICATION',
   CREATE_DATABASE: 'MODIFICATION',
+  CREATE_SCHEMA: 'MODIFICATION',
   CREATE_TABLE: 'MODIFICATION',
   CREATE_VIEW: 'MODIFICATION',
   CREATE_TRIGGER: 'MODIFICATION',
   CREATE_FUNCTION: 'MODIFICATION',
   CREATE_INDEX: 'MODIFICATION',
   DROP_DATABASE: 'MODIFICATION',
+  DROP_SCHEMA: 'MODIFICATION',
   DROP_TABLE: 'MODIFICATION',
   DROP_VIEW: 'MODIFICATION',
   DROP_TRIGGER: 'MODIFICATION',
   DROP_FUNCTION: 'MODIFICATION',
   DROP_INDEX: 'MODIFICATION',
   ALTER_DATABASE: 'MODIFICATION',
+  ALTER_SCHEMA: 'MODIFICATION',
   ALTER_TABLE: 'MODIFICATION',
   ALTER_VIEW: 'MODIFICATION',
   ALTER_TRIGGER: 'MODIFICATION',
@@ -346,7 +349,12 @@ function createCreateStatementParser (options: ParseOptions) {
       validation: {
         requireBefore: ['whitespace'],
         acceptTokens: [
-          { type: 'keyword', value: 'DATABASE' },
+          ...(options.dialect !== 'sqlite'
+            ? [
+              { type: 'keyword', value: 'DATABASE' },
+              { type: 'keyword', value: 'SCHEMA' },
+            ]
+            : []),
           { type: 'keyword', value: 'TABLE' },
           { type: 'keyword', value: 'VIEW' },
           { type: 'keyword', value: 'TRIGGER' },
@@ -389,7 +397,12 @@ function createDropStatementParser (options: ParseOptions) {
       validation: {
         requireBefore: ['whitespace'],
         acceptTokens: [
-          { type: 'keyword', value: 'DATABASE' },
+          ...(options.dialect !== 'sqlite'
+            ? [
+              { type: 'keyword', value: 'DATABASE' },
+              { type: 'keyword', value: 'SCHEMA' },
+            ]
+            : []),
           { type: 'keyword', value: 'TABLE' },
           { type: 'keyword', value: 'VIEW' },
           { type: 'keyword', value: 'TRIGGER' },
@@ -433,6 +446,7 @@ function createAlterStatementParser (options: ParseOptions) {
           ...(options.dialect !== 'sqlite'
             ? [
               { type: 'keyword', value: 'DATABASE' },
+              { type: 'keyword', value: 'SCHEMA' },
               { type: 'keyword', value: 'TRIGGER' },
               { type: 'keyword', value: 'FUNCTION' },
               { type: 'keyword', value: 'INDEX' },
