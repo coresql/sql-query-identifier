@@ -173,7 +173,7 @@ describe('identifier', function () {
           it(`should throw error for ${dialect}`, () => {
             expect(() => identify(query, { dialect })).to.throw(
               /^Expected any of these tokens .* instead of type="unknown" value="OR" \(currentStep=1\)/
-            )
+            );
           });
         });
       });
@@ -245,7 +245,7 @@ describe('identifier', function () {
             expect(actual).to.eql(expected);
           });
         });
-      })
+      });
     });
 
     describe('identify "CREATE TRIGGER" statements', () => {
@@ -993,6 +993,6 @@ describe('identifier', function () {
       ];
 
       expect(actual).to.eql(expected);
-    })
+    });
   });
 });

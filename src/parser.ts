@@ -65,7 +65,7 @@ const blockOpeners: Record<Dialect, string[]> = {
 const INITIAL_STATEMENT: Statement = {
   start: -1,
   end: 0,
-}
+};
 
 interface ParseOptions {
   isStrict: boolean;
