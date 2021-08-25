@@ -32,9 +32,6 @@ export function identify (query: string, options: IdentifyOptions = {}): Identif
       executionType: statement.executionType,
       parameters: statement.parameters,
     };
-    if (statement.parameters) {
-      result.parameters = statement.parameters;
-    }
     return result;
   });
 }
