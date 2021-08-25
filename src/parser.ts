@@ -59,14 +59,17 @@ const blockOpeners: Record<Dialect, string[]> = {
   sqlite: ['BEGIN', 'CASE'],
 };
 
-const INITIAL_STATEMENT: Statement = {
-  start: -1,
-  end: 0,
-}
-
 interface ParseOptions {
   isStrict: boolean;
   dialect: Dialect;
+}
+
+function createInitialStatement (): Statement {
+  return {
+    start: -1,
+    end: 0,
+    parameters: [],
+  };
 }
 
 /**
@@ -224,7 +227,7 @@ function createStatementParserByToken (token: Token, options: ParseOptions): Sta
 }
 
 function createSelectStatementParser (options: ParseOptions) {
-  const statement = { ...INITIAL_STATEMENT };
+  const statement = createInitialStatement();
 
   const steps: Step[] = [
     // Select
@@ -249,7 +252,7 @@ function createSelectStatementParser (options: ParseOptions) {
 }
 
 function createInsertStatementParser (options: ParseOptions) {
-  const statement = { ...INITIAL_STATEMENT };
+  const statement = createInitialStatement();
 
   const steps: Step[] = [
     // Insert
@@ -274,7 +277,7 @@ function createInsertStatementParser (options: ParseOptions) {
 }
 
 function createUpdateStatementParser (options: ParseOptions) {
-  const statement = { ...INITIAL_STATEMENT };
+  const statement = createInitialStatement();
 
   const steps: Step[] = [
     // Update
@@ -299,7 +302,7 @@ function createUpdateStatementParser (options: ParseOptions) {
 }
 
 function createDeleteStatementParser (options: ParseOptions) {
-  const statement = { ...INITIAL_STATEMENT };
+  const statement = createInitialStatement();
 
   const steps: Step[] = [
     // Delete
@@ -324,7 +327,7 @@ function createDeleteStatementParser (options: ParseOptions) {
 }
 
 function createCreateStatementParser (options: ParseOptions) {
-  const statement = { ...INITIAL_STATEMENT };
+  const statement = createInitialStatement();
 
   const steps: Step[] = [
     // Create
@@ -367,7 +370,7 @@ function createCreateStatementParser (options: ParseOptions) {
 }
 
 function createDropStatementParser (options: ParseOptions) {
-  const statement = { ...INITIAL_STATEMENT };
+  const statement = createInitialStatement();
 
   const steps: Step[] = [
     // Drop
@@ -410,7 +413,7 @@ function createDropStatementParser (options: ParseOptions) {
 }
 
 function createAlterStatementParser (options: ParseOptions) {
-  const statement = { ...INITIAL_STATEMENT };
+  const statement = createInitialStatement();
 
   const steps: Step[] = [
     {
@@ -456,7 +459,7 @@ function createAlterStatementParser (options: ParseOptions) {
 
 
 function createTruncateStatementParser (options: ParseOptions) {
-  const statement = { ...INITIAL_STATEMENT };
+  const statement = createInitialStatement();
 
   const steps: Step[] = [
     {
@@ -480,7 +483,7 @@ function createTruncateStatementParser (options: ParseOptions) {
 }
 
 function createUnknownStatementParser (options: ParseOptions) {
-  const statement = { ...INITIAL_STATEMENT };
+  const statement = createInitialStatement();
 
   const steps: Step[] = [
     {
@@ -573,7 +576,6 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
       }
 
       if (token.type === 'parameter') {
-        statement.parameters ||= []
         statement.parameters.push(token.value)
       }
 

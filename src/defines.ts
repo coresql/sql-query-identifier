@@ -37,7 +37,7 @@ export interface IdentifyResult {
   text: string;
   type: StatementType;
   executionType: ExecutionType;
-  parameters?: string[];
+  parameters: string[];
 }
 
 export interface Statement {
@@ -50,7 +50,7 @@ export interface Statement {
   definer?: number;
   algorithm?: number;
   sqlSecurity?: number;
-  parameters?: string[]
+  parameters: string[]
 }
 
 export interface ConcreteStatement extends Statement {

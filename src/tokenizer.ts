@@ -98,7 +98,7 @@ function unread (state: State): void {
 }
 
 function peek (state: State): Char {
-  if (state.position + 1 === state.input.length - 1) {
+  if (state.position >= state.input.length - 1) {
     return null;
   }
   return state.input[state.position + 1];
@@ -212,7 +212,6 @@ function scanString (state: State, endToken: Char): Token {
 }
 
 function scanParameter (state: State, dialect: Dialect): Token {
-  
   if (['mysql', 'generic', 'sqlite'].includes(dialect)) {
     return {
       type: 'parameter',
@@ -377,8 +376,9 @@ function isString (ch: Char, dialect: Dialect): boolean {
 function isParameter (ch: Char, state: State, dialect: Dialect): boolean {
   let pStart = "?"; // ansi standard - sqlite, mysql
   if (dialect === 'psql') {
-    pStart = '$'
-    if (isNaN(Number(peek(state)))) {
+    pStart = '$';
+    const nextChar = peek(state);
+    if (nextChar === null || isNaN(Number(nextChar))) {
       return false
     }
   }

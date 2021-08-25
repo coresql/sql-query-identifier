@@ -21,12 +21,14 @@ describe('parser', function () {
             type: 'INSERT',
             executionType: 'MODIFICATION',
             endStatement: ';',
+            parameters: [],
           },
           {
             start: 56,
             end: 76,
             type: 'SELECT',
             executionType: 'LISTING',
+            parameters: [],
           },
         ],
         tokens: [
@@ -72,12 +74,14 @@ describe('parser', function () {
             type: 'INSERT',
             executionType: 'MODIFICATION',
             endStatement: ';',
+            parameters: [],
           },
           {
             start: 74,
             end: 103,
             type: 'SELECT',
             executionType: 'LISTING',
+            parameters: [],
           },
         ],
         tokens: [

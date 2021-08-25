@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { scanToken } from '../../src/tokenizer';
+import type { Dialect } from '../../src/defines';
 
 /* eslint prefer-arrow-callback: 0 */
 describe('scan', function () {
@@ -264,15 +265,84 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it("scans generic parameters", function () {
-    const input = "?"
-    const actual = scanToken(initState(input))
-    const expected = {
-      type: 'parameter',
-      value: '?',
-      start: 0,
-      end: 0
-    }
-    expect(actual).to.eql(expected)
-  })
+  describe('tokenizing parameters', () => {
+    describe('tokenizing just parameter starting character', () => {
+      [
+        ['?', 'generic'],
+        ['?', 'mysql'],
+        ['?', 'sqlite'],
+        [':', 'mssql'],
+      ].forEach(([ch, dialect]) => {
+        it(`scans just ${ch} as parameter for ${dialect}`, () => {
+          const input = `${ch}`;
+          const actual = scanToken(initState(input), dialect as Dialect);
+          const expected = {
+            type: 'parameter',
+            value: input,
+            start: 0,
+            end: 0
+          };
+          expect(actual).to.eql(expected);
+        });
+      });
+      it(`does not scan just $ as parameter for psql`, () => {
+        const input = '$';
+        const actual = scanToken(initState(input), 'psql');
+        const expected = {
+          type: 'unknown',
+          value: input,
+          start: 0,
+          end: 0,
+        };
+        expect(actual).to.eql(expected);
+      });
+    });
+    describe('tokenizing parameter with following characters', () => {
+      [
+        ['?', 'generic'],
+        ['?', 'mysql'],
+        ['?', 'sqlite'],
+      ].forEach(([ch, dialect]) => {
+        it(`should only scan ${ch} from ${ch}1 for ${dialect}`, () => {
+          const input = `${ch}1`;
+          const actual = scanToken(initState(input), dialect as Dialect);
+          const expected = {
+            type: 'parameter',
+            value: ch,
+            start: 0,
+            end: 0,
+          };
+          expect(actual).to.eql(expected);
+        });
+      });
+      [
+        ['$', 'psql'],
+        [':', 'mssql'],
+      ].forEach(([ch, dialect]) => {
+        it(`should scan ${ch}1 for ${dialect}`, () => {
+          const input = `${ch}1`;
+          const actual = scanToken(initState(input), dialect as Dialect);
+          const expected = {
+            type: 'parameter',
+            value: input,
+            start: 0,
+            end: 1,
+          };
+          expect(actual).to.eql(expected);
+        });
+      });
+
+      it('should not scan $a for psql', () => {
+        const input = '$a';
+        const actual = scanToken(initState(input), 'psql');
+        const expected = {
+          type: 'unknown',
+          value: '$',
+          start: 0,
+          end: 0,
+        };
+        expect(actual).to.eql(expected);
+      });
+    });
+  });
 });

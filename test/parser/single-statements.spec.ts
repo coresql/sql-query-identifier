@@ -27,6 +27,7 @@ describe('parser', function () {
             end: 20,
             type: 'SELECT',
             executionType: 'LISTING',
+            parameters: [],
           },
         ],
         tokens: [
@@ -56,6 +57,7 @@ describe('parser', function () {
             end: 20,
             type: 'SELECT',
             executionType: 'LISTING',
+            parameters: [],
           },
         ],
         tokens: [
@@ -86,6 +88,7 @@ describe('parser', function () {
             type: 'CREATE_TABLE',
             executionType: 'MODIFICATION',
             endStatement: ';',
+            parameters: [],
           },
         ],
         tokens: [
@@ -125,6 +128,7 @@ describe('parser', function () {
             type: 'CREATE_DATABASE',
             executionType: 'MODIFICATION',
             endStatement: ';',
+            parameters: [],
           },
         ],
         tokens: [
@@ -164,6 +168,7 @@ describe('parser', function () {
             type: 'DROP_TABLE',
             executionType: 'MODIFICATION',
             endStatement: ';',
+            parameters: [],
           },
         ],
         tokens: [
@@ -203,6 +208,7 @@ describe('parser', function () {
             type: 'DROP_DATABASE',
             executionType: 'MODIFICATION',
             endStatement: ';',
+            parameters: [],
           },
         ],
         tokens: [
@@ -241,6 +247,7 @@ describe('parser', function () {
             type: 'INSERT',
             executionType: 'MODIFICATION',
             endStatement: ';',
+            parameters: [],
           },
         ],
         tokens: [
@@ -274,6 +281,7 @@ describe('parser', function () {
             type: 'UPDATE',
             executionType: 'MODIFICATION',
             endStatement: ';',
+            parameters: [],
           },
         ],
         tokens: [
@@ -307,6 +315,7 @@ describe('parser', function () {
             type: 'DELETE',
             executionType: 'MODIFICATION',
             endStatement: ';',
+            parameters: [],
           },
         ],
         tokens: [
@@ -340,6 +349,7 @@ describe('parser', function () {
             type: 'TRUNCATE',
             executionType: 'MODIFICATION',
             endStatement: ';',
+            parameters: [],
           },
         ],
         tokens: [

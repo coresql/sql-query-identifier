@@ -14,6 +14,7 @@ describe('identifier', function () {
           text: 'SELECT * FROM Persons',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
@@ -29,6 +30,7 @@ describe('identifier', function () {
           text: "SELECT 'This is a ''quoted string' FROM Persons",
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
@@ -44,6 +46,7 @@ describe('identifier', function () {
           text: 'SELECT * FROM "Pers;\'ons"',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
@@ -59,6 +62,7 @@ describe('identifier', function () {
           text: 'SELECT * FROM [Pers;\'ons]',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
@@ -74,6 +78,7 @@ describe('identifier', function () {
           text: 'CREATE TABLE Persons (PersonID int, Name varchar(255));',
           type: 'CREATE_TABLE',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
 
@@ -90,6 +95,7 @@ describe('identifier', function () {
             text: "CREATE VIEW vista AS SELECT 'Hello World';",
             type: 'CREATE_VIEW',
             executionType: 'MODIFICATION',
+            parameters: [],
           },
         ];
 
@@ -108,6 +114,7 @@ describe('identifier', function () {
                 text: query,
                 type: 'CREATE_VIEW',
                 executionType: 'MODIFICATION',
+                parameters: [],
               },
             ];
 
@@ -136,6 +143,7 @@ describe('identifier', function () {
                 text: query,
                 type: 'CREATE_VIEW',
                 executionType: 'MODIFICATION',
+                parameters: [],
               },
             ];
 
@@ -165,6 +173,7 @@ describe('identifier', function () {
                   text: query,
                   type: 'CREATE_VIEW',
                   executionType: 'MODIFICATION',
+                  parameters: [],
                 },
               ];
 
@@ -193,6 +202,7 @@ describe('identifier', function () {
                 text: query,
                 type: 'CREATE_VIEW',
                 executionType: 'MODIFICATION',
+                parameters: [],
               },
             ];
 
@@ -213,6 +223,7 @@ describe('identifier', function () {
                 text: query,
                 type: 'CREATE_VIEW',
                 executionType: 'MODIFICATION',
+                parameters: [],
               },
             ];
 
@@ -232,6 +243,7 @@ describe('identifier', function () {
             text: 'CREATE TRIGGER sqlmods AFTER UPDATE ON bar FOR EACH ROW WHEN old.yay IS NULL BEGIN UPDATE bar SET yay = 1 WHERE rowid = NEW.rowid; END;',
             type: 'CREATE_TRIGGER',
             executionType: 'MODIFICATION',
+            parameters: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -256,6 +268,7 @@ describe('identifier', function () {
             text: sql,
             type: 'CREATE_TRIGGER',
             executionType: 'MODIFICATION',
+            parameters: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -289,6 +302,7 @@ describe('identifier', function () {
             text: query,
             type: 'CREATE_TRIGGER',
             executionType: 'MODIFICATION',
+            parameters: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -303,6 +317,7 @@ describe('identifier', function () {
             text: 'CREATE TRIGGER view_insert INSTEAD OF INSERT ON my_view FOR EACH ROW EXECUTE PROCEDURE view_insert_row();',
             type: 'CREATE_TRIGGER',
             executionType: 'MODIFICATION',
+            parameters: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -347,6 +362,7 @@ describe('identifier', function () {
             text: sql,
             type: 'CREATE_FUNCTION',
             executionType: 'MODIFICATION',
+            parameters: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -396,6 +412,7 @@ describe('identifier', function () {
             text: sql,
             type: 'CREATE_FUNCTION',
             executionType: 'MODIFICATION',
+            parameters: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -419,6 +436,7 @@ describe('identifier', function () {
             text: sql,
             type: 'CREATE_FUNCTION',
             executionType: 'MODIFICATION',
+            parameters: [],
           },
         ];
 
@@ -434,6 +452,7 @@ describe('identifier', function () {
             text: "CREATE FUNCTION hello (s CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ',s,'!');",
             type: 'CREATE_FUNCTION',
             executionType: 'MODIFICATION',
+            parameters: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -448,6 +467,7 @@ describe('identifier', function () {
             text: "CREATE DEFINER = 'admin'@'localhost' FUNCTION hello (s CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ',s,'!');",
             type: 'CREATE_FUNCTION',
             executionType: 'MODIFICATION',
+            parameters: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -480,6 +500,7 @@ describe('identifier', function () {
             text: query,
             type: 'CREATE_FUNCTION',
             executionType: 'MODIFICATION',
+            parameters: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -497,6 +518,7 @@ describe('identifier', function () {
             text: sql,
             type: 'CREATE_INDEX',
             executionType: 'MODIFICATION',
+            parameters: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -512,6 +534,7 @@ describe('identifier', function () {
             text: sql,
             type: 'CREATE_INDEX',
             executionType: 'MODIFICATION',
+            parameters: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -529,6 +552,7 @@ describe('identifier', function () {
                 text: sql,
                 type: 'CREATE_INDEX',
                 executionType: 'MODIFICATION',
+                parameters: [],
               },
             ];
             expect(actual).to.eql(expected);
@@ -548,6 +572,7 @@ describe('identifier', function () {
                 text: sql,
                 type: 'CREATE_INDEX',
                 executionType: 'MODIFICATION',
+                parameters: [],
               },
             ];
             expect(actual).to.eql(expected);
@@ -565,6 +590,7 @@ describe('identifier', function () {
           text: 'DROP TABLE Persons;',
           type: 'DROP_TABLE',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
 
@@ -580,6 +606,7 @@ describe('identifier', function () {
           text: 'DROP VIEW kinds;',
           type: 'DROP_VIEW',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
 
@@ -595,6 +622,7 @@ describe('identifier', function () {
           text: 'DROP DATABASE Profile;',
           type: 'DROP_DATABASE',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
 
@@ -610,6 +638,7 @@ describe('identifier', function () {
           text: 'DROP TRIGGER delete_stu on student_mast;',
           type: 'DROP_TRIGGER',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
       expect(actual).to.eql(expected);
@@ -625,6 +654,7 @@ describe('identifier', function () {
           text: sql,
           type: 'DROP_FUNCTION',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
       expect(actual).to.eql(expected);
@@ -640,6 +670,7 @@ describe('identifier', function () {
           text: sql,
           type: 'DROP_INDEX',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
       expect(actual).to.eql(expected);
@@ -654,6 +685,7 @@ describe('identifier', function () {
           text: 'TRUNCATE TABLE Persons;',
           type: 'TRUNCATE',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
 
@@ -669,6 +701,7 @@ describe('identifier', function () {
           text: 'INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');',
           type: 'INSERT',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
 
@@ -684,6 +717,7 @@ describe('identifier', function () {
           text: 'UPDATE Persons SET Name = \'John\' WHERE PersonID = 1;',
           type: 'UPDATE',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
 
@@ -699,6 +733,7 @@ describe('identifier', function () {
           text: 'UPDATE customers SET a = 0, note = CONCAT(note, "abc;def") WHERE a = 10;',
           type: 'UPDATE',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
       expect(actual).to.eql(expected);
@@ -713,6 +748,7 @@ describe('identifier', function () {
           text: 'DELETE FROM Persons WHERE PersonID = 1;',
           type: 'DELETE',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
 
@@ -737,6 +773,7 @@ describe('identifier', function () {
               text: sql,
               type: `ALTER_${type}`,
               executionType: 'MODIFICATION',
+              parameters: [],
             },
           ];
 
@@ -772,6 +809,7 @@ describe('identifier', function () {
           text: 'SELECT * FROM Persons\n      ',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
@@ -792,6 +830,7 @@ describe('identifier', function () {
           text: 'SELECT * FROM Persons\n      ',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
@@ -812,6 +851,7 @@ describe('identifier', function () {
           text: 'SELECT * FROM Persons\n        /**\n          * some comment\n          */\n      ',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
@@ -830,6 +870,7 @@ describe('identifier', function () {
           text: 'SELECT * FROM Persons\n        -- some comment\n      ',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
@@ -849,6 +890,7 @@ describe('identifier', function () {
           text: 'SELECT *\n        -- some comment\n        FROM Persons\n      ',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
@@ -870,6 +912,7 @@ describe('identifier', function () {
           text: 'SELECT *\n        /**\n          * some comment\n          */\n        FROM Persons\n      ',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
@@ -893,6 +936,7 @@ describe('identifier', function () {
           text: sql,
           type: 'CREATE_LOGFILE',
           executionType: 'UNKNOWN',
+          parameters: [],
         },
       ];
 
@@ -913,6 +957,7 @@ describe('identifier', function () {
           text: sql,
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
@@ -950,6 +995,7 @@ describe('identifier', function () {
           text: sql,
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
