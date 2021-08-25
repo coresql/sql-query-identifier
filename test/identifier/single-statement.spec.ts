@@ -81,6 +81,7 @@ describe('identifier', function () {
               text: sql,
               type: `CREATE_${type}`,
               executionType: 'MODIFICATION',
+              parameters: [],
             },
           ];
 
@@ -619,6 +620,7 @@ describe('identifier', function () {
               text: sql,
               type: `DROP_${type}`,
               executionType: 'MODIFICATION',
+              parameters: [],
             },
           ];
 
