@@ -16,6 +16,7 @@ module.exports = {
     "node": true,
   },
   "rules": {
+    "@typescript-eslint/semi": "error",
     "max-len": 0,
     "no-continue": 0,
     "no-plusplus": 0,

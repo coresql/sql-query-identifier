@@ -14,6 +14,7 @@ const KEYWORDS = [
   'CREATE',
   'DROP',
   'DATABASE',
+  'SCHEMA',
   'TABLE',
   'VIEW',
   'TRIGGER',
@@ -35,7 +36,7 @@ const ENDTOKENS: Record<string, Char> = {
   "'": "'",
   "`": "`",
   "[": "]"
-}
+};
 
 export function scanToken (state: State, dialect: Dialect = 'generic'): Token {
   const ch = read(state);
@@ -369,7 +370,7 @@ function isWhitespace (ch: Char): boolean {
 }
 
 function isString (ch: Char, dialect: Dialect): boolean {
-  const stringStart: Char[] = dialect === 'mysql' ? ["'", '"'] : ["'"]
+  const stringStart: Char[] = dialect === 'mysql' ? ["'", '"'] : ["'"];
   return stringStart.includes(ch);
 }
 
