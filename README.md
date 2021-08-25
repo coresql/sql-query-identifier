@@ -91,14 +91,16 @@ console.log(statements);
     end: 64,
     text: 'INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');',
     type: 'INSERT',
-    executionType: 'MODIFICATION'
+    executionType: 'MODIFICATION',
+    parameters: []
   },
   {
     start: 74,
     end: 95,
     text: 'SELECT * FROM Persons;',
     type: 'SELECT',
-    executionType: 'LISTING'
+    executionType: 'LISTING',
+    parameters: []
   }
 ]
 ```

@@ -14,6 +14,7 @@ describe('identifier', function () {
           text: 'INSERT INTO Customers (CustomerName, Country) SELECT SupplierName, Country FROM Suppliers',
           type: 'INSERT',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
 
@@ -29,6 +30,7 @@ describe('identifier', function () {
           text: 'INSERT INTO Customers (CustomerName, Country) /* comment */ SELECT SupplierName, Country FROM Suppliers',
           type: 'INSERT',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
 
@@ -48,6 +50,7 @@ describe('identifier', function () {
           text: 'INSERT INTO Customers (CustomerName, Country)\n        SELECT SupplierName, Country FROM Suppliers;',
           type: 'INSERT',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
 
@@ -68,6 +71,7 @@ describe('identifier', function () {
           text: 'INSERT INTO Customers (CustomerName, Country)\n        -- comment\n        SELECT SupplierName, Country FROM Suppliers;',
           type: 'INSERT',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
       ];
 

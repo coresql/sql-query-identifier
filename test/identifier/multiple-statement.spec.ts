@@ -14,6 +14,7 @@ describe('identifier', function () {
           text: 'INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');',
           type: 'INSERT',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
         {
           end: 76,
@@ -21,6 +22,7 @@ describe('identifier', function () {
           text: 'SELECT * FROM Persons',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
@@ -40,6 +42,7 @@ describe('identifier', function () {
           text: 'INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');',
           type: 'INSERT',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
         {
           start: 74,
@@ -47,6 +50,7 @@ describe('identifier', function () {
           text: 'SELECT * FROM Persons;',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
@@ -66,6 +70,7 @@ describe('identifier', function () {
           text: 'SELECT "foo\'bar";',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
         {
           start: 35,
@@ -73,6 +78,7 @@ describe('identifier', function () {
           text: 'SELECT * FROM table;',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
@@ -97,6 +103,7 @@ describe('identifier', function () {
           text: 'INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');',
           type: 'INSERT',
           executionType: 'MODIFICATION',
+          parameters: [],
         },
         {
           start: 75,
@@ -104,6 +111,7 @@ describe('identifier', function () {
           text: 'WITH employee AS (SELECT * FROM Employees)\n        SELECT * FROM employee WHERE ID < 20\n        UNION ALL\n        SELECT * FROM employee WHERE Sex = \'M\';',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
         {
           start: 238,
@@ -111,6 +119,7 @@ describe('identifier', function () {
           text: 'SELECT * FROM Persons;',
           type: 'SELECT',
           executionType: 'LISTING',
+          parameters: [],
         },
       ];
 
