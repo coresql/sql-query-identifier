@@ -1,32 +1,37 @@
 module.exports = {
-  "parser": "@typescript-eslint/parser",
-  "plugins": [
-    "@typescript-eslint",
+  parser: '@typescript-eslint/parser',
+  extends: ['eslint:recommended'],
+  env: {
+    node: true,
+  },
+  rules: {
+    'arrow-parens': 'error',
+    'func-names': 'off',
+    'id-length': ['error', { exceptions: ['i', 'j', 'e', 'a', 'b', 't'] }],
+    'import/prefer-default-export': 'off',
+    'prefer-arrow-callback': 'error',
+    'quote-props': ['error', 'as-needed'],
+    'space-before-function-paren': ['error', 'never'],
+  },
+  plugins: ['prettier'],
+  overrides: [
+    {
+      files: ['**/*.ts'],
+      plugins: ['@typescript-eslint'],
+      parserOptions: {
+        tsconfigRootDir: __dirname,
+        project: './tsconfig.test.json',
+      },
+      extends: [
+        'plugin:@typescript-eslint/recommended',
+        'plugin:@typescript-eslint/recommended-requiring-type-checking',
+        'plugin:prettier/recommended',
+        'prettier',
+      ],
+    },
+    {
+      files: ['**/*.js'],
+      extends: ['plugin:prettier/recommended', 'prettier'],
+    },
   ],
-  "parserOptions": {
-    "tsconfigRootDir": __dirname,
-    "project": "./tsconfig.test.json"
-  },
-  "extends": [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:@typescript-eslint/recommended-requiring-type-checking",
-  ],
-  "env": {
-    "node": true,
-  },
-  "rules": {
-    "@typescript-eslint/semi": "error",
-    "max-len": 0,
-    "no-continue": 0,
-    "no-plusplus": 0,
-    "no-use-before-define": 0,
-    "space-before-function-paren": [2, {"anonymous": "always", "named": "always"}],
-    "func-names": 0,
-    "id-length": [1, {"exceptions": ["i", "j", "e", "a", "b", "t"]}],
-    "import/prefer-default-export": 0
-  },
-  "ignorePatterns": [
-    "*.js"
-  ]
-}
+};

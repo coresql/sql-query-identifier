@@ -2,8 +2,7 @@ import { expect } from 'chai';
 import { scanToken } from '../../src/tokenizer';
 import type { Dialect } from '../../src/defines';
 
-/* eslint prefer-arrow-callback: 0 */
-describe('scan', function () {
+describe('scan', () => {
   const initState = (input: string) => ({
     input,
     start: 0,
@@ -11,7 +10,7 @@ describe('scan', function () {
     position: -1,
   });
 
-  it('scans inline comments', function () {
+  it('scans inline comments', () => {
     const actual = scanToken(initState('-- my comment'));
     const expected = {
       type: 'comment-inline',
@@ -22,7 +21,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans block comments', function () {
+  it('scans block comments', () => {
     const commentBlock = '/*\n * This is my comment block\n */';
     const actual = scanToken(initState(commentBlock));
     const expected = {
@@ -34,7 +33,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans white spaces', function () {
+  it('scans white spaces', () => {
     const actual = scanToken(initState('   \n\t\r  '));
     const expected = {
       type: 'whitespace',
@@ -45,7 +44,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans SELECT keyword', function () {
+  it('scans SELECT keyword', () => {
     const actual = scanToken(initState('SELECT'));
     const expected = {
       type: 'keyword',
@@ -56,7 +55,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans quoted keyword', function () {
+  it('scans quoted keyword', () => {
     const actual = scanToken(initState('"ta;\'`ble"'));
     const expected = {
       type: 'keyword',
@@ -67,19 +66,19 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans quoted string', function () {
-    const actual = scanToken(initState("'some string; I \"love it\"'"), "mysql");
+  it('scans quoted string', () => {
+    const actual = scanToken(initState('\'some string; I "love it"\''), 'mysql');
     const expected = {
       type: 'string',
-      value: "'some string; I \"love it\"'",
+      value: '\'some string; I "love it"\'',
       start: 0,
       end: 25,
     };
     expect(actual).to.eql(expected);
   });
 
-  it('scans quoted string', function () {
-    const actual = scanToken(initState("'''foo'' bar'"), "mysql");
+  it('scans quoted string', () => {
+    const actual = scanToken(initState("'''foo'' bar'"), 'mysql');
     const expected = {
       type: 'string',
       value: "'''foo'' bar'",
@@ -89,7 +88,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans INSERT keyword', function () {
+  it('scans INSERT keyword', () => {
     const actual = scanToken(initState('INSERT'));
     const expected = {
       type: 'keyword',
@@ -100,7 +99,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans DELETE keyword', function () {
+  it('scans DELETE keyword', () => {
     const actual = scanToken(initState('DELETE'));
     const expected = {
       type: 'keyword',
@@ -111,7 +110,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans UPDATE keyword', function () {
+  it('scans UPDATE keyword', () => {
     const actual = scanToken(initState('UPDATE'));
     const expected = {
       type: 'keyword',
@@ -122,7 +121,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans CREATE keyword', function () {
+  it('scans CREATE keyword', () => {
     const actual = scanToken(initState('CREATE'));
     const expected = {
       type: 'keyword',
@@ -133,7 +132,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans DROP keyword', function () {
+  it('scans DROP keyword', () => {
     const actual = scanToken(initState('DROP'));
     const expected = {
       type: 'keyword',
@@ -144,7 +143,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans TABLE keyword', function () {
+  it('scans TABLE keyword', () => {
     const actual = scanToken(initState('TABLE'));
     const expected = {
       type: 'keyword',
@@ -166,7 +165,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans DATABASE keyword', function () {
+  it('scans DATABASE keyword', () => {
     const actual = scanToken(initState('DATABASE'));
     const expected = {
       type: 'keyword',
@@ -177,7 +176,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans TRUNCATE keyword', function () {
+  it('scans TRUNCATE keyword', () => {
     const actual = scanToken(initState('TRUNCATE'));
     const expected = {
       type: 'keyword',
@@ -199,18 +198,18 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans \'Hello World\' as string value', function () {
-    const actual = scanToken(initState('\'Hello World\''));
+  it("scans 'Hello World' as string value", () => {
+    const actual = scanToken(initState("'Hello World'"));
     const expected = {
       type: 'string',
-      value: '\'Hello World\'',
+      value: "'Hello World'",
       start: 0,
       end: 12,
     };
     expect(actual).to.eql(expected);
   });
 
-  it('skips unknown tokens', function () {
+  it('skips unknown tokens', () => {
     const actual = scanToken(initState('*'));
     const expected = {
       type: 'unknown',
@@ -221,7 +220,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans ; individual identifier', function () {
+  it('scans ; individual identifier', () => {
     const actual = scanToken(initState(';'));
     const expected = {
       type: 'semicolon',
@@ -232,7 +231,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans string with underscore as one token', function () {
+  it('scans string with underscore as one token', () => {
     const actual = scanToken(initState('end_date'));
     const expected = {
       type: 'unknown',
@@ -243,7 +242,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans dollar quoted string', function () {
+  it('scans dollar quoted string', () => {
     const actual = scanToken(initState('$$test$$'));
     const expected = {
       type: 'string',
@@ -254,7 +253,7 @@ describe('scan', function () {
     expect(actual).to.eql(expected);
   });
 
-  it('scans dollar quoted string with label', function () {
+  it('scans dollar quoted string with label', () => {
     const actual = scanToken(initState('$aaa$test$aaa$'));
     const expected = {
       type: 'string',
@@ -280,12 +279,12 @@ describe('scan', function () {
             type: 'parameter',
             value: input,
             start: 0,
-            end: 0
+            end: 0,
           };
           expect(actual).to.eql(expected);
         });
       });
-      it(`does not scan just $ as parameter for psql`, () => {
+      it('does not scan just $ as parameter for psql', () => {
         const input = '$';
         const actual = scanToken(initState(input), 'psql');
         const expected = {

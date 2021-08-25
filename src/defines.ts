@@ -1,6 +1,7 @@
 export const DIALECTS = ['mssql', 'sqlite', 'mysql', 'psql', 'generic'] as const;
 export type Dialect = typeof DIALECTS[number];
-export type StatementType = 'INSERT'
+export type StatementType =
+  | 'INSERT'
   | 'UPDATE'
   | 'DELETE'
   | 'SELECT'
@@ -27,10 +28,11 @@ export type StatementType = 'INSERT'
   | 'ALTER_FUNCTION'
   | 'ALTER_INDEX'
   | 'UNKNOWN';
+
 export type ExecutionType = 'LISTING' | 'MODIFICATION' | 'UNKNOWN';
 
 export interface IdentifyOptions {
-  strict?: boolean
+  strict?: boolean;
   dialect?: Dialect;
 }
 
@@ -53,7 +55,7 @@ export interface Statement {
   definer?: number;
   algorithm?: number;
   sqlSecurity?: number;
-  parameters: string[]
+  parameters: string[];
 }
 
 export interface ConcreteStatement extends Statement {
@@ -70,7 +72,7 @@ export interface State {
 
 export interface Token {
   type:
-    'whitespace'
+    | 'whitespace'
     | 'comment-inline'
     | 'comment-block'
     | 'string'
@@ -95,7 +97,7 @@ export interface Step {
   preCanGoToNext: (token?: Token) => boolean;
   validation?: {
     requireBefore?: string[];
-    acceptTokens: {type: string; value: string;}[];
+    acceptTokens: { type: string; value: string }[];
   };
   add: (token: Token) => void;
   postCanGoToNext: (token?: Token) => boolean;

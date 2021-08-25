@@ -34,11 +34,11 @@ const INDIVIDUALS: Record<string, Token['type']> = {
 const ENDTOKENS: Record<string, Char> = {
   '"': '"',
   "'": "'",
-  "`": "`",
-  "[": "]"
+  '`': '`',
+  '[': ']',
 };
 
-export function scanToken (state: State, dialect: Dialect = 'generic'): Token {
+export function scanToken(state: State, dialect: Dialect = 'generic'): Token {
   const ch = read(state);
 
   if (isWhitespace(ch)) {
@@ -81,16 +81,16 @@ export function scanToken (state: State, dialect: Dialect = 'generic'): Token {
   return skipChar(state);
 }
 
-function read (state: State, skip = 0): Char {
+function read(state: State, skip = 0): Char {
   if (state.position + skip === state.input.length - 1) {
     return null;
   }
 
-  state.position += (1 + skip);
+  state.position += 1 + skip;
   return state.input[state.position];
 }
 
-function unread (state: State): void {
+function unread(state: State): void {
   if (state.position === state.start) {
     return;
   }
@@ -98,22 +98,22 @@ function unread (state: State): void {
   state.position--;
 }
 
-function peek (state: State): Char {
+function peek(state: State): Char {
   if (state.position >= state.input.length - 1) {
     return null;
   }
   return state.input[state.position + 1];
 }
 
-function isKeyword (word: string): boolean {
+function isKeyword(word: string): boolean {
   return KEYWORDS.includes(word.toUpperCase());
 }
 
-function resolveIndividualTokenType (ch: string): Token['type'] | undefined {
+function resolveIndividualTokenType(ch: string): Token['type'] | undefined {
   return INDIVIDUALS[ch];
 }
 
-function scanWhitespace (state: State): Token {
+function scanWhitespace(state: State): Token {
   let nextChar: string | null;
 
   do {
@@ -133,7 +133,7 @@ function scanWhitespace (state: State): Token {
   };
 }
 
-function scanCommentInline (state: State): Token {
+function scanCommentInline(state: State): Token {
   let nextChar: Char;
 
   do {
@@ -153,18 +153,21 @@ function scanCommentInline (state: State): Token {
   };
 }
 
-function scanDollarQuotedString (state: State): Token {
+function scanDollarQuotedString(state: State): Token {
   const match = /^(\$[a-zA-Z0-9_]*\$)/.exec(state.input.slice(state.start));
   if (!match) {
     throw new Error('Could not find dollar quoted string opener');
   }
   const label = match[1];
-  for (let i = 0; i < (label.length - 1); i++) {
+  for (let i = 0; i < label.length - 1; i++) {
     read(state);
   }
 
   let nextChar: Char = '';
-  while (state.input.slice(state.position, state.position + label.length) !== label && nextChar !== null) {
+  while (
+    state.input.slice(state.position, state.position + label.length) !== label &&
+    nextChar !== null
+  ) {
     do {
       nextChar = read(state);
     } while (nextChar !== '$' && nextChar !== null);
@@ -174,7 +177,7 @@ function scanDollarQuotedString (state: State): Token {
     }
   }
 
-  for (let i = 0; i < (label.length - 1); i++) {
+  for (let i = 0; i < label.length - 1; i++) {
     read(state);
   }
 
@@ -187,7 +190,7 @@ function scanDollarQuotedString (state: State): Token {
   };
 }
 
-function scanString (state: State, endToken: Char): Token {
+function scanString(state: State, endToken: Char): Token {
   let nextChar: Char;
   do {
     nextChar = read(state);
@@ -212,7 +215,7 @@ function scanString (state: State, endToken: Char): Token {
   };
 }
 
-function scanParameter (state: State, dialect: Dialect): Token {
+function scanParameter(state: State, dialect: Dialect): Token {
   if (['mysql', 'generic', 'sqlite'].includes(dialect)) {
     return {
       type: 'parameter',
@@ -237,7 +240,7 @@ function scanParameter (state: State, dialect: Dialect): Token {
       type: 'parameter',
       value,
       start: state.start,
-      end: state.start + value.length - 1
+      end: state.start + value.length - 1,
     };
   }
 
@@ -247,14 +250,14 @@ function scanParameter (state: State, dialect: Dialect): Token {
       nextChar = read(state);
     } while (!isWhitespace(nextChar) && nextChar !== null);
 
-    if(isWhitespace(nextChar)) unread(state);
+    if (isWhitespace(nextChar)) unread(state);
 
     const value = state.input.slice(state.start, state.position + 1);
     return {
       type: 'parameter',
       value,
       start: state.start,
-      end: state.start + value.length - 1
+      end: state.start + value.length - 1,
     };
   }
 
@@ -262,19 +265,18 @@ function scanParameter (state: State, dialect: Dialect): Token {
     type: 'parameter',
     value: 'unknown',
     start: state.start,
-    end: state.end
+    end: state.end,
   };
-
 }
 
-function scanCommentBlock (state: State): Token {
+function scanCommentBlock(state: State): Token {
   let nextChar: Char = '';
   let prevChar: Char;
 
   do {
     prevChar = nextChar;
     nextChar = read(state);
-  } while (((prevChar || '') + (nextChar || '') !== '*/') && nextChar !== null);
+  } while ((prevChar || '') + (nextChar || '') !== '*/' && nextChar !== null);
 
   if (nextChar !== null && nextChar !== '/') {
     unread(state);
@@ -289,7 +291,7 @@ function scanCommentBlock (state: State): Token {
   };
 }
 
-function scanQuotedIdentifier (state: State, endToken: Char): Token {
+function scanQuotedIdentifier(state: State, endToken: Char): Token {
   let nextChar: Char;
   do {
     nextChar = read(state);
@@ -308,7 +310,7 @@ function scanQuotedIdentifier (state: State, endToken: Char): Token {
   };
 }
 
-function scanWord (state: State): Token {
+function scanWord(state: State): Token {
   let nextChar: Char;
 
   do {
@@ -332,7 +334,7 @@ function scanWord (state: State): Token {
   };
 }
 
-function scanIndividualCharacter (state: State): Token | null {
+function scanIndividualCharacter(state: State): Token | null {
   const value = state.input.slice(state.start, state.position + 1);
   const type = resolveIndividualTokenType(value);
   if (!type) {
@@ -347,7 +349,7 @@ function scanIndividualCharacter (state: State): Token | null {
   };
 }
 
-function skipChar (state: State): Token {
+function skipChar(state: State): Token {
   return {
     type: 'unknown',
     value: state.input.slice(state.start, state.position + 1),
@@ -356,7 +358,7 @@ function skipChar (state: State): Token {
   };
 }
 
-function skipWord (state: State, value: string): Token {
+function skipWord(state: State, value: string): Token {
   return {
     type: 'unknown',
     value,
@@ -365,17 +367,17 @@ function skipWord (state: State, value: string): Token {
   };
 }
 
-function isWhitespace (ch: Char): boolean {
+function isWhitespace(ch: Char): boolean {
   return ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r';
 }
 
-function isString (ch: Char, dialect: Dialect): boolean {
+function isString(ch: Char, dialect: Dialect): boolean {
   const stringStart: Char[] = dialect === 'mysql' ? ["'", '"'] : ["'"];
   return stringStart.includes(ch);
 }
 
-function isParameter (ch: Char, state: State, dialect: Dialect): boolean {
-  let pStart = "?"; // ansi standard - sqlite, mysql
+function isParameter(ch: Char, state: State, dialect: Dialect): boolean {
+  let pStart = '?'; // ansi standard - sqlite, mysql
   if (dialect === 'psql') {
     pStart = '$';
     const nextChar = peek(state);
@@ -388,17 +390,16 @@ function isParameter (ch: Char, state: State, dialect: Dialect): boolean {
   return ch === pStart;
 }
 
-function isDollarQuotedString (state: State): boolean {
+function isDollarQuotedString(state: State): boolean {
   return /^\$[\w]*\$/.exec(state.input.slice(state.start)) !== null;
 }
 
-function isQuotedIdentifier (ch: Char, dialect: Dialect): boolean {
-
+function isQuotedIdentifier(ch: Char, dialect: Dialect): boolean {
   const startQuoteChars: Char[] = dialect === 'mssql' ? ['"', '['] : ['"', '`'];
   return startQuoteChars.includes(ch);
 }
 
-function isCommentInline (ch: Char, state: State): boolean {
+function isCommentInline(ch: Char, state: State): boolean {
   let isComment = ch === '-';
   if (!isComment) {
     return false;
@@ -414,7 +415,7 @@ function isCommentInline (ch: Char, state: State): boolean {
   return isComment;
 }
 
-function isCommentBlock (ch: Char, state: State): boolean {
+function isCommentBlock(ch: Char, state: State): boolean {
   let isComment = ch === '/';
   if (!isComment) {
     return false;
@@ -430,11 +431,6 @@ function isCommentBlock (ch: Char, state: State): boolean {
   return isComment;
 }
 
-function isLetter (ch: Char): boolean {
-  return ch !== null
-    && (
-      (ch >= 'a' && ch <= 'z')
-      || (ch >= 'A' && ch <= 'Z')
-      || ch === '_'
-    );
+function isLetter(ch: Char): boolean {
+  return ch !== null && ((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch === '_');
 }

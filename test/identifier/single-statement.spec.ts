@@ -2,10 +2,9 @@ import { expect } from 'chai';
 
 import { Dialect, identify } from '../../src';
 
-/* eslint prefer-arrow-callback: 0 */
-describe('identifier', function () {
-  describe('given queries with a single statement', function () {
-    it('should identify "SELECT" statement', function () {
+describe('identifier', () => {
+  describe('given queries with a single statement', () => {
+    it('should identify "SELECT" statement', () => {
       const actual = identify('SELECT * FROM Persons');
       const expected = [
         {
@@ -21,7 +20,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify "SELECT" statement with quoted string', function () {
+    it('should identify "SELECT" statement with quoted string', () => {
       const actual = identify("SELECT 'This is a ''quoted string' FROM Persons");
       const expected = [
         {
@@ -37,7 +36,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify "SELECT" statement with quoted table', function () {
+    it('should identify "SELECT" statement with quoted table', () => {
       const actual = identify('SELECT * FROM "Pers;\'ons"');
       const expected = [
         {
@@ -53,13 +52,13 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify "SELECT" statement with quoted table in mssql', function () {
-      const actual = identify('SELECT * FROM [Pers;\'ons]', { dialect: "mssql"});
+    it('should identify "SELECT" statement with quoted table in mssql', () => {
+      const actual = identify("SELECT * FROM [Pers;'ons]", { dialect: 'mssql' });
       const expected = [
         {
           start: 0,
           end: 24,
-          text: 'SELECT * FROM [Pers;\'ons]',
+          text: "SELECT * FROM [Pers;'ons]",
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
@@ -72,7 +71,7 @@ describe('identifier', function () {
     ['DATABASE', 'SCHEMA'].forEach((type) => {
       describe(`identify "CREATE ${type}" statements`, () => {
         const sql = `CREATE ${type} Profile;`;
-        it('should identify statement', function () {
+        it('should identify statement', () => {
           const actual = identify(sql);
           const expected = [
             {
@@ -90,13 +89,13 @@ describe('identifier', function () {
 
         it('should throw error for sqlite', () => {
           expect(() => identify(sql, { dialect: 'sqlite' })).to.throw(
-            `Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") instead of type="keyword" value="${type}" (currentStep=1)`
+            `Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") instead of type="keyword" value="${type}" (currentStep=1)`,
           );
         });
       });
     });
 
-    it('should identify "CREATE TABLE" statement', function () {
+    it('should identify "CREATE TABLE" statement', () => {
       const actual = identify('CREATE TABLE Persons (PersonID int, Name varchar(255));');
       const expected = [
         {
@@ -152,7 +151,7 @@ describe('identifier', function () {
         (['generic', 'mysql', 'sqlite'] as Dialect[]).forEach((dialect) => {
           it(`should throw error for ${dialect}`, () => {
             expect(() => identify(query, { dialect })).to.throw(
-              /^Expected any of these tokens .* instead of type="keyword" value="MATERIALIZED" \(currentStep=1\)/
+              /^Expected any of these tokens .* instead of type="keyword" value="MATERIALIZED" \(currentStep=1\)/,
             );
           });
         });
@@ -181,7 +180,7 @@ describe('identifier', function () {
         (['generic', 'sqlite', 'mssql'] as Dialect[]).forEach((dialect) => {
           it(`should throw error for ${dialect}`, () => {
             expect(() => identify(query, { dialect })).to.throw(
-              /^Expected any of these tokens .* instead of type="unknown" value="OR" \(currentStep=1\)/
+              /^Expected any of these tokens .* instead of type="unknown" value="OR" \(currentStep=1\)/,
             );
           });
         });
@@ -196,7 +195,7 @@ describe('identifier', function () {
               const expected = [
                 {
                   start: 0,
-                  end:  42 + temp.length,
+                  end: 42 + temp.length,
                   text: query,
                   type: 'CREATE_VIEW',
                   executionType: 'MODIFICATION',
@@ -210,7 +209,9 @@ describe('identifier', function () {
 
           (['generic', 'mysql', 'mssql'] as Dialect[]).forEach((dialect) => {
             it(`should throw error for ${dialect}`, () => {
-              const regex = new RegExp(`Expected any of these tokens .* instead of type="unknown" value="${temp}" \\(currentStep=1\\)`);
+              const regex = new RegExp(
+                `Expected any of these tokens .* instead of type="unknown" value="${temp}" \\(currentStep=1\\)`,
+              );
               expect(() => identify(query, { dialect })).to.throw(regex);
             });
           });
@@ -261,8 +262,11 @@ describe('identifier', function () {
     });
 
     describe('identify "CREATE TRIGGER" statements', () => {
-      it('should identify sqlite "CREATE TRIGGER" statement', function () {
-        const actual = identify('CREATE TRIGGER sqlmods AFTER UPDATE ON bar FOR EACH ROW WHEN old.yay IS NULL BEGIN UPDATE bar SET yay = 1 WHERE rowid = NEW.rowid; END;', { dialect: 'sqlite' });
+      it('should identify sqlite "CREATE TRIGGER" statement', () => {
+        const actual = identify(
+          'CREATE TRIGGER sqlmods AFTER UPDATE ON bar FOR EACH ROW WHEN old.yay IS NULL BEGIN UPDATE bar SET yay = 1 WHERE rowid = NEW.rowid; END;',
+          { dialect: 'sqlite' },
+        );
         const expected = [
           {
             start: 0,
@@ -276,7 +280,7 @@ describe('identifier', function () {
         expect(actual).to.eql(expected);
       });
 
-      it('should identify sqlite "CREATE TRIGGER" statement with case', function () {
+      it('should identify sqlite "CREATE TRIGGER" statement with case', () => {
         const sql = `CREATE TRIGGER DeleteProduct
         BEFORE DELETE ON Product
         BEGIN
@@ -301,7 +305,7 @@ describe('identifier', function () {
         expect(actual).to.eql(expected);
       });
 
-      it('should identify SQLSERVER "CREATE TRIGGER" statement', function () {
+      it('should identify SQLSERVER "CREATE TRIGGER" statement', () => {
         const query = `CREATE TRIGGER Purchasing.LowCredit ON Purchasing.PurchaseOrderHeader
           AFTER INSERT
           AS
@@ -335,8 +339,10 @@ describe('identifier', function () {
         expect(actual).to.eql(expected);
       });
 
-      it('should identify postgres "CREATE TRIGGER" statement', function () {
-        const actual = identify('CREATE TRIGGER view_insert INSTEAD OF INSERT ON my_view FOR EACH ROW EXECUTE PROCEDURE view_insert_row();');
+      it('should identify postgres "CREATE TRIGGER" statement', () => {
+        const actual = identify(
+          'CREATE TRIGGER view_insert INSTEAD OF INSERT ON my_view FOR EACH ROW EXECUTE PROCEDURE view_insert_row();',
+        );
         const expected = [
           {
             start: 0,
@@ -352,8 +358,7 @@ describe('identifier', function () {
     });
 
     describe('identify "CREATE FUNCTION" statements', () => {
-
-      it('should identify postgres "CREATE FUNCTION" statement with LANGUAGE at end', function () {
+      it('should identify postgres "CREATE FUNCTION" statement with LANGUAGE at end', () => {
         const sql = `CREATE FUNCTION quarterly_summary_func(start_date date DEFAULT CURRENT_TIMESTAMP)
         RETURNS TABLE (staff_name text, staff_bonus int, quarter tsrange)
         As $$
@@ -395,7 +400,7 @@ describe('identifier', function () {
         expect(actual).to.eql(expected);
       });
 
-      it('should identify postgres "CREATE FUNCTION" statement with LANGUAGE at beginning', function () {
+      it('should identify postgres "CREATE FUNCTION" statement with LANGUAGE at beginning', () => {
         const sql = `CREATE OR REPLACE FUNCTION f_grp_prod(text)
           RETURNS TABLE (
             name text
@@ -445,7 +450,7 @@ describe('identifier', function () {
         expect(actual).to.eql(expected);
       });
 
-      it('should identify postgres "CREATE FUNCTION" statement with case', function () {
+      it('should identify postgres "CREATE FUNCTION" statement with case', () => {
         const sql = `CREATE OR REPLACE FUNCTION af_calculate_range(tt TEXT, tc INTEGER)
         RETURNS INTEGER IMMUTABLE AS $$
         BEGIN
@@ -470,8 +475,10 @@ describe('identifier', function () {
         expect(actual).to.eql(expected);
       });
 
-      it('should identify mysql "CREATE FUNCTION" statement', function () {
-        const actual = identify("CREATE FUNCTION hello (s CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ',s,'!');");
+      it('should identify mysql "CREATE FUNCTION" statement', () => {
+        const actual = identify(
+          "CREATE FUNCTION hello (s CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ',s,'!');",
+        );
         const expected = [
           {
             start: 0,
@@ -485,8 +492,11 @@ describe('identifier', function () {
         expect(actual).to.eql(expected);
       });
 
-      it('should identify mysql "CREATE FUNCTION" statement with definer', function () {
-        const actual = identify("CREATE DEFINER = 'admin'@'localhost' FUNCTION hello (s CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ',s,'!');", { dialect: 'mysql' });
+      it('should identify mysql "CREATE FUNCTION" statement with definer', () => {
+        const actual = identify(
+          "CREATE DEFINER = 'admin'@'localhost' FUNCTION hello (s CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ',s,'!');",
+          { dialect: 'mysql' },
+        );
         const expected = [
           {
             start: 0,
@@ -500,7 +510,7 @@ describe('identifier', function () {
         expect(actual).to.eql(expected);
       });
 
-      it('should identify sql server "CREATE FUNCTION" statement', function () {
+      it('should identify sql server "CREATE FUNCTION" statement', () => {
         const query = `CREATE FUNCTION dbo.ISOweek (@DATE datetime)
         RETURNS int
         WITH EXECUTE AS CALLER
@@ -536,7 +546,7 @@ describe('identifier', function () {
 
     describe('should identify "CREATE INDEX" statements', () => {
       it('should identify "CREATE INDEX" statement', () => {
-        const sql = `CREATE INDEX foo ON bar (baz)`;
+        const sql = 'CREATE INDEX foo ON bar (baz)';
         const actual = identify(sql, { dialect: 'mysql' });
         const expected = [
           {
@@ -552,7 +562,7 @@ describe('identifier', function () {
       });
 
       it('should identify "CREATE UNIQUE INDEX" statement', () => {
-        const sql = `CREATE UNIQUE INDEX foo ON bar (baz)`;
+        const sql = 'CREATE UNIQUE INDEX foo ON bar (baz)';
         const actual = identify(sql, { dialect: 'mysql' });
         const expected = [
           {
@@ -611,7 +621,7 @@ describe('identifier', function () {
     ['DATABASE', 'SCHEMA'].forEach((type) => {
       describe(`identify "DROP ${type}" statements`, () => {
         const sql = `DROP ${type} Profile;`;
-        it('should identify statement', function () {
+        it('should identify statement', () => {
           const actual = identify(sql);
           const expected = [
             {
@@ -629,13 +639,13 @@ describe('identifier', function () {
 
         it('should throw error for sqlite', () => {
           expect(() => identify(sql, { dialect: 'sqlite' })).to.throw(
-            `Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") instead of type="keyword" value="${type}" (currentStep=1).`
+            `Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") instead of type="keyword" value="${type}" (currentStep=1).`,
           );
         });
       });
     });
 
-    it('should identify "DROP TABLE" statement', function () {
+    it('should identify "DROP TABLE" statement', () => {
       const actual = identify('DROP TABLE Persons;');
       const expected = [
         {
@@ -667,7 +677,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify "DROP DATABASE" statement', function () {
+    it('should identify "DROP DATABASE" statement', () => {
       const actual = identify('DROP DATABASE Profile;');
       const expected = [
         {
@@ -683,7 +693,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify "DROP TRIGGER" statement', function () {
+    it('should identify "DROP TRIGGER" statement', () => {
       const actual = identify('DROP TRIGGER delete_stu on student_mast;');
       const expected = [
         {
@@ -698,7 +708,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify "DROP FUNCTION" statement', function () {
+    it('should identify "DROP FUNCTION" statement', () => {
       const sql = 'DROP FUNCTION sqrt(integer);';
       const actual = identify(sql);
       const expected = [
@@ -730,7 +740,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify "TRUNCATE TABLE" statement', function () {
+    it('should identify "TRUNCATE TABLE" statement', () => {
       const actual = identify('TRUNCATE TABLE Persons;');
       const expected = [
         {
@@ -746,13 +756,13 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify "INSERT" statement', function () {
-      const actual = identify('INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');');
+    it('should identify "INSERT" statement', () => {
+      const actual = identify("INSERT INTO Persons (PersonID, Name) VALUES (1, 'Jack');");
       const expected = [
         {
           start: 0,
           end: 55,
-          text: 'INSERT INTO Persons (PersonID, Name) VALUES (1, \'Jack\');',
+          text: "INSERT INTO Persons (PersonID, Name) VALUES (1, 'Jack');",
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
@@ -762,13 +772,13 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify "UPDATE" statement', function () {
-      const actual = identify('UPDATE Persons SET Name = \'John\' WHERE PersonID = 1;');
+    it('should identify "UPDATE" statement', () => {
+      const actual = identify("UPDATE Persons SET Name = 'John' WHERE PersonID = 1;");
       const expected = [
         {
           start: 0,
           end: 51,
-          text: 'UPDATE Persons SET Name = \'John\' WHERE PersonID = 1;',
+          text: "UPDATE Persons SET Name = 'John' WHERE PersonID = 1;",
           type: 'UPDATE',
           executionType: 'MODIFICATION',
           parameters: [],
@@ -778,8 +788,10 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify more complex "UPDATE" statement with a weird string/keyword', function () {
-      const actual = identify('UPDATE customers SET a = 0, note = CONCAT(note, "abc;def") WHERE a = 10;');
+    it('should identify more complex "UPDATE" statement with a weird string/keyword', () => {
+      const actual = identify(
+        'UPDATE customers SET a = 0, note = CONCAT(note, "abc;def") WHERE a = 10;',
+      );
       const expected = [
         {
           start: 0,
@@ -793,7 +805,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify "DELETE" statement', function () {
+    it('should identify "DELETE" statement', () => {
       const actual = identify('DELETE FROM Persons WHERE PersonID = 1;');
       const expected = [
         {
@@ -846,14 +858,14 @@ describe('identifier', function () {
         ].forEach(([type, sql]) => {
           it(`should throw error for "ALTER_${type}" statement`, () => {
             expect(() => identify(sql, { dialect: 'sqlite' })).to.throw(
-              `Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") instead of type="keyword" value="${type}" (currentStep=1).`
+              `Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") instead of type="keyword" value="${type}" (currentStep=1).`,
             );
           });
         });
       });
     });
 
-    it('should identify statement starting with inline comment', function () {
+    it('should identify statement starting with inline comment', () => {
       const actual = identify(`
         -- some comment
         SELECT * FROM Persons
@@ -872,7 +884,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify statement starting with block comment', function () {
+    it('should identify statement starting with block comment', () => {
       const actual = identify(`
         /**
           * some comment
@@ -893,7 +905,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify statement ending with block comment', function () {
+    it('should identify statement ending with block comment', () => {
       const actual = identify(`
         SELECT * FROM Persons
         /**
@@ -914,7 +926,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify statement ending with inline comment', function () {
+    it('should identify statement ending with inline comment', () => {
       const actual = identify(`
         SELECT * FROM Persons
         -- some comment
@@ -933,7 +945,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify statement with inline comment in the middle', function () {
+    it('should identify statement with inline comment in the middle', () => {
       const actual = identify(`
         SELECT *
         -- some comment
@@ -953,7 +965,7 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify statement with block comment in the middle', function () {
+    it('should identify statement with block comment in the middle', () => {
       const actual = identify(`
         SELECT *
         /**
@@ -975,14 +987,14 @@ describe('identifier', function () {
       expect(actual).to.eql(expected);
     });
 
-    it('should identify empty statement', function () {
+    it('should identify empty statement', () => {
       const actual = identify('');
       const expected = [];
 
       expect(actual).to.eql(expected);
     });
 
-    it('should able to detect a statement even without knowing its type when strict is disabled - CREATE LOGFILE', function () {
+    it('should able to detect a statement even without knowing its type when strict is disabled - CREATE LOGFILE', () => {
       const sql = "CREATE LOGFILE GROUP lg1 ADD UNDOFILE 'undo.dat' INITIAL_SIZE = 10M;";
       const actual = identify(sql, { strict: false });
       const expected = [

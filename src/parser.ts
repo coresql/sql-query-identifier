@@ -67,7 +67,7 @@ interface ParseOptions {
   dialect: Dialect;
 }
 
-function createInitialStatement (): Statement {
+function createInitialStatement(): Statement {
   return {
     start: -1,
     end: 0,
@@ -78,7 +78,7 @@ function createInitialStatement (): Statement {
 /**
  * Parser
  */
-export function parse (input: string, isStrict = true, dialect: Dialect = 'generic'): ParseResult {
+export function parse(input: string, isStrict = true, dialect: Dialect = 'generic'): ParseResult {
   const topLevelState = initState({ input });
   const topLevelStatement: ParseResult = {
     type: 'QUERY',
@@ -104,11 +104,7 @@ export function parse (input: string, isStrict = true, dialect: Dialect = 'gener
     state: topLevelState,
   };
 
-  const ignoreOutsideBlankTokens = [
-    'whitespace',
-    'comment-inline',
-    'comment-block',
-  ];
+  const ignoreOutsideBlankTokens = ['whitespace', 'comment-inline', 'comment-block'];
 
   while (prevState.position < topLevelState.end) {
     const tokenState = initState({ prevState });
@@ -182,12 +178,10 @@ export function parse (input: string, isStrict = true, dialect: Dialect = 'gener
     }
   }
 
-
-
   return topLevelStatement;
 }
 
-function initState ({ input, prevState }: { input?: string, prevState?: State }): State {
+function initState({ input, prevState }: { input?: string; prevState?: State }): State {
   if (prevState) {
     return {
       input: prevState.input,
@@ -207,18 +201,27 @@ function initState ({ input, prevState }: { input?: string, prevState?: State })
   };
 }
 
-function createStatementParserByToken (token: Token, options: ParseOptions): StatementParser {
+function createStatementParserByToken(token: Token, options: ParseOptions): StatementParser {
   if (token.type === 'keyword') {
     switch (token.value.toUpperCase()) {
-      case 'SELECT': return createSelectStatementParser(options);
-      case 'CREATE': return createCreateStatementParser(options);
-      case 'DROP': return createDropStatementParser(options);
-      case 'ALTER': return createAlterStatementParser(options);
-      case 'INSERT': return createInsertStatementParser(options);
-      case 'UPDATE': return createUpdateStatementParser(options);
-      case 'DELETE': return createDeleteStatementParser(options);
-      case 'TRUNCATE': return createTruncateStatementParser(options);
-      default: break;
+      case 'SELECT':
+        return createSelectStatementParser(options);
+      case 'CREATE':
+        return createCreateStatementParser(options);
+      case 'DROP':
+        return createDropStatementParser(options);
+      case 'ALTER':
+        return createAlterStatementParser(options);
+      case 'INSERT':
+        return createInsertStatementParser(options);
+      case 'UPDATE':
+        return createUpdateStatementParser(options);
+      case 'DELETE':
+        return createDeleteStatementParser(options);
+      case 'TRUNCATE':
+        return createTruncateStatementParser(options);
+      default:
+        break;
     }
   }
 
@@ -229,7 +232,7 @@ function createStatementParserByToken (token: Token, options: ParseOptions): Sta
   throw new Error(`Invalid statement parser "${token.value}"`);
 }
 
-function createSelectStatementParser (options: ParseOptions) {
+function createSelectStatementParser(options: ParseOptions) {
   const statement = createInitialStatement();
 
   const steps: Step[] = [
@@ -237,9 +240,7 @@ function createSelectStatementParser (options: ParseOptions) {
     {
       preCanGoToNext: () => false,
       validation: {
-        acceptTokens: [
-          { type: 'keyword', value: 'SELECT' },
-        ],
+        acceptTokens: [{ type: 'keyword', value: 'SELECT' }],
       },
       add: (token) => {
         statement.type = 'SELECT';
@@ -254,7 +255,7 @@ function createSelectStatementParser (options: ParseOptions) {
   return stateMachineStatementParser(statement, steps, options);
 }
 
-function createInsertStatementParser (options: ParseOptions) {
+function createInsertStatementParser(options: ParseOptions) {
   const statement = createInitialStatement();
 
   const steps: Step[] = [
@@ -262,9 +263,7 @@ function createInsertStatementParser (options: ParseOptions) {
     {
       preCanGoToNext: () => false,
       validation: {
-        acceptTokens: [
-          { type: 'keyword', value: 'INSERT' },
-        ],
+        acceptTokens: [{ type: 'keyword', value: 'INSERT' }],
       },
       add: (token) => {
         statement.type = 'INSERT';
@@ -279,7 +278,7 @@ function createInsertStatementParser (options: ParseOptions) {
   return stateMachineStatementParser(statement, steps, options);
 }
 
-function createUpdateStatementParser (options: ParseOptions) {
+function createUpdateStatementParser(options: ParseOptions) {
   const statement = createInitialStatement();
 
   const steps: Step[] = [
@@ -287,9 +286,7 @@ function createUpdateStatementParser (options: ParseOptions) {
     {
       preCanGoToNext: () => false,
       validation: {
-        acceptTokens: [
-          { type: 'keyword', value: 'UPDATE' },
-        ],
+        acceptTokens: [{ type: 'keyword', value: 'UPDATE' }],
       },
       add: (token) => {
         statement.type = 'UPDATE';
@@ -304,7 +301,7 @@ function createUpdateStatementParser (options: ParseOptions) {
   return stateMachineStatementParser(statement, steps, options);
 }
 
-function createDeleteStatementParser (options: ParseOptions) {
+function createDeleteStatementParser(options: ParseOptions) {
   const statement = createInitialStatement();
 
   const steps: Step[] = [
@@ -312,9 +309,7 @@ function createDeleteStatementParser (options: ParseOptions) {
     {
       preCanGoToNext: () => false,
       validation: {
-        acceptTokens: [
-          { type: 'keyword', value: 'DELETE' },
-        ],
+        acceptTokens: [{ type: 'keyword', value: 'DELETE' }],
       },
       add: (token) => {
         statement.type = 'DELETE';
@@ -329,7 +324,7 @@ function createDeleteStatementParser (options: ParseOptions) {
   return stateMachineStatementParser(statement, steps, options);
 }
 
-function createCreateStatementParser (options: ParseOptions) {
+function createCreateStatementParser(options: ParseOptions) {
   const statement = createInitialStatement();
 
   const steps: Step[] = [
@@ -337,9 +332,7 @@ function createCreateStatementParser (options: ParseOptions) {
     {
       preCanGoToNext: () => false,
       validation: {
-        acceptTokens: [
-          { type: 'keyword', value: 'CREATE' },
-        ],
+        acceptTokens: [{ type: 'keyword', value: 'CREATE' }],
       },
       add: (token) => {
         if (statement.start < 0) {
@@ -356,9 +349,9 @@ function createCreateStatementParser (options: ParseOptions) {
         acceptTokens: [
           ...(options.dialect !== 'sqlite'
             ? [
-              { type: 'keyword', value: 'DATABASE' },
-              { type: 'keyword', value: 'SCHEMA' },
-            ]
+                { type: 'keyword', value: 'DATABASE' },
+                { type: 'keyword', value: 'SCHEMA' },
+              ]
             : []),
           { type: 'keyword', value: 'TABLE' },
           { type: 'keyword', value: 'VIEW' },
@@ -377,7 +370,7 @@ function createCreateStatementParser (options: ParseOptions) {
   return stateMachineStatementParser(statement, steps, options);
 }
 
-function createDropStatementParser (options: ParseOptions) {
+function createDropStatementParser(options: ParseOptions) {
   const statement = createInitialStatement();
 
   const steps: Step[] = [
@@ -385,9 +378,7 @@ function createDropStatementParser (options: ParseOptions) {
     {
       preCanGoToNext: () => false,
       validation: {
-        acceptTokens: [
-          { type: 'keyword', value: 'DROP' },
-        ],
+        acceptTokens: [{ type: 'keyword', value: 'DROP' }],
       },
       add: (token) => {
         if (statement.start < 0) {
@@ -404,9 +395,9 @@ function createDropStatementParser (options: ParseOptions) {
         acceptTokens: [
           ...(options.dialect !== 'sqlite'
             ? [
-              { type: 'keyword', value: 'DATABASE' },
-              { type: 'keyword', value: 'SCHEMA' },
-            ]
+                { type: 'keyword', value: 'DATABASE' },
+                { type: 'keyword', value: 'SCHEMA' },
+              ]
             : []),
           { type: 'keyword', value: 'TABLE' },
           { type: 'keyword', value: 'VIEW' },
@@ -425,16 +416,14 @@ function createDropStatementParser (options: ParseOptions) {
   return stateMachineStatementParser(statement, steps, options);
 }
 
-function createAlterStatementParser (options: ParseOptions) {
+function createAlterStatementParser(options: ParseOptions) {
   const statement = createInitialStatement();
 
   const steps: Step[] = [
     {
       preCanGoToNext: () => false,
       validation: {
-        acceptTokens: [
-          { type: 'keyword', value: 'ALTER' },
-        ],
+        acceptTokens: [{ type: 'keyword', value: 'ALTER' }],
       },
       add: (token) => {
         if (statement.start < 0) {
@@ -450,12 +439,12 @@ function createAlterStatementParser (options: ParseOptions) {
         acceptTokens: [
           ...(options.dialect !== 'sqlite'
             ? [
-              { type: 'keyword', value: 'DATABASE' },
-              { type: 'keyword', value: 'SCHEMA' },
-              { type: 'keyword', value: 'TRIGGER' },
-              { type: 'keyword', value: 'FUNCTION' },
-              { type: 'keyword', value: 'INDEX' },
-            ]
+                { type: 'keyword', value: 'DATABASE' },
+                { type: 'keyword', value: 'SCHEMA' },
+                { type: 'keyword', value: 'TRIGGER' },
+                { type: 'keyword', value: 'FUNCTION' },
+                { type: 'keyword', value: 'INDEX' },
+              ]
             : []),
           { type: 'keyword', value: 'TABLE' },
           { type: 'keyword', value: 'VIEW' },
@@ -471,17 +460,14 @@ function createAlterStatementParser (options: ParseOptions) {
   return stateMachineStatementParser(statement, steps, options);
 }
 
-
-function createTruncateStatementParser (options: ParseOptions) {
+function createTruncateStatementParser(options: ParseOptions) {
   const statement = createInitialStatement();
 
   const steps: Step[] = [
     {
       preCanGoToNext: () => false,
       validation: {
-        acceptTokens: [
-          { type: 'keyword', value: 'TRUNCATE' },
-        ],
+        acceptTokens: [{ type: 'keyword', value: 'TRUNCATE' }],
       },
       add: (token) => {
         statement.type = 'TRUNCATE';
@@ -496,7 +482,7 @@ function createTruncateStatementParser (options: ParseOptions) {
   return stateMachineStatementParser(statement, steps, options);
 }
 
-function createUnknownStatementParser (options: ParseOptions) {
+function createUnknownStatementParser(options: ParseOptions) {
   const statement = createInitialStatement();
 
   const steps: Step[] = [
@@ -515,7 +501,11 @@ function createUnknownStatementParser (options: ParseOptions) {
   return stateMachineStatementParser(statement, steps, options);
 }
 
-function stateMachineStatementParser (statement: Statement, steps: Step[], { isStrict, dialect }: ParseOptions): StatementParser {
+function stateMachineStatementParser(
+  statement: Statement,
+  steps: Step[],
+  { isStrict, dialect }: ParseOptions,
+): StatementParser {
   let currentStepIndex = 0;
   let prevToken: Token;
   let prevPrevToken: Token;
@@ -528,17 +518,14 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
       return true;
     }
 
-    return step
-      .validation
-      .acceptTokens.filter((accept) => {
+    return (
+      step.validation.acceptTokens.filter((accept) => {
         const isValidType = token.type === accept.type;
-        const isValidValue = (
-          !accept.value
-          || token.value.toUpperCase() === accept.value
-        );
+        const isValidValue = !accept.value || token.value.toUpperCase() === accept.value;
 
         return isValidType && isValidValue;
-      }).length > 0;
+      }).length > 0
+    );
   };
 
   const setPrevToken = (token: Token) => {
@@ -547,23 +534,20 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
   };
 
   return {
-    getStatement () {
+    getStatement() {
       return statement;
     },
 
-    addToken (token: Token) {
+    addToken(token: Token) {
       /* eslint no-param-reassign: 0 */
       if (statement.endStatement) {
         throw new Error('This statement has already got to the end.');
       }
 
       if (
-        statement.type
-        && token.type === 'semicolon'
-        && (
-          !statementsWithEnds.includes(statement.type)
-          || (openBlocks === 0 && statement.canEnd)
-        )
+        statement.type &&
+        token.type === 'semicolon' &&
+        (!statementsWithEnds.includes(statement.type) || (openBlocks === 0 && statement.canEnd))
       ) {
         statement.endStatement = ';';
         return;
@@ -583,7 +567,11 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
         return;
       }
 
-      if (token.type === 'keyword' && blockOpeners[dialect].includes(token.value) && prevPrevToken.value !== 'END') {
+      if (
+        token.type === 'keyword' &&
+        blockOpeners[dialect].includes(token.value) &&
+        prevPrevToken.value !== 'END'
+      ) {
         openBlocks++;
         setPrevToken(token);
         return;
@@ -601,9 +589,9 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
 
       // index modifiers
       if (
-        token.value.toUpperCase() === 'UNIQUE'
-        || (dialect === 'mysql' && ['FULLTEXT', 'SPATIAL'].includes(token.value.toUpperCase()))
-        || (dialect === 'mssql' && ['CLUSTERED', 'NONCLUSTERED'].includes(token.value.toUpperCase()))
+        token.value.toUpperCase() === 'UNIQUE' ||
+        (dialect === 'mysql' && ['FULLTEXT', 'SPATIAL'].includes(token.value.toUpperCase())) ||
+        (dialect === 'mssql' && ['CLUSTERED', 'NONCLUSTERED'].includes(token.value.toUpperCase()))
       ) {
         setPrevToken(token);
         return;
@@ -616,12 +604,18 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
 
       // psql allows for optional "OR REPLACE" between "CREATE" and "FUNCTION"
       // mysql and psql allow it between "CREATE" and "VIEW"
-      if (['psql', 'mysql'].includes(dialect) && ['OR', 'REPLACE'].includes(token.value.toUpperCase())) {
+      if (
+        ['psql', 'mysql'].includes(dialect) &&
+        ['OR', 'REPLACE'].includes(token.value.toUpperCase())
+      ) {
         setPrevToken(token);
         return;
       }
 
-      if (['psql', 'sqlite'].includes(dialect) && ['TEMP', 'TEMPORARY'].includes(token.value.toUpperCase())) {
+      if (
+        ['psql', 'sqlite'].includes(dialect) &&
+        ['TEMP', 'TEMPORARY'].includes(token.value.toUpperCase())
+      ) {
         setPrevToken(token);
         return;
       }
@@ -674,7 +668,10 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
           return;
         }
 
-        if (statement.algorithm > 1 && ['UNDEFINED', 'MERGE', 'TEMPTABLE'].includes(prevToken.value.toUpperCase())) {
+        if (
+          statement.algorithm > 1 &&
+          ['UNDEFINED', 'MERGE', 'TEMPTABLE'].includes(prevToken.value.toUpperCase())
+        ) {
           setPrevToken(token);
           return;
         }
@@ -691,13 +688,13 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
       if (statement.sqlSecurity !== undefined) {
         if (
           (statement.sqlSecurity === 0 && token.value.toUpperCase() === 'SECURITY') ||
-          (statement.sqlSecurity === 1 && ['DEFINER', 'INVOKER'].includes(token.value.toUpperCase()))
+          (statement.sqlSecurity === 1 &&
+            ['DEFINER', 'INVOKER'].includes(token.value.toUpperCase()))
         ) {
           statement.sqlSecurity++;
           setPrevToken(token);
           return;
-        }
-        else if (statement.sqlSecurity === 2) {
+        } else if (statement.sqlSecurity === 2) {
           delete statement.sqlSecurity;
         }
       }
@@ -709,28 +706,33 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
       }
 
       if (
-        currentStep.validation
-        && currentStep.validation.requireBefore
-        && !currentStep.validation.requireBefore.includes(prevToken.type)
+        currentStep.validation &&
+        currentStep.validation.requireBefore &&
+        !currentStep.validation.requireBefore.includes(prevToken.type)
       ) {
         const requireds = currentStep.validation.requireBefore.join(' or ');
-        throw new Error(`Expected any of these tokens ${requireds} before "${token.value}" (currentStep=${currentStepIndex}).`);
+        throw new Error(
+          `Expected any of these tokens ${requireds} before "${token.value}" (currentStep=${currentStepIndex}).`,
+        );
       }
 
       if (!isValidToken(currentStep, token) && isStrict) {
-        const expecteds = currentStep.validation ?
-          currentStep
-            .validation
-            .acceptTokens
-            .map((accept) => `(type="${accept.type}" value="${accept.value}")`)
-            .join(' or ') :
-          '()';
-        throw new Error(`Expected any of these tokens ${expecteds} instead of type="${token.type}" value="${token.value}" (currentStep=${currentStepIndex}).`);
+        const expecteds = currentStep.validation
+          ? currentStep.validation.acceptTokens
+              .map((accept) => `(type="${accept.type}" value="${accept.value}")`)
+              .join(' or ')
+          : '()';
+        throw new Error(
+          `Expected any of these tokens ${expecteds} instead of type="${token.type}" value="${token.value}" (currentStep=${currentStepIndex}).`,
+        );
       }
 
       currentStep.add(token);
 
-      statement.executionType = statement.type && EXECUTION_TYPES[statement.type] ? EXECUTION_TYPES[statement.type] : 'UNKNOWN';
+      statement.executionType =
+        statement.type && EXECUTION_TYPES[statement.type]
+          ? EXECUTION_TYPES[statement.type]
+          : 'UNKNOWN';
 
       if (currentStep.postCanGoToNext(token)) {
         currentStepIndex++;

@@ -1,9 +1,9 @@
-import { Token } from "../src/defines";
+import { Token } from '../src/defines';
 
 /**
  * Helper function to make easier check the assert result
  */
-export function aggregateUnknownTokens (tokens: Token[]): Token[] {
+export function aggregateUnknownTokens(tokens: Token[]): Token[] {
   return tokens.reduce((result: Token[], token, index) => {
     const prev = result[result.length - 1];
     const next = tokens[index + 1];
@@ -17,15 +17,14 @@ export function aggregateUnknownTokens (tokens: Token[]): Token[] {
     const isCurrStringAfterUnknown = isCurrString && isPrevUnknown;
     const isCurrStringBeforeUnknown = isCurrString && isNextUnknown;
 
-    const isKnowTokenBeforeUnknown = (
-      isCurrWhitespaceBeforeUnknown || isCurrStringBeforeUnknown
-    ) && !isPrevUnknown;
+    const isKnowTokenBeforeUnknown =
+      (isCurrWhitespaceBeforeUnknown || isCurrStringBeforeUnknown) && !isPrevUnknown;
 
-    const isNewToken = isKnowTokenBeforeUnknown || (
-      !isCurrWhitespaceAfterUnknown
-      && !isCurrStringAfterUnknown
-      && (!isCurrUnknown || !isPrevUnknown)
-    );
+    const isNewToken =
+      isKnowTokenBeforeUnknown ||
+      (!isCurrWhitespaceAfterUnknown &&
+        !isCurrStringAfterUnknown &&
+        (!isCurrUnknown || !isPrevUnknown));
 
     if (isNewToken) {
       result.push({

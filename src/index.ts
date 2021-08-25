@@ -13,7 +13,7 @@ export type {
 /**
  * Identifier
  */
-export function identify (query: string, options: IdentifyOptions = {}): IdentifyResult[] {
+export function identify(query: string, options: IdentifyOptions = {}): IdentifyResult[] {
   const isStrict = typeof options.strict === 'undefined' ? true : options.strict === true;
   const dialect = typeof options.dialect === 'undefined' ? 'generic' : options.dialect;
 
@@ -36,6 +36,6 @@ export function identify (query: string, options: IdentifyOptions = {}): Identif
   });
 }
 
-export function getExecutionType (command: string): ExecutionType {
+export function getExecutionType(command: string): ExecutionType {
   return EXECUTION_TYPES[command as StatementType] || 'UNKNOWN';
 }
