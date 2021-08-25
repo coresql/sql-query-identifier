@@ -376,8 +376,8 @@ describe('parser', function () {
 
     describe("with parameters", function () {
       it('should extract the parameters', function () {
-        const actual = parse("select x from a where x = ?")
-        actual.tokens = aggregateUnknownTokens(actual.tokens)
+        const actual = parse("select x from a where x = ?");
+        actual.tokens = aggregateUnknownTokens(actual.tokens);
         const expected: Token[] = [
           {
             type: 'keyword', value: 'select', start: 0, end: 5,
@@ -388,14 +388,14 @@ describe('parser', function () {
           {
             type: 'parameter', value: '?', start: 26, end: 26
           }
-        ]
-        expect(actual.tokens).to.eql(expected)
+        ];
+        expect(actual.tokens).to.eql(expected);
         expect(actual.body[0].parameters).to.eql(['?']);
       });
 
       it('should extract PSQL parameters', function () {
-        const actual = parse("select x from a where x = $1", true, 'psql')
-        actual.tokens = aggregateUnknownTokens(actual.tokens)
+        const actual = parse("select x from a where x = $1", true, 'psql');
+        actual.tokens = aggregateUnknownTokens(actual.tokens);
         const expected: Token[] = [
           {
             type: 'keyword', value: 'select', start: 0, end: 5,
@@ -406,14 +406,14 @@ describe('parser', function () {
           {
             type: 'parameter', value: '$1', start: 26, end: 27
           }
-        ]
-        expect(actual.tokens).to.eql(expected)
+        ];
+        expect(actual.tokens).to.eql(expected);
         expect(actual.body[0].parameters).to.eql(['$1']);
-      })
+      });
 
       it('should extract multiple PSQL parameters', function () {
-        const actual = parse("select x from a where x = $1 and y = $2", true, 'psql')
-        actual.tokens = aggregateUnknownTokens(actual.tokens)
+        const actual = parse("select x from a where x = $1 and y = $2", true, 'psql');
+        actual.tokens = aggregateUnknownTokens(actual.tokens);
         const expected: Token[] = [
           {
             type: 'keyword', value: 'select', start: 0, end: 5,
@@ -430,14 +430,14 @@ describe('parser', function () {
           {
             type: 'parameter', value: '$2', start: 37, end: 38
           }
-        ]
-        expect(actual.tokens).to.eql(expected)
+        ];
+        expect(actual.tokens).to.eql(expected);
         expect(actual.body[0].parameters).to.eql(['$1', '$2']);
-      })
+      });
 
       it('should extract mssql parameters', function () {
-        const actual = parse("select x from a where x = :foo", true, 'mssql')
-        actual.tokens = aggregateUnknownTokens(actual.tokens)
+        const actual = parse("select x from a where x = :foo", true, 'mssql');
+        actual.tokens = aggregateUnknownTokens(actual.tokens);
         const expected: Token[] = [
           {
             type: 'keyword', value: 'select', start: 0, end: 5,
@@ -448,23 +448,23 @@ describe('parser', function () {
           {
             type: 'parameter', value: ':foo', start: 26, end: 29
           }
-        ]
-        expect(actual.tokens).to.eql(expected)
+        ];
+        expect(actual.tokens).to.eql(expected);
         expect(actual.body[0].parameters).to.eql([':foo']);
       });
 
       it('should not identify params in a comment', function () {
-        const actual = parse("-- comment ?")
+        const actual = parse("-- comment ?");
         const expected: Token[] = [
           {
             type: 'comment-inline', value: '-- comment ?', start: 0, end: 11
           }
-        ]
-        expect(actual.tokens).to.eql(expected)
-      })
+        ];
+        expect(actual.tokens).to.eql(expected);
+      });
 
       it('should not identify params in a string', function () {
-        const actual = parse("select '$1'", true, 'psql')
+        const actual = parse("select '$1'", true, 'psql');
         const expected: Token[] = [
           {
             type: 'keyword', value: 'select', start: 0, end: 5
@@ -475,14 +475,14 @@ describe('parser', function () {
           {
             type: 'string', value: "'$1'", start: 7, end: 10
           }
-        ]
-        expect(actual.tokens).to.eql(expected)
-      })
+        ];
+        expect(actual.tokens).to.eql(expected);
+      });
 
 
       it('should extract multiple mssql parameters', function () {
-        const actual = parse("select x from a where x = :foo and y = :bar", true, 'mssql')
-        actual.tokens = aggregateUnknownTokens(actual.tokens)
+        const actual = parse("select x from a where x = :foo and y = :bar", true, 'mssql');
+        actual.tokens = aggregateUnknownTokens(actual.tokens);
         const expected: Token[] = [
           {
             type: 'keyword', value: 'select', start: 0, end: 5,
@@ -499,10 +499,10 @@ describe('parser', function () {
           {
             type: 'parameter', value: ':bar', start: 39, end: 42
           }
-        ]
-        expect(actual.tokens).to.eql(expected)
+        ];
+        expect(actual.tokens).to.eql(expected);
         expect(actual.body[0].parameters).to.eql([':foo', ':bar']);
-      })
+      });
 
     });
   });

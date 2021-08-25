@@ -590,7 +590,7 @@ function stateMachineStatementParser (statement: Statement, steps: Step[], { isS
       }
 
       if (token.type === 'parameter') {
-        statement.parameters.push(token.value)
+        statement.parameters.push(token.value);
       }
 
       if (statement.type) {

@@ -58,7 +58,7 @@ export function scanToken (state: State, dialect: Dialect = 'generic'): Token {
   }
 
   if (isParameter(ch, state, dialect)) {
-    return scanParameter(state, dialect)
+    return scanParameter(state, dialect);
   }
 
   if (isDollarQuotedString(state)) {
@@ -219,43 +219,43 @@ function scanParameter (state: State, dialect: Dialect): Token {
       value: state.input.slice(state.start, state.position + 1),
       start: state.start,
       end: state.start,
-    }
+    };
   }
 
   if (dialect === 'psql') {
-    let nextChar: Char
+    let nextChar: Char;
 
     do {
-      nextChar = read(state)
-    } while (!isNaN(Number(nextChar)) && !isWhitespace(nextChar) && nextChar !== null)
+      nextChar = read(state);
+    } while (!isNaN(Number(nextChar)) && !isWhitespace(nextChar) && nextChar !== null);
 
     if (isWhitespace(nextChar)) unread(state);
 
-    const value = state.input.slice(state.start, state.position + 1)
+    const value = state.input.slice(state.start, state.position + 1);
 
     return {
       type: 'parameter',
       value,
       start: state.start,
       end: state.start + value.length - 1
-    }
+    };
   }
 
   if (dialect === 'mssql') {
-    let nextChar: Char
+    let nextChar: Char;
     do {
-      nextChar = read(state)
-    } while (!isWhitespace(nextChar) && nextChar !== null)
+      nextChar = read(state);
+    } while (!isWhitespace(nextChar) && nextChar !== null);
 
     if(isWhitespace(nextChar)) unread(state);
 
-    const value = state.input.slice(state.start, state.position + 1)
+    const value = state.input.slice(state.start, state.position + 1);
     return {
       type: 'parameter',
       value,
       start: state.start,
       end: state.start + value.length - 1
-    }
+    };
   }
 
   return {
@@ -263,7 +263,7 @@ function scanParameter (state: State, dialect: Dialect): Token {
     value: 'unknown',
     start: state.start,
     end: state.end
-  }
+  };
 
 }
 
@@ -380,12 +380,12 @@ function isParameter (ch: Char, state: State, dialect: Dialect): boolean {
     pStart = '$';
     const nextChar = peek(state);
     if (nextChar === null || isNaN(Number(nextChar))) {
-      return false
+      return false;
     }
   }
-  if (dialect === 'mssql') pStart = ':'
+  if (dialect === 'mssql') pStart = ':';
 
-  return ch === pStart
+  return ch === pStart;
 }
 
 function isDollarQuotedString (state: State): boolean {
