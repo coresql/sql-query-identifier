@@ -132,7 +132,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
               cteState.statementEnd = true;
             }
           }
-        } else if (token.value === 'AS') {
+        } else if (token.value.toUpperCase() === 'AS') {
           cteState.asSeen = true;
         }
 
