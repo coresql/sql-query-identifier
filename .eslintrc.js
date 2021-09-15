@@ -16,7 +16,7 @@ module.exports = {
   plugins: ['prettier'],
   overrides: [
     {
-      files: ['**/*.ts'],
+      files: ['src/**/*.ts', 'test/**/*.ts'],
       plugins: ['@typescript-eslint'],
       parserOptions: {
         tsconfigRootDir: __dirname,
@@ -30,7 +30,7 @@ module.exports = {
       ],
     },
     {
-      files: ['**/*.js'],
+      files: ['*.js'],
       extends: ['plugin:prettier/recommended', 'prettier'],
     },
   ],
