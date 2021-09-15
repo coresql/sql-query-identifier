@@ -7,6 +7,19 @@ describe('identify', () => {
       'Unknown dialect. Allowed values: mssql, sqlite, mysql, psql, generic',
     );
   });
+
+  it('should sort parameters for postgres', () => {
+    expect(identify('SELECT * FROM foo WHERE bar = $2 AND baz = $1', { dialect: 'psql' })).to.eql([
+      {
+        start: 0,
+        end: 44,
+        text: 'SELECT * FROM foo WHERE bar = $2 AND baz = $1',
+        type: 'SELECT',
+        executionType: 'LISTING',
+        parameters: ['$1', '$2'],
+      },
+    ]);
+  });
 });
 
 describe('getExecutionType', () => {
