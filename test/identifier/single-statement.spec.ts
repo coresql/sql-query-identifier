@@ -1032,6 +1032,27 @@ describe('identifier', () => {
       expect(actual).to.eql(expected);
     });
 
+    it('should identify statement using lower case CTE with column list', () => {
+      const sql = `with cte_name (column1, column2) AS (
+        SELECT * FROM table
+      )
+      SELECT * FROM cte_name;`;
+
+      const actual = identify(sql);
+      const expected = [
+        {
+          start: 0,
+          end: 102,
+          text: sql,
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
     it('should identify statement using multiple CTE and no column list', () => {
       const sql = `WITH
       cte1 AS

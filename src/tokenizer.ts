@@ -106,7 +106,8 @@ function peek(state: State): Char {
 }
 
 function isKeyword(word: string): boolean {
-  return KEYWORDS.includes(word.toUpperCase());
+  const result = KEYWORDS.includes(word.toUpperCase());
+  return result
 }
 
 function resolveIndividualTokenType(ch: string): Token['type'] | undefined {

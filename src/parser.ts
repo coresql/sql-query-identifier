@@ -116,7 +116,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
         continue;
-      } else if (token.type === 'keyword' && token.value === 'WITH') {
+      } else if (token.type === 'keyword' && token.value.toUpperCase() === 'WITH') {
         cteState.isCte = true;
         topLevelStatement.tokens.push(token);
         cteState.state = tokenState;
