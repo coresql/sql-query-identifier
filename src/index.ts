@@ -30,7 +30,8 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
       text: query.substring(statement.start, statement.end + 1),
       type: statement.type,
       executionType: statement.executionType,
-      parameters: statement.parameters,
+      // we want to sort the postgres params: $1 $2 $3, regardless of the order they appear
+      parameters: dialect === 'psql' ? statement.parameters.sort() : statement.parameters,
     };
     return result;
   });

@@ -578,7 +578,13 @@ function stateMachineStatementParser(
       }
 
       if (token.type === 'parameter') {
-        statement.parameters.push(token.value);
+        const exists = statement.parameters.includes(token.value);
+        if (token.value === '?' || !exists) {
+          // for named and positional parameters we only want unique
+          // eg $1 $2
+          // or :one :two
+          statement.parameters.push(token.value);
+        }
       }
 
       if (statement.type) {
