@@ -1090,5 +1090,60 @@ describe('identifier', () => {
 
       expect(actual).to.eql(expected);
     });
+
+    it('Should extract positional Parameters', () => {
+      const actual = identify('SELECT * FROM Persons where x = $1 and y = $2 and a = $1', {
+        dialect: 'psql',
+        strict: true,
+      });
+      const expected = [
+        {
+          start: 0,
+          end: 55,
+          text: 'SELECT * FROM Persons where x = $1 and y = $2 and a = $1',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: ['$1', '$2'],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+    it('Should extract named Parameters', () => {
+      const actual = identify('SELECT * FROM Persons where x = :one and y = :two and a = :one', {
+        dialect: 'mssql',
+        strict: true,
+      });
+      const expected = [
+        {
+          start: 0,
+          end: 61,
+          text: 'SELECT * FROM Persons where x = :one and y = :two and a = :one',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [':one', ':two'],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+    it('Should extract question mark Parameters', () => {
+      const actual = identify('SELECT * FROM Persons where x = ? and y = ? and a = ?', {
+        dialect: 'mysql',
+        strict: true,
+      });
+      const expected = [
+        {
+          start: 0,
+          end: 52,
+          text: 'SELECT * FROM Persons where x = ? and y = ? and a = ?',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: ['?', '?', '?'],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
   });
 });

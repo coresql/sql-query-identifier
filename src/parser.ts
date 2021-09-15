@@ -577,7 +577,10 @@ function stateMachineStatementParser(
         return;
       }
 
-      if (token.type === 'parameter') {
+      if (
+        token.type === 'parameter' &&
+        (token.value === '?' || !statement.parameters.includes(token.value))
+      ) {
         statement.parameters.push(token.value);
       }
 
