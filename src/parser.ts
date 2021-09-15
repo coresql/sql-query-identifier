@@ -116,7 +116,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
         continue;
-      } else if (token.type === 'keyword' && token.value === 'WITH') {
+      } else if (token.type === 'keyword' && token.value.toUpperCase() === 'WITH') {
         cteState.isCte = true;
         topLevelStatement.tokens.push(token);
         cteState.state = tokenState;
@@ -132,7 +132,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
               cteState.statementEnd = true;
             }
           }
-        } else if (token.value === 'AS') {
+        } else if (token.value.toUpperCase() === 'AS') {
           cteState.asSeen = true;
         }
 
@@ -570,7 +570,7 @@ function stateMachineStatementParser(
       if (
         token.type === 'keyword' &&
         blockOpeners[dialect].includes(token.value) &&
-        prevPrevToken.value !== 'END'
+        prevPrevToken.value.toUpperCase() !== 'END'
       ) {
         openBlocks++;
         setPrevToken(token);
