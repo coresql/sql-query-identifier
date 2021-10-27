@@ -104,7 +104,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
     state: topLevelState,
   };
 
-  const ignoreOutsideBlankTokens = ['whitespace', 'comment-inline', 'comment-block'];
+  const ignoreOutsideBlankTokens = ['whitespace', 'comment-inline', 'comment-block', 'semicolon'];
 
   while (prevState.position < topLevelState.end) {
     const tokenState = initState({ prevState });

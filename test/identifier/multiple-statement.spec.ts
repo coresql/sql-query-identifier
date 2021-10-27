@@ -132,5 +132,43 @@ describe('identifier', () => {
 
       expect(actual).to.eql(expected);
     });
+
+    it('should able to ignore empty statements (extra semicolons)', () => {
+      const actual = identify(
+        `
+        ;select 1;;select 2;;;
+        ;
+        select 3;
+      `,
+      );
+      const expected = [
+        {
+          start: 10,
+          end: 18,
+          text: 'select 1;',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+        },
+        {
+          start: 20,
+          end: 28,
+          text: 'select 2;',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+        },
+        {
+          start: 50,
+          end: 58,
+          text: 'select 3;',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
   });
 });
