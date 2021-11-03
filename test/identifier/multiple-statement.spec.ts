@@ -234,5 +234,35 @@ describe('identifier', () => {
       expect(sql.substring(actual[0].start, actual[0].end + 1)).to.eql(statement1);
       expect(sql.substring(actual[1].start, actual[1].end + 1)).to.eql(statement2);
     });
+
+    it('should identify statements with semicolon inside CTE parens', () => {
+      const statement1 = `with temp as ( SELECT ;`;
+      const statement2 = 'select * from foo';
+      const sql = `${statement1}\n${statement2}`;
+      const actual = identify(sql);
+
+      const expected = [
+        {
+          start: 0,
+          end: 22,
+          text: statement1,
+          type: 'UNKNOWN',
+          executionType: 'UNKNOWN',
+          parameters: [],
+        },
+        {
+          start: 24,
+          end: 40,
+          text: statement2,
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+      expect(sql.substring(actual[0].start, actual[0].end + 1)).to.eql(statement1);
+      expect(sql.substring(actual[1].start, actual[1].end + 1)).to.eql(statement2);
+    });
   });
 });

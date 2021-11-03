@@ -128,7 +128,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
         continue;
         // If we're scanning in a CTE, handle someone putting a semicolon anywhere (after 'with',
         // after semicolon, etc.) along it to "early terminate".
-      } else if (cteState.isCte && cteState.parens === 0 && token.type === 'semicolon') {
+      } else if (cteState.isCte && token.type === 'semicolon') {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
         topLevelStatement.body.push({
@@ -141,6 +141,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
         cteState.isCte = false;
         cteState.asSeen = false;
         cteState.statementEnd = false;
+        cteState.parens = 0;
         continue;
       } else if (cteState.isCte && !cteState.statementEnd) {
         if (cteState.asSeen) {
