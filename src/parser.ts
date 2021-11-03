@@ -111,8 +111,8 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
     const token = scanToken(tokenState, dialect);
 
     if (!statementParser) {
-      // ignore blank tokens that are not in a statement
-      if (ignoreOutsideBlankTokens.includes(token.type)) {
+      // ignore blank tokens before the start of a CTE / not part of a statement
+      if (!cteState.isCte && ignoreOutsideBlankTokens.includes(token.type)) {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
         continue;
@@ -125,6 +125,23 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
         topLevelStatement.tokens.push(token);
         cteState.state = tokenState;
         prevState = tokenState;
+        continue;
+        // If we're scanning in a CTE, handle someone putting a semicolon anywhere (after 'with',
+        // after semicolon, etc.) along it to "early terminate".
+      } else if (cteState.isCte && token.type === 'semicolon') {
+        topLevelStatement.tokens.push(token);
+        prevState = tokenState;
+        topLevelStatement.body.push({
+          start: cteState.state.start,
+          end: token.end,
+          type: 'UNKNOWN',
+          executionType: 'UNKNOWN',
+          parameters: [],
+        });
+        cteState.isCte = false;
+        cteState.asSeen = false;
+        cteState.statementEnd = false;
+        cteState.parens = 0;
         continue;
       } else if (cteState.isCte && !cteState.statementEnd) {
         if (cteState.asSeen) {
@@ -147,6 +164,15 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
         cteState.asSeen = false;
         cteState.statementEnd = false;
 
+        topLevelStatement.tokens.push(token);
+        prevState = tokenState;
+        continue;
+        // Ignore blank tokens after the end of the CTE till start of statement
+      } else if (
+        cteState.isCte &&
+        cteState.statementEnd &&
+        ignoreOutsideBlankTokens.includes(token.type)
+      ) {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
         continue;
