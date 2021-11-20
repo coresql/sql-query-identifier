@@ -255,7 +255,7 @@ function createStatementParserByToken(token: Token, options: ParseOptions): Stat
     }
   }
 
-  if (!options.isStrict && token.type === 'unknown') {
+  if (!options.isStrict) {
     return createUnknownStatementParser(options);
   }
 
