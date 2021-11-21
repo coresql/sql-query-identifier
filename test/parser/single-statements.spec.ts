@@ -9,6 +9,51 @@ describe('parser', () => {
     it('should throw an error including the unknown statement', () => {
       expect(() => parse('LIST * FROM Persons')).to.throw('Invalid statement parser "LIST"');
     });
+
+    describe('with strict disabled', () => {
+      it('should parse if first token is unknown', () => {
+        const actual = parse('LIST * FROM foo', false);
+        actual.tokens = aggregateUnknownTokens(actual.tokens);
+        expect(actual).to.eql({
+          type: 'QUERY',
+          start: 0,
+          end: 14,
+          body: [
+            {
+              start: 0,
+              end: 14,
+              parameters: [],
+              type: 'UNKNOWN',
+              executionType: 'UNKNOWN',
+            },
+          ],
+          tokens: [{ type: 'unknown', value: 'LIST * FROM foo', start: 0, end: 14 }],
+        });
+      });
+
+      it('should parse if first token is invalid keyword', () => {
+        const actual = parse('AS bar LEFT JOIN foo', false);
+        actual.tokens = aggregateUnknownTokens(actual.tokens);
+        expect(actual).to.eql({
+          type: 'QUERY',
+          start: 0,
+          end: 19,
+          body: [
+            {
+              start: 0,
+              end: 19,
+              parameters: [],
+              type: 'UNKNOWN',
+              executionType: 'UNKNOWN',
+            },
+          ],
+          tokens: [
+            { type: 'keyword', value: 'AS', start: 0, end: 1 },
+            { type: 'unknown', value: ' bar LEFT JOIN foo', start: 2, end: 19 },
+          ],
+        });
+      });
+    });
   });
 
   describe('given queries with a single statement', () => {
