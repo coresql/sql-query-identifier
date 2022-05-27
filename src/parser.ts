@@ -50,16 +50,28 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   ALTER_TRIGGER: 'MODIFICATION',
   ALTER_FUNCTION: 'MODIFICATION',
   ALTER_INDEX: 'MODIFICATION',
+  ANON_BLOCK: 'UNKNOWN',
   UNKNOWN: 'UNKNOWN',
 };
 
-const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION'];
+const genericStatementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION'];
+
+const dialectStatementsWithEnds: any = {
+  'oracle': ['DECLARE', 'BEGIN']
+}
+
+function statementsWithEnds(dialect: Dialect) {
+  const dialectS = dialectStatementsWithEnds[dialect] || []
+  return [...genericStatementsWithEnds, ...dialectS]
+}
+
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
   psql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
   mysql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
   mssql: ['BEGIN', 'CASE'],
   sqlite: ['BEGIN', 'CASE'],
+  oracle: ['BEGIN',]
 };
 
 interface ParseOptions {
@@ -250,6 +262,10 @@ function createStatementParserByToken(token: Token, options: ParseOptions): Stat
         return createDeleteStatementParser(options);
       case 'TRUNCATE':
         return createTruncateStatementParser(options);
+      // lovely oracle, yum yum
+      case 'BEGIN':
+      case 'DECLARE':
+        return createBlockStatementParser(options)
       default:
         break;
     }
@@ -273,6 +289,8 @@ function createSelectStatementParser(options: ParseOptions) {
         acceptTokens: [{ type: 'keyword', value: 'SELECT' }],
       },
       add: (token) => {
+        console.log("adding token", token)
+
         statement.type = 'SELECT';
         if (statement.start < 0) {
           statement.start = token.start;
@@ -283,6 +301,28 @@ function createSelectStatementParser(options: ParseOptions) {
   ];
 
   return stateMachineStatementParser(statement, steps, options);
+}
+
+function createBlockStatementParser(options: ParseOptions) {
+  console.log("creating block parser!")
+  const statement = createInitialStatement();
+  const steps: Step[] = [
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        acceptTokens: [{type: 'keyword', value: 'BEGIN'}],
+      },
+      add: (token) => {
+        console.log("adding token", token)
+        statement.type = 'ANON_BLOCK';
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
+      },
+      postCanGoToNext: () => true
+    }
+  ]
+  return stateMachineStatementParser(statement, steps, options)
 }
 
 function createInsertStatementParser(options: ParseOptions) {
@@ -574,10 +614,11 @@ function stateMachineStatementParser(
         throw new Error('This statement has already got to the end.');
       }
 
+      console.log("TOKEN/STATEMENT", token, statement)
       if (
         statement.type &&
         token.type === 'semicolon' &&
-        (!statementsWithEnds.includes(statement.type) || (openBlocks === 0 && statement.canEnd))
+        (!statementsWithEnds(dialect).includes(statement.type) || (openBlocks === 0 && statement.canEnd))
       ) {
         statement.endStatement = ';';
         return;
@@ -600,7 +641,8 @@ function stateMachineStatementParser(
       if (
         token.type === 'keyword' &&
         blockOpeners[dialect].includes(token.value) &&
-        prevPrevToken.value.toUpperCase() !== 'END'
+        statement.type !== 'ANON_BLOCK' &&
+        prevPrevToken?.value.toUpperCase() !== 'END'
       ) {
         openBlocks++;
         setPrevToken(token);

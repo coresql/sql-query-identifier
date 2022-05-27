@@ -27,6 +27,17 @@ const KEYWORDS = [
   'MATERIALIZED',
 ];
 
+const DIALECT_KEYWORDS: any = {
+  'oracle': [
+    'BEGIN', 'DECLARE', 'INTO'
+  ]
+}
+
+function dialectKeywords(d: Dialect) {
+  return DIALECT_KEYWORDS[d] || []
+}
+
+
 const INDIVIDUALS: Record<string, Token['type']> = {
   ';': 'semicolon',
 };
@@ -70,7 +81,7 @@ export function scanToken(state: State, dialect: Dialect = 'generic'): Token {
   }
 
   if (isLetter(ch)) {
-    return scanWord(state);
+    return scanWord(state, dialect);
   }
 
   const individual = scanIndividualCharacter(state);
@@ -105,8 +116,9 @@ function peek(state: State): Char {
   return state.input[state.position + 1];
 }
 
-function isKeyword(word: string): boolean {
-  return KEYWORDS.includes(word.toUpperCase());
+function isKeyword(word: string, dialect: Dialect): boolean {
+  const keywords = [...KEYWORDS, ...dialectKeywords(dialect)]
+  return keywords.includes(word.toUpperCase());
 }
 
 function resolveIndividualTokenType(ch: string): Token['type'] | undefined {
@@ -310,7 +322,7 @@ function scanQuotedIdentifier(state: State, endToken: Char): Token {
   };
 }
 
-function scanWord(state: State): Token {
+function scanWord(state: State, dialect: Dialect): Token {
   let nextChar: Char;
 
   do {
@@ -322,7 +334,7 @@ function scanWord(state: State): Token {
   }
 
   const value = state.input.slice(state.start, state.position + 1);
-  if (!isKeyword(value)) {
+  if (!isKeyword(value, dialect)) {
     return skipWord(state, value);
   }
 
