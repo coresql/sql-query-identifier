@@ -20,6 +20,4 @@ describe('oracle scanning', () => {
     };
     expect(actual).to.eql(expected);
   });
-
-
-})
+});

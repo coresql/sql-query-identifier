@@ -28,15 +28,12 @@ const KEYWORDS = [
 ];
 
 const DIALECT_KEYWORDS: any = {
-  'oracle': [
-    'BEGIN', 'DECLARE', 'INTO'
-  ]
-}
+  oracle: ['BEGIN', 'DECLARE', 'INTO'],
+};
 
 function dialectKeywords(d: Dialect) {
-  return DIALECT_KEYWORDS[d] || []
+  return DIALECT_KEYWORDS[d] || [];
 }
-
 
 const INDIVIDUALS: Record<string, Token['type']> = {
   ';': 'semicolon',
@@ -117,7 +114,7 @@ function peek(state: State): Char {
 }
 
 function isKeyword(word: string, dialect: Dialect): boolean {
-  const keywords = [...KEYWORDS, ...dialectKeywords(dialect)]
+  const keywords = [...KEYWORDS, ...dialectKeywords(dialect)];
   return keywords.includes(word.toUpperCase());
 }
 
