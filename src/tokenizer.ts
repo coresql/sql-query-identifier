@@ -27,12 +27,17 @@ const KEYWORDS = [
   'MATERIALIZED',
 ];
 
-const DIALECT_KEYWORDS: any = {
+const DIALECT_KEYWORDS = {
   oracle: ['BEGIN', 'DECLARE', 'INTO'],
+  generic: [],
+  psql: [],
+  mysql: [],
+  mssql: [],
+  sqlite: [],
 };
 
-function dialectKeywords(d: Dialect) {
-  return DIALECT_KEYWORDS[d] || [];
+function dialectKeywords(dialect: Dialect): string[] {
+  return DIALECT_KEYWORDS[dialect] || [];
 }
 
 const INDIVIDUALS: Record<string, Token['type']> = {

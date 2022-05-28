@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import { scanToken } from '../../src/tokenizer';
-import type { Dialect } from '../../src/defines';
 
 describe('oracle scanning', () => {
   const initState = (input: string) => ({

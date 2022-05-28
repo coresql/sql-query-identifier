@@ -56,12 +56,17 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
 
 const genericStatementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION'];
 
-const dialectStatementsWithEnds: any = {
+const dialectStatementsWithEnds = {
   oracle: ['ANON_BLOCK'],
+  generic: [],
+  psql: [],
+  mysql: [],
+  mssql: [],
+  sqlite: [],
 };
 
-function statementsWithEnds(dialect: Dialect) {
-  const dialectS = dialectStatementsWithEnds[dialect] || [];
+function statementsWithEnds(dialect: Dialect): string[] {
+  const dialectS: string[] = dialectStatementsWithEnds[dialect] || [];
   return [...genericStatementsWithEnds, ...dialectS];
 }
 
@@ -637,6 +642,7 @@ function stateMachineStatementParser(
       // statements in this library.
       if (
         dialect === 'oracle' &&
+        statement.type &&
         statementsWithEnds(dialect).includes(statement.type) &&
         token.value.toUpperCase() === 'END' &&
         openBlocks == 0
