@@ -2,14 +2,13 @@ import { parse } from '../../src/parser';
 import { expect } from 'chai';
 
 describe('Parser for oracle', () => {
-
   describe('Given a CASE Statement', () => {
     it('should parse a simple case statement', () => {
-      const sql = `SELECT CASE WHEN a = 'a' THEN 'foo' ELSE 'bar' END CASE from table;`
-      const result = parse(sql, false, 'oracle')
-      expect(result.body.length).to.eql(1)
-    })
-  })
+      const sql = `SELECT CASE WHEN a = 'a' THEN 'foo' ELSE 'bar' END CASE from table;`;
+      const result = parse(sql, false, 'oracle');
+      expect(result.body.length).to.eql(1);
+    });
+  });
 
   describe('given an anonymous block with an OUT pram', () => {
     it('should treat a simple block as a single query', () => {
@@ -25,7 +24,6 @@ describe('Parser for oracle', () => {
       expect(result.body[0].start).to.eq(0);
       expect(result.body[0].end).to.eq(119);
       expect(result.body.length).to.eql(1);
-
     });
 
     it('should identify a block query and a normal query together', () => {
@@ -37,14 +35,13 @@ describe('Parser for oracle', () => {
       END;
 
       select * from another_thing
-      `
-      const result = parse(sql, false, 'oracle')
-      expect(result.body.length).to.eql(2)
-      expect(result.body[0].start).to.eq(0)
-      expect(result.body[0].end).to.eq(98)
-      expect(result.body[1].start).to.eq(107)
-    })
-
+      `;
+      const result = parse(sql, false, 'oracle');
+      expect(result.body.length).to.eql(2);
+      expect(result.body[0].start).to.eq(0);
+      expect(result.body[0].end).to.eq(98);
+      expect(result.body[1].start).to.eq(107);
+    });
   });
   describe('given an anonymous block with a variable', () => {
     it('should treat a block with DECLARE and another query as two separate queries', () => {
@@ -60,7 +57,7 @@ describe('Parser for oracle', () => {
         select * from foo;
       `;
       const result = parse(sql, false, 'oracle');
-      console.log(result)
+      console.log(result);
       expect(result.body.length).to.eql(2);
       expect(result.body[0].start).to.eq(0);
       expect(result.body[0].end).to.eq(166);
@@ -131,11 +128,11 @@ describe('Parser for oracle', () => {
               WHEN no_data_found THEN
                 DBMS_OUTPUT.PUT_LINE('Employee ' || n_emp_id || ' not found');
           END;
-        END;`
+        END;`;
       // yes this is still just one statement.
       const result = parse(sql, false, 'oracle');
-      console.log(result)
+      console.log(result);
       expect(result.body.length).to.eql(1);
-    })
+    });
   });
 });

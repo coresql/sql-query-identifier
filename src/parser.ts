@@ -74,7 +74,6 @@ const blockOpeners: Record<Dialect, string[]> = {
   oracle: ['BEGIN', 'CASE', 'IF', 'DECLARE'],
 };
 
-
 interface ParseOptions {
   isStrict: boolean;
   dialect: Dialect;
@@ -290,7 +289,6 @@ function createSelectStatementParser(options: ParseOptions) {
         acceptTokens: [{ type: 'keyword', value: 'SELECT' }],
       },
       add: (token) => {
-
         statement.type = 'SELECT';
         if (statement.start < 0) {
           statement.start = token.start;
@@ -305,7 +303,7 @@ function createSelectStatementParser(options: ParseOptions) {
 
 function createBlockStatementParser(options: ParseOptions) {
   const statement = createInitialStatement();
-  statement.type = 'ANON_BLOCK'
+  statement.type = 'ANON_BLOCK';
   // ...start will always be 0? I guess not if there's whitespace...
   // but probably fine for now.
   statement.start = 0;
@@ -313,7 +311,10 @@ function createBlockStatementParser(options: ParseOptions) {
     {
       preCanGoToNext: () => false,
       validation: {
-        acceptTokens: [{ type: 'keyword', value: 'BEGIN' }, { type: 'keyword', value: 'DECLARE'}],
+        acceptTokens: [
+          { type: 'keyword', value: 'BEGIN' },
+          { type: 'keyword', value: 'DECLARE' },
+        ],
       },
       add: (token) => {
         if (statement.start < 0) {
@@ -612,7 +613,7 @@ function stateMachineStatementParser(
     },
 
     addToken(token: Token) {
-      console.log('addToken (start)', token)
+      console.log('addToken (start)', token);
       /* eslint no-param-reassign: 0 */
       if (statement.endStatement) {
         throw new Error('This statement has already got to the end.');
@@ -637,10 +638,11 @@ function stateMachineStatementParser(
       if (
         dialect === 'oracle' &&
         statementsWithEnds(dialect).includes(statement.type) &&
-        token.value.toUpperCase() === 'END' && openBlocks == 0
+        token.value.toUpperCase() === 'END' &&
+        openBlocks == 0
       ) {
-        statement.endStatement = 'END'
-        return
+        statement.endStatement = 'END';
+        return;
       }
 
       // this should not count ANON_BLOCK statements as expression blocks
@@ -660,7 +662,7 @@ function stateMachineStatementParser(
         return;
       }
 
-      console.log('pre openblock check', token)
+      console.log('pre openblock check', token);
       if (
         token.type === 'keyword' &&
         blockOpeners[dialect].includes(token.value) &&
@@ -672,8 +674,8 @@ function stateMachineStatementParser(
           statement.startToken?.value.toUpperCase() !== 'DECLARE' &&
           token.value.toUpperCase() === 'BEGIN' &&
           beginSkipped === false
-          ) {
-          beginSkipped = true
+        ) {
+          beginSkipped = true;
           // skip
         } else {
           lastBlockOpener = token;
@@ -683,7 +685,7 @@ function stateMachineStatementParser(
         }
       }
 
-      console.log('post open block check')
+      console.log('post open block check');
 
       if (
         token.type === 'parameter' &&
@@ -837,10 +839,10 @@ function stateMachineStatementParser(
           `Expected any of these tokens ${expecteds} instead of type="${token.type}" value="${token.value}" (currentStep=${currentStepIndex}).`,
         );
       } else {
-        statement.startToken = token
+        statement.startToken = token;
       }
 
-      console.log("ADDING TOKEN", token)
+      console.log('ADDING TOKEN', token);
 
       currentStep.add(token);
 

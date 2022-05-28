@@ -21,11 +21,11 @@ describe('parser', () => {
           body: [
             {
               start: 0,
-              "startToken": {
-                "end": 3,
-                "start": 0,
-                "type": "unknown",
-                "value": "LIST",
+              startToken: {
+                end: 3,
+                start: 0,
+                type: 'unknown',
+                value: 'LIST',
               },
               end: 14,
               parameters: [],
@@ -47,11 +47,11 @@ describe('parser', () => {
           body: [
             {
               start: 0,
-              "startToken": {
-                "end": 1,
-                "start": 0,
-                "type": "keyword",
-                "value": "AS",
+              startToken: {
+                end: 1,
+                start: 0,
+                type: 'keyword',
+                value: 'AS',
               },
               end: 19,
               parameters: [],
@@ -82,11 +82,11 @@ describe('parser', () => {
           {
             start: 0,
             end: 20,
-            "startToken": {
-                          "end": 5,
-              "start": 0,
-              "type": "keyword",
-              "value": "SELECT",
+            startToken: {
+              end: 5,
+              start: 0,
+              type: 'keyword',
+              value: 'SELECT',
             },
             type: 'SELECT',
             executionType: 'LISTING',
@@ -124,11 +124,11 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
-            "startToken": {
-              "end": 5,
-              "start": 0,
-              "type": "keyword",
-              "value": "select",
+            startToken: {
+              end: 5,
+              start: 0,
+              type: 'keyword',
+              value: 'select',
             },
             end: 20,
             type: 'SELECT',
@@ -167,11 +167,11 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
-            "startToken": {
-              "end": 11,
-              "start": 7,
-              "type": "keyword",
-              "value": "TABLE"
+            startToken: {
+              end: 11,
+              start: 7,
+              type: 'keyword',
+              value: 'TABLE',
             },
             end: 54,
             type: 'CREATE_TABLE',
@@ -230,11 +230,11 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
-            "startToken": {
-              "end": 14,
-              "start": 7,
-              "type": "keyword",
-              "value": "DATABASE",
+            startToken: {
+              end: 14,
+              start: 7,
+              type: 'keyword',
+              value: 'DATABASE',
             },
             end: 23,
             type: 'CREATE_DATABASE',
@@ -292,11 +292,11 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
-            "startToken": {
-              "end": 9,
-  "start": 5,
-  "type": "keyword",
-  "value": "TABLE",
+            startToken: {
+              end: 9,
+              start: 5,
+              type: 'keyword',
+              value: 'TABLE',
             },
             end: 18,
             type: 'DROP_TABLE',
@@ -354,11 +354,11 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
-            "startToken": {
-              "end": 12,
-  "start": 5,
-  "type": "keyword",
-  "value": "DATABASE",
+            startToken: {
+              end: 12,
+              start: 5,
+              type: 'keyword',
+              value: 'DATABASE',
             },
             end: 21,
             type: 'DROP_DATABASE',
@@ -415,11 +415,11 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
-            "startToken": {
-              "end": 5,
-  "start": 0,
-  "type": "keyword",
-  "value": "INSERT",
+            startToken: {
+              end: 5,
+              start: 0,
+              type: 'keyword',
+              value: 'INSERT',
             },
             end: 55,
             type: 'INSERT',
@@ -465,11 +465,11 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
-            "startToken": {
-              "end": 5,
-  "start": 0,
-  "type": "keyword",
-  "value": "UPDATE",
+            startToken: {
+              end: 5,
+              start: 0,
+              type: 'keyword',
+              value: 'UPDATE',
             },
             end: 51,
             type: 'UPDATE',
@@ -515,11 +515,11 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
-            "startToken": {
-              "end": 5,
-  "start": 0,
-  "type": "keyword",
-  "value": "DELETE",
+            startToken: {
+              end: 5,
+              start: 0,
+              type: 'keyword',
+              value: 'DELETE',
             },
             end: 38,
             type: 'DELETE',
@@ -565,11 +565,11 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
-            "startToken": {
-              "end": 7,
-  "start": 0,
-  "type": "keyword",
-  "value": "TRUNCATE",
+            startToken: {
+              end: 7,
+              start: 0,
+              type: 'keyword',
+              value: 'TRUNCATE',
             },
             end: 22,
             type: 'TRUNCATE',
