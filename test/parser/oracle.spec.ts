@@ -2,8 +2,17 @@ import { parse } from '../../src/parser';
 import { expect } from 'chai';
 
 describe('Parser for oracle', () => {
+
+  describe('Given a CASE Statement', () => {
+    it('should parse a simple case statement', () => {
+      const sql = `SELECT CASE WHEN a = 'a' THEN 'foo' ELSE 'bar' END CASE from table;`
+      const result = parse(sql, false, 'oracle')
+      expect(result.body.length).to.eql(1)
+    })
+  })
+
   describe('given an anonymous block with an OUT pram', () => {
-    it.only('should treat a simple block as a single query', () => {
+    it('should treat a simple block as a single query', () => {
       const sql = `BEGIN
           SELECT
             cols.column_name INTO :variable
@@ -12,15 +21,34 @@ describe('Parser for oracle', () => {
         END`;
       const result = parse(sql, false, 'oracle');
 
-      console.log(result);
-
+      expect(result.body[0].type).to.eq('ANON_BLOCK');
+      expect(result.body[0].start).to.eq(0);
+      expect(result.body[0].end).to.eq(119);
       expect(result.body.length).to.eql(1);
+
     });
+
+    it('should identify a block query and a normal query together', () => {
+      const sql = `BEGIN
+      SELECT
+      cols.column_name INTO :variable
+      FROM
+      example_table;
+      END;
+
+      select * from another_thing
+      `
+      const result = parse(sql, false, 'oracle')
+      expect(result.body.length).to.eql(2)
+      expect(result.body[0].start).to.eq(0)
+      expect(result.body[0].end).to.eq(98)
+      expect(result.body[1].start).to.eq(107)
+    })
+
   });
   describe('given an anonymous block with a variable', () => {
-    it('should treat a simple block as a single query', () => {
-      const sql = `
-        DECLARE
+    it('should treat a block with DECLARE and another query as two separate queries', () => {
+      const sql = `DECLARE
           PK_NAME VARCHAR(200);
         BEGIN
           SELECT
@@ -28,10 +56,14 @@ describe('Parser for oracle', () => {
           FROM
             example_table;
         END;
+
+        select * from foo;
       `;
       const result = parse(sql, false, 'oracle');
-
-      expect(result.body.length).to.eql(1);
+      console.log(result)
+      expect(result.body.length).to.eql(2);
+      expect(result.body[0].start).to.eq(0);
+      expect(result.body[0].end).to.eq(166);
     });
 
     it('Should treat a block with two queries as a single query', () => {
@@ -79,5 +111,31 @@ describe('Parser for oracle', () => {
       const result = parse(sql, false, 'oracle');
       expect(result.body.length).to.eql(1);
     });
+
+    it('should identify a compound statement with a nested compound statement as a single statement', () => {
+      const sql = `DECLARE
+          n_emp_id EMPLOYEES.EMPLOYEE_ID%TYPE := &emp_id1;
+        BEGIN
+          DECLARE
+            n_emp_id employees.employee_id%TYPE := &emp_id2;
+            v_name   employees.first_name%TYPE;
+          BEGIN
+            SELECT first_name, CASE foo WHEN 'a' THEN 1 ELSE 2 END CASE as other
+            INTO v_name
+            FROM employees
+            WHERE employee_id = n_emp_id;
+
+            DBMS_OUTPUT.PUT_LINE('First name of employee ' || n_emp_id ||
+                                              ' is ' || v_name);
+            EXCEPTION
+              WHEN no_data_found THEN
+                DBMS_OUTPUT.PUT_LINE('Employee ' || n_emp_id || ' not found');
+          END;
+        END;`
+      // yes this is still just one statement.
+      const result = parse(sql, false, 'oracle');
+      console.log(result)
+      expect(result.body.length).to.eql(1);
+    })
   });
 });

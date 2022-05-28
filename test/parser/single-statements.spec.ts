@@ -21,6 +21,12 @@ describe('parser', () => {
           body: [
             {
               start: 0,
+              "startToken": {
+                "end": 3,
+                "start": 0,
+                "type": "unknown",
+                "value": "LIST",
+              },
               end: 14,
               parameters: [],
               type: 'UNKNOWN',
@@ -41,6 +47,12 @@ describe('parser', () => {
           body: [
             {
               start: 0,
+              "startToken": {
+                "end": 1,
+                "start": 0,
+                "type": "keyword",
+                "value": "AS",
+              },
               end: 19,
               parameters: [],
               type: 'UNKNOWN',
@@ -70,6 +82,12 @@ describe('parser', () => {
           {
             start: 0,
             end: 20,
+            "startToken": {
+                          "end": 5,
+              "start": 0,
+              "type": "keyword",
+              "value": "SELECT",
+            },
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
@@ -106,6 +124,12 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
+            "startToken": {
+              "end": 5,
+              "start": 0,
+              "type": "keyword",
+              "value": "select",
+            },
             end: 20,
             type: 'SELECT',
             executionType: 'LISTING',
@@ -143,6 +167,12 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
+            "startToken": {
+              "end": 11,
+              "start": 7,
+              "type": "keyword",
+              "value": "TABLE"
+            },
             end: 54,
             type: 'CREATE_TABLE',
             executionType: 'MODIFICATION',
@@ -194,11 +224,18 @@ describe('parser', () => {
       const expected = {
         type: 'QUERY',
         start: 0,
+
         end: 23,
         body: [
           // nodes
           {
             start: 0,
+            "startToken": {
+              "end": 14,
+              "start": 7,
+              "type": "keyword",
+              "value": "DATABASE",
+            },
             end: 23,
             type: 'CREATE_DATABASE',
             executionType: 'MODIFICATION',
@@ -255,6 +292,12 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
+            "startToken": {
+              "end": 9,
+  "start": 5,
+  "type": "keyword",
+  "value": "TABLE",
+            },
             end: 18,
             type: 'DROP_TABLE',
             executionType: 'MODIFICATION',
@@ -311,6 +354,12 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
+            "startToken": {
+              "end": 12,
+  "start": 5,
+  "type": "keyword",
+  "value": "DATABASE",
+            },
             end: 21,
             type: 'DROP_DATABASE',
             executionType: 'MODIFICATION',
@@ -366,6 +415,12 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
+            "startToken": {
+              "end": 5,
+  "start": 0,
+  "type": "keyword",
+  "value": "INSERT",
+            },
             end: 55,
             type: 'INSERT',
             executionType: 'MODIFICATION',
@@ -410,6 +465,12 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
+            "startToken": {
+              "end": 5,
+  "start": 0,
+  "type": "keyword",
+  "value": "UPDATE",
+            },
             end: 51,
             type: 'UPDATE',
             executionType: 'MODIFICATION',
@@ -454,6 +515,12 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
+            "startToken": {
+              "end": 5,
+  "start": 0,
+  "type": "keyword",
+  "value": "DELETE",
+            },
             end: 38,
             type: 'DELETE',
             executionType: 'MODIFICATION',
@@ -498,6 +565,12 @@ describe('parser', () => {
           // nodes
           {
             start: 0,
+            "startToken": {
+              "end": 7,
+  "start": 0,
+  "type": "keyword",
+  "value": "TRUNCATE",
+            },
             end: 22,
             type: 'TRUNCATE',
             executionType: 'MODIFICATION',

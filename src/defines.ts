@@ -48,6 +48,7 @@ export interface IdentifyResult {
 
 export interface Statement {
   start: number;
+  startToken?: Token;
   end: number;
   type?: StatementType;
   executionType?: ExecutionType;

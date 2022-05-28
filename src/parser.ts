@@ -57,7 +57,7 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
 const genericStatementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION'];
 
 const dialectStatementsWithEnds: any = {
-  oracle: ['DECLARE', 'BEGIN'],
+  oracle: ['ANON_BLOCK'],
 };
 
 function statementsWithEnds(dialect: Dialect) {
@@ -71,8 +71,9 @@ const blockOpeners: Record<Dialect, string[]> = {
   mysql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
   mssql: ['BEGIN', 'CASE'],
   sqlite: ['BEGIN', 'CASE'],
-  oracle: ['BEGIN'],
+  oracle: ['BEGIN', 'CASE', 'IF', 'DECLARE'],
 };
+
 
 interface ParseOptions {
   isStrict: boolean;
@@ -289,7 +290,6 @@ function createSelectStatementParser(options: ParseOptions) {
         acceptTokens: [{ type: 'keyword', value: 'SELECT' }],
       },
       add: (token) => {
-        console.log('adding token', token);
 
         statement.type = 'SELECT';
         if (statement.start < 0) {
@@ -304,17 +304,18 @@ function createSelectStatementParser(options: ParseOptions) {
 }
 
 function createBlockStatementParser(options: ParseOptions) {
-  console.log('creating block parser!');
   const statement = createInitialStatement();
+  statement.type = 'ANON_BLOCK'
+  // ...start will always be 0? I guess not if there's whitespace...
+  // but probably fine for now.
+  statement.start = 0;
   const steps: Step[] = [
     {
       preCanGoToNext: () => false,
       validation: {
-        acceptTokens: [{ type: 'keyword', value: 'BEGIN' }],
+        acceptTokens: [{ type: 'keyword', value: 'BEGIN' }, { type: 'keyword', value: 'DECLARE'}],
       },
       add: (token) => {
-        console.log('adding token', token);
-        statement.type = 'ANON_BLOCK';
         if (statement.start < 0) {
           statement.start = token.start;
         }
@@ -579,6 +580,8 @@ function stateMachineStatementParser(
   let currentStepIndex = 0;
   let prevToken: Token;
   let prevPrevToken: Token;
+  let lastBlockOpener: Token;
+  let beginSkipped = false;
 
   let openBlocks = 0;
 
@@ -609,12 +612,12 @@ function stateMachineStatementParser(
     },
 
     addToken(token: Token) {
+      console.log('addToken (start)', token)
       /* eslint no-param-reassign: 0 */
       if (statement.endStatement) {
         throw new Error('This statement has already got to the end.');
       }
 
-      console.log('TOKEN/STATEMENT', token, statement);
       if (
         statement.type &&
         token.type === 'semicolon' &&
@@ -625,7 +628,25 @@ function stateMachineStatementParser(
         return;
       }
 
-      if (token.value.toUpperCase() === 'END') {
+      // BEGIN statements are weird as they behave differently to the other 'statementsWithEnds'
+      // like create trigger and create function
+      // because they use the shared block keyword BEGIN...
+      // https://docs.oracle.com/cd/E17952_01/mysql-5.7-en/begin-end.html
+      // they are technically 'compound statements', although we have no concept of nested
+      // statements in this library.
+      if (
+        dialect === 'oracle' &&
+        statementsWithEnds(dialect).includes(statement.type) &&
+        token.value.toUpperCase() === 'END' && openBlocks == 0
+      ) {
+        statement.endStatement = 'END'
+        return
+      }
+
+      // this should not count ANON_BLOCK statements as expression blocks
+      // openBlock really refers to 'expression blocks' like CASE .... END
+      // not statement blocks.
+      if (token.value.toUpperCase() === 'END' && openBlocks > 0) {
         openBlocks--;
         if (openBlocks === 0) {
           statement.canEnd = true;
@@ -639,16 +660,30 @@ function stateMachineStatementParser(
         return;
       }
 
+      console.log('pre openblock check', token)
       if (
         token.type === 'keyword' &&
         blockOpeners[dialect].includes(token.value) &&
-        statement.type !== 'ANON_BLOCK' &&
         prevPrevToken?.value.toUpperCase() !== 'END'
       ) {
-        openBlocks++;
-        setPrevToken(token);
-        return;
+        if (
+          dialect === 'oracle' &&
+          lastBlockOpener &&
+          statement.startToken?.value.toUpperCase() !== 'DECLARE' &&
+          token.value.toUpperCase() === 'BEGIN' &&
+          beginSkipped === false
+          ) {
+          beginSkipped = true
+          // skip
+        } else {
+          lastBlockOpener = token;
+          openBlocks++;
+          setPrevToken(token);
+          return;
+        }
       }
+
+      console.log('post open block check')
 
       if (
         token.type === 'parameter' &&
@@ -657,7 +692,7 @@ function stateMachineStatementParser(
         statement.parameters.push(token.value);
       }
 
-      if (statement.type) {
+      if (statement.type && statement.start >= 0) {
         // statement has already been identified
         // just wait until end of the statement
         return;
@@ -801,7 +836,11 @@ function stateMachineStatementParser(
         throw new Error(
           `Expected any of these tokens ${expecteds} instead of type="${token.type}" value="${token.value}" (currentStep=${currentStepIndex}).`,
         );
+      } else {
+        statement.startToken = token
       }
+
+      console.log("ADDING TOKEN", token)
 
       currentStep.add(token);
 
