@@ -19,7 +19,6 @@ describe('Parser for oracle', () => {
             example_table;
         END`;
       const result = parse(sql, false, 'oracle');
-      console.log(result)
       expect(result.body[0].type).to.eq('ANON_BLOCK');
       expect(result.body[0].start).to.eq(0);
       expect(result.body[0].end).to.eq(119);
@@ -81,7 +80,6 @@ describe('Parser for oracle', () => {
         select * from foo;
       `;
       const result = parse(sql, false, 'oracle');
-      console.log(result);
       expect(result.body.length).to.eql(2);
       expect(result.body[0].start).to.eq(0);
       expect(result.body[0].end).to.eq(166);
@@ -155,7 +153,6 @@ describe('Parser for oracle', () => {
         END;`;
       // yes this is still just one statement.
       const result = parse(sql, false, 'oracle');
-      console.log(result);
       expect(result.body.length).to.eql(1);
     });
   });
