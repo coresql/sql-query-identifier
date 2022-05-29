@@ -4,7 +4,7 @@ import { expect } from 'chai';
 describe('identify', () => {
   it('should throw error for invalid dialect', () => {
     expect(() => identify('SELECT * FROM foo', { dialect: 'invalid' as Dialect })).to.throw(
-      'Unknown dialect. Allowed values: mssql, sqlite, mysql, psql, generic',
+      'Unknown dialect. Allowed values: mssql, sqlite, mysql, oracle, psql, generic',
     );
   });
 

@@ -51,16 +51,27 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   ALTER_FUNCTION: 'MODIFICATION',
   ALTER_INDEX: 'MODIFICATION',
   UNKNOWN: 'UNKNOWN',
+  ANON_BLOCK: 'UNKNOWN',
 };
 
-const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION'];
+const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION', 'ANON_BLOCK'];
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
   psql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
   mysql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
   mssql: ['BEGIN', 'CASE'],
   sqlite: ['BEGIN', 'CASE'],
+  oracle: ['DECLARE', 'BEGIN', 'CASE'],
 };
+
+const statementBlockOpeners: Record<Dialect, string[]> = {
+  generic: [],
+  psql: [],
+  mysql: [],
+  mssql: [],
+  sqlite: [],
+  oracle: [],
+}
 
 interface ParseOptions {
   isStrict: boolean;
@@ -193,6 +204,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
 
     const statement = statementParser.getStatement();
     if (statement.endStatement) {
+      console.log('statement.end', token)
       statement.end = token.end;
       topLevelStatement.body.push(statement as ConcreteStatement);
       statementParser = null;
@@ -250,6 +262,12 @@ function createStatementParserByToken(token: Token, options: ParseOptions): Stat
         return createDeleteStatementParser(options);
       case 'TRUNCATE':
         return createTruncateStatementParser(options);
+      case 'DECLARE':
+      case 'BEGIN':
+        if (options.dialect === 'oracle') {
+          return createBlockStatementParser(options);
+        }
+      // eslint-disable-next-line no-fallthrough
       default:
         break;
     }
@@ -274,6 +292,34 @@ function createSelectStatementParser(options: ParseOptions) {
       },
       add: (token) => {
         statement.type = 'SELECT';
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
+      },
+      postCanGoToNext: () => true,
+    },
+  ];
+
+  return stateMachineStatementParser(statement, steps, options);
+}
+
+function createBlockStatementParser(options: ParseOptions) {
+  console.log('creating block statement parser!')
+  const statement = createInitialStatement();
+  statement.type = 'ANON_BLOCK';
+
+  const steps: Step[] = [
+    // Select
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        acceptTokens: [
+          { type: 'keyword', value: 'DECLARE' },
+          { type: 'keyword', value: 'BEGIN' },
+        ],
+      },
+      add: (token) => {
+        console.log('ADD', token)
         if (statement.start < 0) {
           statement.start = token.start;
         }
@@ -540,6 +586,9 @@ function stateMachineStatementParser(
   let prevToken: Token;
   let prevPrevToken: Token;
 
+  let lastBlockOpener: Token;
+  let anonBlockStarted = false;
+
   let openBlocks = 0;
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
@@ -574,6 +623,7 @@ function stateMachineStatementParser(
         throw new Error('This statement has already got to the end.');
       }
 
+      console.log("addToken token, openblocks", token.value, openBlocks);
       if (
         statement.type &&
         token.type === 'semicolon' &&
@@ -597,14 +647,35 @@ function stateMachineStatementParser(
         return;
       }
 
+      console.log('block check:');
       if (
         token.type === 'keyword' &&
         blockOpeners[dialect].includes(token.value) &&
-        prevPrevToken.value.toUpperCase() !== 'END'
+        prevPrevToken?.value.toUpperCase() !== 'END'
       ) {
+        if (
+          dialect === 'oracle' &&
+          lastBlockOpener?.value === 'DECLARE' &&
+          token.value.toUpperCase() === 'BEGIN'
+        ) {
+          console.log('---> oracle && follows DECLARE');
+          // don't open a new block!
+          setPrevToken(token);
+          lastBlockOpener = token;
+          return;
+        }
+        console.log('---> incrementing open blocks', statement.type, anonBlockStarted);
         openBlocks++;
+        lastBlockOpener = token;
         setPrevToken(token);
-        return;
+        if (statement.type === 'ANON_BLOCK' && !anonBlockStarted) {
+          console.log('---> not returning, setting anonBlockStarted');
+          anonBlockStarted = true;
+          // don't return
+        } else {
+          console.log('---> normal block, returning');
+          return;
+        }
       }
 
       if (
@@ -614,7 +685,7 @@ function stateMachineStatementParser(
         statement.parameters.push(token.value);
       }
 
-      if (statement.type) {
+      if (statement.type && statement.start >= 0) {
         // statement has already been identified
         // just wait until end of the statement
         return;
