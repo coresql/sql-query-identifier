@@ -155,5 +155,39 @@ describe('Parser for oracle', () => {
       const result = parse(sql, false, 'oracle');
       expect(result.body.length).to.eql(1);
     });
+    it('should identify a block query after a create table query', () => {
+      const sql = `create table
+          "untitled_table8" (
+            "id" integer not null primary key,
+            "created_at" varchar(255) not null
+          );
+
+        DECLARE
+          PK_NAME VARCHAR(200);
+
+        BEGIN
+          EXECUTE IMMEDIATE ('CREATE SEQUENCE "untitled_table8_seq"');
+
+        SELECT
+          cols.column_name INTO PK_NAME
+        FROM
+          all_constraints cons,
+          all_cons_columns cols
+        WHERE
+          cons.constraint_type = 'P'
+          AND cons.constraint_name = cols.constraint_name
+          AND cons.owner = cols.owner
+          AND cols.table_name = 'untitled_table8';
+
+        execute immediate (
+          'create or replace trigger "untitled_table8_autoinc_trg"  BEFORE INSERT on "untitled_table8"  for each row  declare  checking number := 1;  begin    if (:new."' || PK_NAME || '" is null) then      while checking >= 1 loop        select "untitled_table8_seq".nextval into :new."' || PK_NAME || '" from dual;        select count("' || PK_NAME || '") into checking from "untitled_table8"        where "' || PK_NAME || '" = :new."' || PK_NAME || '";      end loop;    end if;  end;'
+        );
+
+        END;`;
+      const result = parse(sql, false, 'oracle');
+      expect(result.body.length).to.eq(2);
+      expect(result.body[0].type).to.eq('CREATE_TABLE');
+      expect(result.body[1].type).to.eq('ANON_BLOCK');
+    });
   });
 });
