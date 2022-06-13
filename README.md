@@ -65,7 +65,7 @@ Execution types allow to know what is the query behavior
 * `LISTING:` is when the query list the data
 * `MODIFICATION:` is when the query modificate the database somehow (structure or data)
 * `INFORMATION:` is show some data information such as a profile data
-* `ANON_BLOCK: ` is for a anonymous block query containing multiple statements of unknown type (Oracle Database only)
+* `ANON_BLOCK: ` is for an anonymous block query which may contain multiple statements of unknown type (Oracle Database only)
 * `UNKNOWN`: (only available if strict mode is disabled)
 
 ## Installation
