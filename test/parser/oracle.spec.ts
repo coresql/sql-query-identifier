@@ -19,10 +19,10 @@ describe('Parser for oracle', () => {
             example_table;
         END`;
       const result = parse(sql, false, 'oracle');
+      expect(result.body.length).to.eql(1);
       expect(result.body[0].type).to.eq('ANON_BLOCK');
       expect(result.body[0].start).to.eq(0);
       expect(result.body[0].end).to.eq(119);
-      expect(result.body.length).to.eql(1);
     });
 
     it('should easily identify two blocks', () => {
@@ -42,11 +42,13 @@ describe('Parser for oracle', () => {
         `;
       const result = parse(sql, false, 'oracle');
 
+      expect(result.body.length).to.eql(2);
       expect(result.body[0].type).to.eq('ANON_BLOCK');
       expect(result.body[0].start).to.eq(0);
       expect(result.body[0].end).to.eq(120);
-      expect(result.body.length).to.eql(2);
+      expect(result.body[1].type).to.eq('ANON_BLOCK');
       expect(result.body[1].start).to.eq(131);
+      expect(result.body[1].end).to.eq(259);
     });
 
     it('should identify a block query and a normal query together', () => {
@@ -61,8 +63,10 @@ describe('Parser for oracle', () => {
       `;
       const result = parse(sql, false, 'oracle');
       expect(result.body.length).to.eql(2);
+      expect(result.body[0].type).to.eq('ANON_BLOCK');
       expect(result.body[0].start).to.eq(0);
       expect(result.body[0].end).to.eq(98);
+      expect(result.body[1].type).to.eq('SELECT');
       expect(result.body[1].start).to.eq(107);
     });
   });
@@ -81,8 +85,11 @@ describe('Parser for oracle', () => {
       `;
       const result = parse(sql, false, 'oracle');
       expect(result.body.length).to.eql(2);
+      expect(result.body[0].type).to.eq('ANON_BLOCK');
       expect(result.body[0].start).to.eq(0);
       expect(result.body[0].end).to.eq(166);
+      expect(result.body[1].type).to.eq('SELECT');
+      expect(result.body[1].start).to.eq(177);
     });
 
     it('Should treat a block with two queries as a single query', () => {
