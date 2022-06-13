@@ -128,6 +128,47 @@ describe('identifier', () => {
     });
 
     describe('identifying statements with anonymous blocks', () => {
+      it('should work in strict mode', () => {
+        const actual = identify(
+          `
+          DECLARE
+            PK_NAME VARCHAR(200);
+
+          BEGIN
+            EXECUTE IMMEDIATE ('CREATE SEQUENCE "untitled_table8_seq"');
+
+          SELECT
+            cols.column_name INTO PK_NAME
+          FROM
+            all_constraints cons,
+            all_cons_columns cols
+          WHERE
+            cons.constraint_type = 'P'
+            AND cons.constraint_name = cols.constraint_name
+            AND cons.owner = cols.owner
+            AND cols.table_name = 'untitled_table8';
+
+          execute immediate (
+            'create or replace trigger "untitled_table8_autoinc_trg"  BEFORE INSERT on "untitled_table8"  for each row  declare  checking number := 1;  begin    if (:new."' || PK_NAME || '" is null) then      while checking >= 1 loop        select "untitled_table8_seq".nextval into :new."' || PK_NAME || '" from dual;        select count("' || PK_NAME || '") into checking from "untitled_table8"        where "' || PK_NAME || '" = :new."' || PK_NAME || '";      end loop;    end if;  end;'
+          );
+
+          END;
+          `,
+          { dialect: 'oracle', strict: true },
+        );
+        const expected = [
+          {
+            end: 1043,
+            executionType: 'ANON_BLOCK',
+            parameters: [],
+            start: 11,
+            text: 'DECLARE\n            PK_NAME VARCHAR(200);\n\n          BEGIN\n            EXECUTE IMMEDIATE (\'CREATE SEQUENCE "untitled_table8_seq"\');\n\n          SELECT\n            cols.column_name INTO PK_NAME\n          FROM\n            all_constraints cons,\n            all_cons_columns cols\n          WHERE\n            cons.constraint_type = \'P\'\n            AND cons.constraint_name = cols.constraint_name\n            AND cons.owner = cols.owner\n            AND cols.table_name = \'untitled_table8\';\n\n          execute immediate (\n            \'create or replace trigger "untitled_table8_autoinc_trg"  BEFORE INSERT on "untitled_table8"  for each row  declare  checking number := 1;  begin    if (:new."\' || PK_NAME || \'" is null) then      while checking >= 1 loop        select "untitled_table8_seq".nextval into :new."\' || PK_NAME || \'" from dual;        select count("\' || PK_NAME || \'") into checking from "untitled_table8"        where "\' || PK_NAME || \'" = :new."\' || PK_NAME || \'";      end loop;    end if;  end;\'\n          );\n\n          END;',
+            type: 'ANON_BLOCK',
+          },
+        ];
+        expect(actual).to.eql(expected);
+      });
+
       it('should identify a create table then a block', () => {
         const actual = identify(
           `
@@ -173,7 +214,7 @@ describe('identifier', () => {
           },
           {
             end: 1212,
-            executionType: 'UNKNOWN',
+            executionType: 'ANON_BLOCK',
             parameters: [],
             start: 180,
             text: 'DECLARE\n            PK_NAME VARCHAR(200);\n\n          BEGIN\n            EXECUTE IMMEDIATE (\'CREATE SEQUENCE "untitled_table8_seq"\');\n\n          SELECT\n            cols.column_name INTO PK_NAME\n          FROM\n            all_constraints cons,\n            all_cons_columns cols\n          WHERE\n            cons.constraint_type = \'P\'\n            AND cons.constraint_name = cols.constraint_name\n            AND cons.owner = cols.owner\n            AND cols.table_name = \'untitled_table8\';\n\n          execute immediate (\n            \'create or replace trigger "untitled_table8_autoinc_trg"  BEFORE INSERT on "untitled_table8"  for each row  declare  checking number := 1;  begin    if (:new."\' || PK_NAME || \'" is null) then      while checking >= 1 loop        select "untitled_table8_seq".nextval into :new."\' || PK_NAME || \'" from dual;        select count("\' || PK_NAME || \'") into checking from "untitled_table8"        where "\' || PK_NAME || \'" = :new."\' || PK_NAME || \'";      end loop;    end if;  end;\'\n          );\n\n          END;',

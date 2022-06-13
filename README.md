@@ -55,6 +55,7 @@ This way you have sure is a valid query before trying to identify the types.
 * ALTER_TRIGGER
 * ALTER_FUNCTION
 * ALTER_INDEX
+* ANON_BLOCK (Oracle Database only)
 * UNKNOWN (only available if strict mode is disabled)
 
 ## Execution types
@@ -64,6 +65,7 @@ Execution types allow to know what is the query behavior
 * `LISTING:` is when the query list the data
 * `MODIFICATION:` is when the query modificate the database somehow (structure or data)
 * `INFORMATION:` is show some data information such as a profile data
+* `ANON_BLOCK: ` is for a anonymous block query containing multiple statements of unknown type (Oracle Database only)
 * `UNKNOWN`: (only available if strict mode is disabled)
 
 ## Installation
@@ -112,7 +114,7 @@ console.log(statements);
 1. `input (string)`: the whole SQL script text to be processed
 1. `options (object)`: allow to set different configurations
     1. `strict (bool)`: allow disable strict mode which will ignore unknown types *(default=true)*
-    2. `dialect (string)`: Specify your database dialect, values: `generic`, `mysql`, `psql`, `sqlite` and `mssql`. *(default=generic)*
+    2. `dialect (string)`: Specify your database dialect, values: `generic`, `mysql`, `oracle`, `psql`, `sqlite` and `mssql`. *(default=generic)*
 
 ## Contributing
 

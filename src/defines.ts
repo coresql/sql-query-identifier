@@ -30,7 +30,7 @@ export type StatementType =
   | 'ANON_BLOCK'
   | 'UNKNOWN';
 
-export type ExecutionType = 'LISTING' | 'MODIFICATION' | 'UNKNOWN';
+export type ExecutionType = 'LISTING' | 'MODIFICATION' | 'ANON_BLOCK' | 'UNKNOWN';
 
 export interface IdentifyOptions {
   strict?: boolean;

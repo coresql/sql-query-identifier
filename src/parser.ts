@@ -51,7 +51,7 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   ALTER_FUNCTION: 'MODIFICATION',
   ALTER_INDEX: 'MODIFICATION',
   UNKNOWN: 'UNKNOWN',
-  ANON_BLOCK: 'UNKNOWN',
+  ANON_BLOCK: 'ANON_BLOCK',
 };
 
 const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION', 'ANON_BLOCK'];
