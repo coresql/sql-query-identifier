@@ -51,15 +51,17 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   ALTER_FUNCTION: 'MODIFICATION',
   ALTER_INDEX: 'MODIFICATION',
   UNKNOWN: 'UNKNOWN',
+  ANON_BLOCK: 'ANON_BLOCK',
 };
 
-const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION'];
+const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION', 'ANON_BLOCK'];
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
   psql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
   mysql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
   mssql: ['BEGIN', 'CASE'],
   sqlite: ['BEGIN', 'CASE'],
+  oracle: ['DECLARE', 'BEGIN', 'CASE'],
 };
 
 interface ParseOptions {
@@ -250,6 +252,12 @@ function createStatementParserByToken(token: Token, options: ParseOptions): Stat
         return createDeleteStatementParser(options);
       case 'TRUNCATE':
         return createTruncateStatementParser(options);
+      case 'DECLARE':
+      case 'BEGIN':
+        if (options.dialect === 'oracle') {
+          return createBlockStatementParser(options);
+        }
+      // eslint-disable-next-line no-fallthrough
       default:
         break;
     }
@@ -274,6 +282,32 @@ function createSelectStatementParser(options: ParseOptions) {
       },
       add: (token) => {
         statement.type = 'SELECT';
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
+      },
+      postCanGoToNext: () => true,
+    },
+  ];
+
+  return stateMachineStatementParser(statement, steps, options);
+}
+
+function createBlockStatementParser(options: ParseOptions) {
+  const statement = createInitialStatement();
+  statement.type = 'ANON_BLOCK';
+
+  const steps: Step[] = [
+    // Select
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        acceptTokens: [
+          { type: 'keyword', value: 'DECLARE' },
+          { type: 'keyword', value: 'BEGIN' },
+        ],
+      },
+      add: (token) => {
         if (statement.start < 0) {
           statement.start = token.start;
         }
@@ -540,6 +574,9 @@ function stateMachineStatementParser(
   let prevToken: Token;
   let prevPrevToken: Token;
 
+  let lastBlockOpener: Token;
+  let anonBlockStarted = false;
+
   let openBlocks = 0;
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
@@ -600,11 +637,27 @@ function stateMachineStatementParser(
       if (
         token.type === 'keyword' &&
         blockOpeners[dialect].includes(token.value) &&
-        prevPrevToken.value.toUpperCase() !== 'END'
+        prevPrevToken?.value.toUpperCase() !== 'END'
       ) {
+        if (
+          dialect === 'oracle' &&
+          lastBlockOpener?.value === 'DECLARE' &&
+          token.value.toUpperCase() === 'BEGIN'
+        ) {
+          // don't open a new block!
+          setPrevToken(token);
+          lastBlockOpener = token;
+          return;
+        }
         openBlocks++;
+        lastBlockOpener = token;
         setPrevToken(token);
-        return;
+        if (statement.type === 'ANON_BLOCK' && !anonBlockStarted) {
+          anonBlockStarted = true;
+          // don't return
+        } else {
+          return;
+        }
       }
 
       if (
@@ -614,7 +667,7 @@ function stateMachineStatementParser(
         statement.parameters.push(token.value);
       }
 
-      if (statement.type) {
+      if (statement.type && statement.start >= 0) {
         // statement has already been identified
         // just wait until end of the statement
         return;

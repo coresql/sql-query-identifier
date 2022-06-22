@@ -25,6 +25,9 @@ const KEYWORDS = [
   'WITH',
   'AS',
   'MATERIALIZED',
+  'BEGIN',
+  'DECLARE',
+  'CASE',
 ];
 
 const INDIVIDUALS: Record<string, Token['type']> = {
