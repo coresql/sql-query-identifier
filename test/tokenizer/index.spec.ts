@@ -342,6 +342,17 @@ describe('scan', () => {
         };
         expect(actual).to.eql(expected);
       });
+
+      it('should not include trailing non-numbers for psql', () => {
+        const actual = scanToken(initState('$1,'), 'psql');
+        const expected = {
+          type: 'parameter',
+          value: '$1',
+          start: 0,
+          end: 1,
+        };
+        expect(actual).to.eql(expected);
+      });
     });
   });
 });
