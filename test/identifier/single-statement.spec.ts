@@ -89,7 +89,7 @@ describe('identifier', () => {
 
         it('should throw error for sqlite', () => {
           expect(() => identify(sql, { dialect: 'sqlite' })).to.throw(
-            `Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") instead of type="keyword" value="${type}" (currentStep=1)`,
+            `Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") or (type="keyword" value="PROCEDURE") instead of type="keyword" value="${type}" (currentStep=1)`,
           );
         });
       });
@@ -349,6 +349,32 @@ describe('identifier', () => {
             end: 104,
             text: 'CREATE TRIGGER view_insert INSTEAD OF INSERT ON my_view FOR EACH ROW EXECUTE PROCEDURE view_insert_row();',
             type: 'CREATE_TRIGGER',
+            executionType: 'MODIFICATION',
+            parameters: [],
+          },
+        ];
+        expect(actual).to.eql(expected);
+      });
+    });
+
+    describe('identify bigquery "CREATE PROCEDURE" statements', () => {
+      it('should identify bigquery "CREATE PROCEDURE" statement', () => {
+        const sql = `CREATE OR REPLACE PROCEDURE mydataset.create_customer()
+        BEGIN
+          DECLARE id STRING;
+          SET id = GENERATE_UUID();
+          INSERT INTO mydataset.customers (customer_id)
+            VALUES(id);
+          SELECT FORMAT("Created customer %s", id);
+        END`;
+
+        const actual = identify(sql, { dialect: 'bigquery' });
+        const expected = [
+          {
+            start: 0,
+            end: 277,
+            text: sql,
+            type: 'CREATE_PROCEDURE',
             executionType: 'MODIFICATION',
             parameters: [],
           },

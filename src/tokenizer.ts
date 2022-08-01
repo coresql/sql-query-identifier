@@ -28,6 +28,7 @@ const KEYWORDS = [
   'BEGIN',
   'DECLARE',
   'CASE',
+  'PROCEDURE',
 ];
 
 const INDIVIDUALS: Record<string, Token['type']> = {

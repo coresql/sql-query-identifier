@@ -36,6 +36,7 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   CREATE_TRIGGER: 'MODIFICATION',
   CREATE_FUNCTION: 'MODIFICATION',
   CREATE_INDEX: 'MODIFICATION',
+  CREATE_PROCEDURE: 'MODIFICATION',
   DROP_DATABASE: 'MODIFICATION',
   DROP_SCHEMA: 'MODIFICATION',
   DROP_TABLE: 'MODIFICATION',
@@ -54,7 +55,7 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   ANON_BLOCK: 'ANON_BLOCK',
 };
 
-const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION', 'ANON_BLOCK'];
+const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION', 'CREATE_PROCEDURE', 'ANON_BLOCK'];
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
   psql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
@@ -62,6 +63,7 @@ const blockOpeners: Record<Dialect, string[]> = {
   mssql: ['BEGIN', 'CASE'],
   sqlite: ['BEGIN', 'CASE'],
   oracle: ['DECLARE', 'BEGIN', 'CASE'],
+  bigquery: ['DECLARE', 'BEGIN', 'CASE'],
 };
 
 interface ParseOptions {
@@ -254,7 +256,7 @@ function createStatementParserByToken(token: Token, options: ParseOptions): Stat
         return createTruncateStatementParser(options);
       case 'DECLARE':
       case 'BEGIN':
-        if (options.dialect === 'oracle') {
+        if (['oracle', 'bigquery'].includes(options.dialect)) {
           return createBlockStatementParser(options);
         }
       // eslint-disable-next-line no-fallthrough
@@ -422,6 +424,7 @@ function createCreateStatementParser(options: ParseOptions) {
           { type: 'keyword', value: 'TRIGGER' },
           { type: 'keyword', value: 'FUNCTION' },
           { type: 'keyword', value: 'INDEX' },
+          { type: 'keyword', value: 'PROCEDURE' },
         ],
       },
       add: (token) => {
@@ -508,6 +511,7 @@ function createAlterStatementParser(options: ParseOptions) {
                 { type: 'keyword', value: 'TRIGGER' },
                 { type: 'keyword', value: 'FUNCTION' },
                 { type: 'keyword', value: 'INDEX' },
+                { type: 'keyword', value: 'PROCEDURE' },
               ]
             : []),
           { type: 'keyword', value: 'TABLE' },
@@ -640,7 +644,7 @@ function stateMachineStatementParser(
         prevPrevToken?.value.toUpperCase() !== 'END'
       ) {
         if (
-          dialect === 'oracle' &&
+          ['oracle', 'bigquery'].includes(dialect) &&
           lastBlockOpener?.value === 'DECLARE' &&
           token.value.toUpperCase() === 'BEGIN'
         ) {
@@ -691,7 +695,7 @@ function stateMachineStatementParser(
       // psql allows for optional "OR REPLACE" between "CREATE" and "FUNCTION"
       // mysql and psql allow it between "CREATE" and "VIEW"
       if (
-        ['psql', 'mysql'].includes(dialect) &&
+        ['psql', 'mysql', 'bigquery'].includes(dialect) &&
         ['OR', 'REPLACE'].includes(token.value.toUpperCase())
       ) {
         setPrevToken(token);

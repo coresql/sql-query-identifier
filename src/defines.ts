@@ -1,4 +1,12 @@
-export const DIALECTS = ['mssql', 'sqlite', 'mysql', 'oracle', 'psql', 'generic'] as const;
+export const DIALECTS = [
+  'mssql',
+  'sqlite',
+  'mysql',
+  'oracle',
+  'psql',
+  'bigquery',
+  'generic',
+] as const;
 export type Dialect = typeof DIALECTS[number];
 export type StatementType =
   | 'INSERT'
@@ -13,6 +21,7 @@ export type StatementType =
   | 'CREATE_TRIGGER'
   | 'CREATE_FUNCTION'
   | 'CREATE_INDEX'
+  | 'CREATE_PROCEDURE'
   | 'DROP_DATABASE'
   | 'DROP_SCHEMA'
   | 'DROP_TABLE'

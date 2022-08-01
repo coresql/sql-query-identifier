@@ -41,6 +41,7 @@ This way you have sure is a valid query before trying to identify the types.
 * CREATE_TRIGGER
 * CREATE_FUNCTION
 * CREATE_INDEX
+* CREATE_PROCEDURE
 * DROP_DATABASE
 * DROP_SCHEMA
 * DROP_TABLE
