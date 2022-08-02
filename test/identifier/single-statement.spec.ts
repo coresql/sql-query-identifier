@@ -403,21 +403,28 @@ describe('identifier', () => {
     });
 
     describe('identify "ALTER PROCEDURE" statements', () => {
-      it('should identify "ALTER PROCEDURE" statement', () => {
-        const sql = `ALTER PROCEDURE mydataset.create_customer`;
+      const sql = `ALTER PROCEDURE mydataset.create_customer`;
+      (['oracle', 'psql', 'mysql', 'mssql'] as Dialect[]).forEach((dialect) => {
+        it('should identify "ALTER PROCEDURE" statement', () => {
+          const actual = identify(sql, { dialect });
+          const expected = [
+            {
+              start: 0,
+              end: 40,
+              text: sql,
+              type: 'ALTER_PROCEDURE',
+              executionType: 'MODIFICATION',
+              parameters: [],
+            },
+          ];
+          expect(actual).to.eql(expected);
+        });
+      });
 
-        const actual = identify(sql, { dialect: 'mysql' });
-        const expected = [
-          {
-            start: 0,
-            end: 40,
-            text: sql,
-            type: 'ALTER_PROCEDURE',
-            executionType: 'MODIFICATION',
-            parameters: [],
-          },
-        ];
-        expect(actual).to.eql(expected);
+      it('should throw error for bigquery', () => {
+        expect(() => identify(sql, { dialect: 'bigquery' })).to.throw(
+          `Expected any of these tokens (type="keyword" value="DATABASE") or (type="keyword" value="SCHEMA") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") or (type="keyword" value="TABLE") or (type="keyword" value="VIEW") instead of type="keyword" value="PROCEDURE`,
+        );
       });
     });
 
