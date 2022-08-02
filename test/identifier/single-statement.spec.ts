@@ -89,7 +89,7 @@ describe('identifier', () => {
 
         it('should throw error for sqlite', () => {
           expect(() => identify(sql, { dialect: 'sqlite' })).to.throw(
-            `Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") or (type="keyword" value="PROCEDURE") instead of type="keyword" value="${type}" (currentStep=1)`,
+            `Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") instead of type="keyword" value="${type}" (currentStep=1)`,
           );
         });
       });

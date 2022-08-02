@@ -256,7 +256,7 @@ function createStatementParserByToken(token: Token, options: ParseOptions): Stat
         return createTruncateStatementParser(options);
       case 'DECLARE':
       case 'BEGIN':
-        if (['oracle', 'bigquery'].includes(options.dialect)) {
+        if (['oracle'].includes(options.dialect)) {
           return createBlockStatementParser(options);
         }
       // eslint-disable-next-line no-fallthrough
@@ -417,6 +417,7 @@ function createCreateStatementParser(options: ParseOptions) {
             ? [
                 { type: 'keyword', value: 'DATABASE' },
                 { type: 'keyword', value: 'SCHEMA' },
+                { type: 'keyword', value: 'PROCEDURE' },
               ]
             : []),
           { type: 'keyword', value: 'TABLE' },
@@ -424,7 +425,6 @@ function createCreateStatementParser(options: ParseOptions) {
           { type: 'keyword', value: 'TRIGGER' },
           { type: 'keyword', value: 'FUNCTION' },
           { type: 'keyword', value: 'INDEX' },
-          { type: 'keyword', value: 'PROCEDURE' },
         ],
       },
       add: (token) => {
