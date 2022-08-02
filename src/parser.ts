@@ -256,7 +256,7 @@ function createStatementParserByToken(token: Token, options: ParseOptions): Stat
         return createTruncateStatementParser(options);
       case 'DECLARE':
       case 'BEGIN':
-        if (['oracle'].includes(options.dialect)) {
+        if (options.dialect === 'oracle') {
           return createBlockStatementParser(options);
         }
       // eslint-disable-next-line no-fallthrough
