@@ -406,11 +406,11 @@ describe('identifier', () => {
       it('should identify "ALTER PROCEDURE" statement', () => {
         const sql = `ALTER PROCEDURE mydataset.create_customer`;
 
-        const actual = identify(sql, { dialect: 'bigquery' });
+        const actual = identify(sql, { dialect: 'mysql' });
         const expected = [
           {
             start: 0,
-            end: 39,
+            end: 40,
             text: sql,
             type: 'ALTER_PROCEDURE',
             executionType: 'MODIFICATION',

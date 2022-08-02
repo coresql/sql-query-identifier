@@ -514,7 +514,9 @@ function createAlterStatementParser(options: ParseOptions) {
                 { type: 'keyword', value: 'TRIGGER' },
                 { type: 'keyword', value: 'FUNCTION' },
                 { type: 'keyword', value: 'INDEX' },
-                { type: 'keyword', value: 'PROCEDURE' },
+                ...(options.dialect !== 'bigquery'
+                  ? [{ type: 'keyword', value: 'PROCEDURE' }]
+                  : []),
               ]
             : []),
           { type: 'keyword', value: 'TABLE' },
