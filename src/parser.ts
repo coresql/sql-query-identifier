@@ -44,6 +44,7 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   DROP_TRIGGER: 'MODIFICATION',
   DROP_FUNCTION: 'MODIFICATION',
   DROP_INDEX: 'MODIFICATION',
+  DROP_PROCEDURE: 'MODIFICATION',
   ALTER_DATABASE: 'MODIFICATION',
   ALTER_SCHEMA: 'MODIFICATION',
   ALTER_TABLE: 'MODIFICATION',
@@ -51,6 +52,7 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   ALTER_TRIGGER: 'MODIFICATION',
   ALTER_FUNCTION: 'MODIFICATION',
   ALTER_INDEX: 'MODIFICATION',
+  ALTER_PROCEDURE: 'MODIFICATION',
   UNKNOWN: 'UNKNOWN',
   ANON_BLOCK: 'ANON_BLOCK',
 };
@@ -464,6 +466,7 @@ function createDropStatementParser(options: ParseOptions) {
             ? [
                 { type: 'keyword', value: 'DATABASE' },
                 { type: 'keyword', value: 'SCHEMA' },
+                { type: 'keyword', value: 'PROCEDURE' },
               ]
             : []),
           { type: 'keyword', value: 'TABLE' },

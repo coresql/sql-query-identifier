@@ -29,6 +29,7 @@ export type StatementType =
   | 'DROP_TRIGGER'
   | 'DROP_FUNCTION'
   | 'DROP_INDEX'
+  | 'DROP_PROCEDURE'
   | 'ALTER_DATABASE'
   | 'ALTER_SCHEMA'
   | 'ALTER_TABLE'
@@ -36,6 +37,7 @@ export type StatementType =
   | 'ALTER_TRIGGER'
   | 'ALTER_FUNCTION'
   | 'ALTER_INDEX'
+  | 'ALTER_PROCEDURE'
   | 'ANON_BLOCK'
   | 'UNKNOWN';
 

@@ -357,7 +357,7 @@ describe('identifier', () => {
       });
     });
 
-    describe('identify bigquery "CREATE PROCEDURE" statements', () => {
+    describe('identify "CREATE PROCEDURE" statements', () => {
       it('should identify bigquery "CREATE PROCEDURE" statement', () => {
         const sql = `CREATE OR REPLACE PROCEDURE mydataset.create_customer()
         BEGIN
@@ -375,6 +375,44 @@ describe('identifier', () => {
             end: 277,
             text: sql,
             type: 'CREATE_PROCEDURE',
+            executionType: 'MODIFICATION',
+            parameters: [],
+          },
+        ];
+        expect(actual).to.eql(expected);
+      });
+    });
+
+    describe('identify "DROP PROCEDURE" statements', () => {
+      it('should identify "DROP PROCEDURE" statement', () => {
+        const sql = `DROP PROCEDURE mydataset.create_customer`;
+
+        const actual = identify(sql, { dialect: 'bigquery' });
+        const expected = [
+          {
+            start: 0,
+            end: 39,
+            text: sql,
+            type: 'DROP_PROCEDURE',
+            executionType: 'MODIFICATION',
+            parameters: [],
+          },
+        ];
+        expect(actual).to.eql(expected);
+      });
+    });
+
+    describe('identify "ALTER PROCEDURE" statements', () => {
+      it('should identify "ALTER PROCEDURE" statement', () => {
+        const sql = `ALTER PROCEDURE mydataset.create_customer`;
+
+        const actual = identify(sql, { dialect: 'bigquery' });
+        const expected = [
+          {
+            start: 0,
+            end: 39,
+            text: sql,
+            type: 'ALTER_PROCEDURE',
             executionType: 'MODIFICATION',
             parameters: [],
           },

@@ -49,6 +49,7 @@ This way you have sure is a valid query before trying to identify the types.
 * DROP_TRIGGER
 * DROP_FUNCTION
 * DROP_INDEX
+* DROP_PROCEDURE
 * ALTER_DATABASE
 * ALTER_SCHEMA
 * ALTER_TABLE
@@ -56,6 +57,7 @@ This way you have sure is a valid query before trying to identify the types.
 * ALTER_TRIGGER
 * ALTER_FUNCTION
 * ALTER_INDEX
+* ALTER_PROCEDURE
 * ANON_BLOCK (Oracle Database only)
 * UNKNOWN (only available if strict mode is disabled)
 
