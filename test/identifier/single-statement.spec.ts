@@ -1210,6 +1210,26 @@ describe('identifier', () => {
 
       expect(actual).to.eql(expected);
     });
+
+    it('Should extract positional Parameters with trailing commas', () => {
+      const actual = identify('SELECT $1,$2 FROM foo', {
+        dialect: 'psql',
+        strict: true,
+      });
+      const expected = [
+        {
+          start: 0,
+          end: 20,
+          text: 'SELECT $1,$2 FROM foo',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: ['$1', '$2'],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
     it('Should extract named Parameters', () => {
       const actual = identify('SELECT * FROM Persons where x = :one and y = :two and a = :one', {
         dialect: 'mssql',
@@ -1228,6 +1248,7 @@ describe('identifier', () => {
 
       expect(actual).to.eql(expected);
     });
+
     it('Should extract question mark Parameters', () => {
       const actual = identify('SELECT * FROM Persons where x = ? and y = ? and a = ?', {
         dialect: 'mysql',

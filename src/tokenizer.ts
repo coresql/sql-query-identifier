@@ -234,9 +234,9 @@ function scanParameter(state: State, dialect: Dialect): Token {
 
     do {
       nextChar = read(state);
-    } while (!isNaN(Number(nextChar)) && !isWhitespace(nextChar) && nextChar !== null);
+    } while (nextChar !== null && !isNaN(Number(nextChar)) && !isWhitespace(nextChar));
 
-    if (isWhitespace(nextChar)) unread(state);
+    if (nextChar !== null) unread(state);
 
     const value = state.input.slice(state.start, state.position + 1);
 
