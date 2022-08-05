@@ -130,7 +130,7 @@ describe('identifier', () => {
 
       describe('identifying "CREATE MATERIALIZED VIEW" statement', () => {
         const query = "CREATE MATERIALIZED VIEW vista AS SELECT 'Hello World';";
-        (['psql', 'mssql'] as Dialect[]).forEach((dialect) => {
+        (['bigquery', 'psql', 'mssql'] as Dialect[]).forEach((dialect) => {
           it(`should identify for ${dialect}`, () => {
             const actual = identify(query, { dialect });
             const expected = [
@@ -159,7 +159,7 @@ describe('identifier', () => {
 
       describe('identify "CREATE OR REPLACE VIEW" statement', () => {
         const query = "CREATE OR REPLACE VIEW vista AS SELECT 'Hello world';";
-        (['mysql', 'psql'] as Dialect[]).forEach((dialect) => {
+        (['bigquery', 'mysql', 'psql'] as Dialect[]).forEach((dialect) => {
           it(`should identify for ${dialect}`, () => {
             const actual = identify(query, { dialect });
             const expected = [
@@ -177,12 +177,18 @@ describe('identifier', () => {
           });
         });
 
-        (['generic', 'sqlite', 'mssql'] as Dialect[]).forEach((dialect) => {
+        (['generic', 'sqlite'] as Dialect[]).forEach((dialect) => {
           it(`should throw error for ${dialect}`, () => {
             expect(() => identify(query, { dialect })).to.throw(
               /^Expected any of these tokens .* instead of type="unknown" value="OR" \(currentStep=1\)/,
             );
           });
+        });
+
+        it(`should throw error for mssql`, () => {
+          expect(() => identify(query, { dialect: 'mssql' })).to.throw(
+            /^Expected any of these tokens .* instead of type="unknown" value="REPLACE" \(currentStep=1\)/,
+          );
         });
       });
 
@@ -207,7 +213,7 @@ describe('identifier', () => {
             });
           });
 
-          (['generic', 'mysql', 'mssql'] as Dialect[]).forEach((dialect) => {
+          (['generic', 'mysql', 'mssql', 'bigquery', 'oracle'] as Dialect[]).forEach((dialect) => {
             it(`should throw error for ${dialect}`, () => {
               const regex = new RegExp(
                 `Expected any of these tokens .* instead of type="unknown" value="${temp}" \\(currentStep=1\\)`,
@@ -354,6 +360,165 @@ describe('identifier', () => {
           },
         ];
         expect(actual).to.eql(expected);
+      });
+    });
+
+    describe('identity PROCEDURE statements', () => {
+      describe('identify "CREATE PROCEDURE" statements', () => {
+        (['bigquery', 'generic', 'mssql', 'mysql', 'oracle', 'psql'] as Dialect[]).forEach(
+          (dialect) => {
+            it(`should identify statement for ${dialect}`, () => {
+              const sql = `CREATE PROCEDURE mydataset.create_customer()
+              BEGIN
+                DECLARE id STRING;
+                SET id = GENERATE_UUID();
+                INSERT INTO mydataset.customers (customer_id)
+                  VALUES(id);
+                SELECT FORMAT("Created customer %s", id);
+              END`;
+
+              const actual = identify(sql, { dialect });
+              const expected = [
+                {
+                  start: 0,
+                  end: 308,
+                  text: sql,
+                  type: 'CREATE_PROCEDURE',
+                  executionType: 'MODIFICATION',
+                  parameters: [],
+                },
+              ];
+              expect(actual).to.eql(expected);
+            });
+          },
+        );
+
+        (['bigquery', 'mysql', 'psql'] as Dialect[]).forEach((dialect) => {
+          it(`should identify statement with "OR REPLACE" for ${dialect}`, () => {
+            const sql = `CREATE OR REPLACE PROCEDURE mydataset.create_customer()
+            BEGIN
+              DECLARE id STRING;
+              SET id = GENERATE_UUID();
+              INSERT INTO mydataset.customers (customer_id)
+                VALUES(id);
+              SELECT FORMAT("Created customer %s", id);
+            END`;
+
+            const actual = identify(sql, { dialect });
+            const expected = [
+              {
+                start: 0,
+                end: 305,
+                text: sql,
+                type: 'CREATE_PROCEDURE',
+                executionType: 'MODIFICATION',
+                parameters: [],
+              },
+            ];
+            expect(actual).to.eql(expected);
+          });
+        });
+
+        it('should identify statement with "OR ALTER" for mssql', () => {
+          const sql = `CREATE OR ALTER PROCEDURE mydataset.create_customer()
+          BEGIN
+            DECLARE id STRING;
+            SET id = GENERATE_UUID();
+            INSERT INTO mydataset.customers (customer_id)
+              VALUES(id);
+            SELECT FORMAT("Created customer %s", id);
+          END`;
+
+          const actual = identify(sql, { dialect: 'mssql' });
+          const expected = [
+            {
+              start: 0,
+              end: 289,
+              text: sql,
+              type: 'CREATE_PROCEDURE',
+              executionType: 'MODIFICATION',
+              parameters: [],
+            },
+          ];
+          expect(actual).to.eql(expected);
+        });
+
+        it('should error for sqlite', () => {
+          const sql = `CREATE PROCEDURE mydataset.create_customer()
+            BEGIN
+              DECLARE id STRING;
+              SET id = GENERATE_UUID();
+              INSERT INTO mydataset.customers (customer_id)
+                VALUES(id);
+              SELECT FORMAT("Created customer %s", id);
+            END`;
+          expect(() => identify(sql, { dialect: 'sqlite' })).to.throw(
+            'Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") instead of type="keyword" value="PROCEDURE" (currentStep=1)',
+          );
+        });
+      });
+
+      describe('identify "DROP PROCEDURE" statements', () => {
+        (['bigquery', 'generic', 'mssql', 'mysql', 'oracle', 'psql'] as Dialect[]).forEach(
+          (dialect) => {
+            it(`should identify the statement for ${dialect}`, () => {
+              const sql = `DROP PROCEDURE mydataset.create_customer`;
+
+              const actual = identify(sql, { dialect });
+              const expected = [
+                {
+                  start: 0,
+                  end: 39,
+                  text: sql,
+                  type: 'DROP_PROCEDURE',
+                  executionType: 'MODIFICATION',
+                  parameters: [],
+                },
+              ];
+              expect(actual).to.eql(expected);
+            });
+          },
+        );
+
+        it('should error for sqlite', () => {
+          const sql = `DROP PROCEDURE mydataset.create_customer`;
+          expect(() => identify(sql, { dialect: 'sqlite' })).to.throw(
+            'Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") instead of type="keyword" value="PROCEDURE" (currentStep=1)',
+          );
+        });
+      });
+
+      describe('identify "ALTER PROCEDURE" statements', () => {
+        const sql = `ALTER PROCEDURE mydataset.create_customer`;
+        (['generic', 'mssql', 'mysql', 'oracle', 'psql'] as Dialect[]).forEach((dialect) => {
+          it('should identify "ALTER PROCEDURE" statement', () => {
+            const actual = identify(sql, { dialect });
+            const expected = [
+              {
+                start: 0,
+                end: 40,
+                text: sql,
+                type: 'ALTER_PROCEDURE',
+                executionType: 'MODIFICATION',
+                parameters: [],
+              },
+            ];
+            expect(actual).to.eql(expected);
+          });
+        });
+
+        it('should throw error for bigquery', () => {
+          expect(() => identify(sql, { dialect: 'bigquery' })).to.throw(
+            `Expected any of these tokens (type="keyword" value="DATABASE") or (type="keyword" value="SCHEMA") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") or (type="keyword" value="TABLE") or (type="keyword" value="VIEW") instead of type="keyword" value="PROCEDURE`,
+          );
+        });
+
+        it('should error for sqlite', () => {
+          const sql = `DROP PROCEDURE mydataset.create_customer`;
+          expect(() => identify(sql, { dialect: 'sqlite' })).to.throw(
+            'Expected any of these tokens (type="keyword" value="TABLE") or (type="keyword" value="VIEW") or (type="keyword" value="TRIGGER") or (type="keyword" value="FUNCTION") or (type="keyword" value="INDEX") instead of type="keyword" value="PROCEDURE" (currentStep=1)',
+          );
+        });
       });
     });
 

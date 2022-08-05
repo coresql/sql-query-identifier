@@ -36,6 +36,7 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   CREATE_TRIGGER: 'MODIFICATION',
   CREATE_FUNCTION: 'MODIFICATION',
   CREATE_INDEX: 'MODIFICATION',
+  CREATE_PROCEDURE: 'MODIFICATION',
   DROP_DATABASE: 'MODIFICATION',
   DROP_SCHEMA: 'MODIFICATION',
   DROP_TABLE: 'MODIFICATION',
@@ -43,6 +44,7 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   DROP_TRIGGER: 'MODIFICATION',
   DROP_FUNCTION: 'MODIFICATION',
   DROP_INDEX: 'MODIFICATION',
+  DROP_PROCEDURE: 'MODIFICATION',
   ALTER_DATABASE: 'MODIFICATION',
   ALTER_SCHEMA: 'MODIFICATION',
   ALTER_TABLE: 'MODIFICATION',
@@ -50,11 +52,12 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   ALTER_TRIGGER: 'MODIFICATION',
   ALTER_FUNCTION: 'MODIFICATION',
   ALTER_INDEX: 'MODIFICATION',
+  ALTER_PROCEDURE: 'MODIFICATION',
   UNKNOWN: 'UNKNOWN',
   ANON_BLOCK: 'ANON_BLOCK',
 };
 
-const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION', 'ANON_BLOCK'];
+const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION', 'CREATE_PROCEDURE', 'ANON_BLOCK'];
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
   psql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
@@ -62,6 +65,7 @@ const blockOpeners: Record<Dialect, string[]> = {
   mssql: ['BEGIN', 'CASE'],
   sqlite: ['BEGIN', 'CASE'],
   oracle: ['DECLARE', 'BEGIN', 'CASE'],
+  bigquery: ['DECLARE', 'BEGIN', 'CASE'],
 };
 
 interface ParseOptions {
@@ -415,6 +419,7 @@ function createCreateStatementParser(options: ParseOptions) {
             ? [
                 { type: 'keyword', value: 'DATABASE' },
                 { type: 'keyword', value: 'SCHEMA' },
+                { type: 'keyword', value: 'PROCEDURE' },
               ]
             : []),
           { type: 'keyword', value: 'TABLE' },
@@ -461,6 +466,7 @@ function createDropStatementParser(options: ParseOptions) {
             ? [
                 { type: 'keyword', value: 'DATABASE' },
                 { type: 'keyword', value: 'SCHEMA' },
+                { type: 'keyword', value: 'PROCEDURE' },
               ]
             : []),
           { type: 'keyword', value: 'TABLE' },
@@ -508,6 +514,9 @@ function createAlterStatementParser(options: ParseOptions) {
                 { type: 'keyword', value: 'TRIGGER' },
                 { type: 'keyword', value: 'FUNCTION' },
                 { type: 'keyword', value: 'INDEX' },
+                ...(options.dialect !== 'bigquery'
+                  ? [{ type: 'keyword', value: 'PROCEDURE' }]
+                  : []),
               ]
             : []),
           { type: 'keyword', value: 'TABLE' },
@@ -571,10 +580,11 @@ function stateMachineStatementParser(
   { isStrict, dialect }: ParseOptions,
 ): StatementParser {
   let currentStepIndex = 0;
-  let prevToken: Token;
-  let prevPrevToken: Token;
+  let prevToken: Token | undefined;
+  let prevPrevToken: Token | undefined;
+  let prevNonWhitespaceToken: Token | undefined;
 
-  let lastBlockOpener: Token;
+  let lastBlockOpener: Token | undefined;
   let anonBlockStarted = false;
 
   let openBlocks = 0;
@@ -598,6 +608,9 @@ function stateMachineStatementParser(
   const setPrevToken = (token: Token) => {
     prevPrevToken = prevToken;
     prevToken = token;
+    if (token.type !== 'whitespace') {
+      prevNonWhitespaceToken = token;
+    }
   };
 
   return {
@@ -640,7 +653,7 @@ function stateMachineStatementParser(
         prevPrevToken?.value.toUpperCase() !== 'END'
       ) {
         if (
-          dialect === 'oracle' &&
+          ['oracle', 'bigquery'].includes(dialect) &&
           lastBlockOpener?.value === 'DECLARE' &&
           token.value.toUpperCase() === 'BEGIN'
         ) {
@@ -683,16 +696,25 @@ function stateMachineStatementParser(
         return;
       }
 
-      if (['psql', 'mssql'].includes(dialect) && token.value.toUpperCase() === 'MATERIALIZED') {
+      if (
+        ['psql', 'mssql', 'bigquery'].includes(dialect) &&
+        token.value.toUpperCase() === 'MATERIALIZED'
+      ) {
         setPrevToken(token);
         return;
       }
 
-      // psql allows for optional "OR REPLACE" between "CREATE" and "FUNCTION"
-      // mysql and psql allow it between "CREATE" and "VIEW"
+      // technically these dialects don't allow "OR REPLACE" or "OR ALTER" between all statement
+      // types, but we'll allow it for now.
+      // For "ALTER", we need to make sure we only catch it here if it directly follows "OR", so
+      // we don't catch it for "ALTER TABLE" statements
       if (
-        ['psql', 'mysql'].includes(dialect) &&
-        ['OR', 'REPLACE'].includes(token.value.toUpperCase())
+        (['psql', 'mysql', 'bigquery'].includes(dialect) &&
+          ['OR', 'REPLACE'].includes(token.value.toUpperCase())) ||
+        (dialect === 'mssql' &&
+          (token.value.toUpperCase() === 'OR' ||
+            (prevNonWhitespaceToken?.value.toUpperCase() === 'OR' &&
+              token.value.toUpperCase() === 'ALTER')))
       ) {
         setPrevToken(token);
         return;
@@ -721,13 +743,13 @@ function stateMachineStatementParser(
       }
 
       if (statement.definer !== undefined && statement.definer > 0) {
-        if (statement.definer === 1 && prevToken.type === 'whitespace') {
+        if (statement.definer === 1 && prevToken?.type === 'whitespace') {
           statement.definer++;
           setPrevToken(token);
           return;
         }
 
-        if (statement.definer > 1 && prevToken.type !== 'whitespace') {
+        if (statement.definer > 1 && prevToken?.type !== 'whitespace') {
           setPrevToken(token);
           return;
         }
@@ -748,7 +770,7 @@ function stateMachineStatementParser(
       }
 
       if (statement.algorithm !== undefined && statement.algorithm > 0) {
-        if (statement.algorithm === 1 && prevToken.type === 'whitespace') {
+        if (statement.algorithm === 1 && prevToken?.type === 'whitespace') {
           statement.algorithm++;
           setPrevToken(token);
           return;
@@ -756,6 +778,7 @@ function stateMachineStatementParser(
 
         if (
           statement.algorithm > 1 &&
+          prevToken &&
           ['UNDEFINED', 'MERGE', 'TEMPTABLE'].includes(prevToken.value.toUpperCase())
         ) {
           setPrevToken(token);
@@ -792,6 +815,7 @@ function stateMachineStatementParser(
       }
 
       if (
+        prevToken &&
         currentStep.validation &&
         currentStep.validation.requireBefore &&
         !currentStep.validation.requireBefore.includes(prevToken.type)
