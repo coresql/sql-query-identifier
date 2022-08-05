@@ -159,7 +159,7 @@ describe('identifier', () => {
 
       describe('identify "CREATE OR REPLACE VIEW" statement', () => {
         const query = "CREATE OR REPLACE VIEW vista AS SELECT 'Hello world';";
-        (['bigquery', 'mysql', 'psql'] as Dialect[]).forEach((dialect) => {
+        (['bigquery', 'generic', 'mysql', 'psql'] as Dialect[]).forEach((dialect) => {
           it(`should identify for ${dialect}`, () => {
             const actual = identify(query, { dialect });
             const expected = [
@@ -177,7 +177,7 @@ describe('identifier', () => {
           });
         });
 
-        (['generic', 'sqlite'] as Dialect[]).forEach((dialect) => {
+        (['sqlite'] as Dialect[]).forEach((dialect) => {
           it(`should throw error for ${dialect}`, () => {
             expect(() => identify(query, { dialect })).to.throw(
               /^Expected any of these tokens .* instead of type="unknown" value="OR" \(currentStep=1\)/,

@@ -709,12 +709,10 @@ function stateMachineStatementParser(
       // For "ALTER", we need to make sure we only catch it here if it directly follows "OR", so
       // we don't catch it for "ALTER TABLE" statements
       if (
-        (['psql', 'mysql', 'bigquery'].includes(dialect) &&
-          ['OR', 'REPLACE'].includes(token.value.toUpperCase())) ||
-        (dialect === 'mssql' &&
-          (token.value.toUpperCase() === 'OR' ||
-            (prevNonWhitespaceToken?.value.toUpperCase() === 'OR' &&
-              token.value.toUpperCase() === 'ALTER')))
+        dialect !== 'sqlite' &&
+        (token.value.toUpperCase() === 'OR' ||
+          (prevNonWhitespaceToken?.value.toUpperCase() === 'OR' &&
+            token.value.toUpperCase() === (dialect === 'mssql' ? 'ALTER' : 'REPLACE')))
       ) {
         setPrevToken(token);
         return;
