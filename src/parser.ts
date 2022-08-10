@@ -65,7 +65,7 @@ const blockOpeners: Record<Dialect, string[]> = {
   mssql: ['BEGIN', 'CASE'],
   sqlite: ['BEGIN', 'CASE'],
   oracle: ['DECLARE', 'BEGIN', 'CASE'],
-  bigquery: ['DECLARE', 'BEGIN', 'CASE'],
+  bigquery: ['BEGIN', 'CASE'],
 };
 
 interface ParseOptions {

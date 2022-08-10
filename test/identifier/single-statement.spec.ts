@@ -1361,5 +1361,24 @@ describe('identifier', () => {
 
       expect(actual).to.eql(expected);
     });
+
+    it('Should identify declare statement as unknown for bigquery', () => {
+      const actual = identify("DECLARE start_time TIMESTAMP DEFAULT '2022-08-08 13:05:00';", {
+        dialect: 'bigquery',
+        strict: false,
+      });
+      const expected = [
+        {
+          start: 0,
+          end: 58,
+          text: "DECLARE start_time TIMESTAMP DEFAULT '2022-08-08 13:05:00';",
+          type: 'UNKNOWN',
+          executionType: 'UNKNOWN',
+          parameters: [],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
   });
 });
