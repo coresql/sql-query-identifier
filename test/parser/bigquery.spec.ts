@@ -53,9 +53,11 @@ describe('Parser for bigquery', () => {
         0,
         Math.min(sql.indexOf(' '), sql.indexOf('\n')),
       )} structure`, () => {
-        const result = parse(sql, false, 'bigquery');
-        expect(result.body.length).to.eql(1);
+        const result = parse(`${sql}\nSELECT 1;`, false, 'bigquery');
+        expect(result.body.length).to.eql(2);
         expect(sql.substring(result.body[0].start, result.body[0].end + 1)).to.eql(sql);
+        expect(result.body[0].type).to.eql('UNKNOWN');
+        expect(result.body[1].type).to.eql('SELECT');
       });
     });
   });
