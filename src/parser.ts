@@ -12,7 +12,7 @@ import type {
 } from './defines';
 
 interface StatementParser {
-  addToken: (token: Token) => void;
+  addToken: (token: Token, nextToken: Token) => void;
   getStatement: () => Statement;
 }
 
@@ -81,6 +81,15 @@ function createInitialStatement(): Statement {
   };
 }
 
+function nextNonWhitespaceToken(state: State): Token {
+  let token: Token;
+  do {
+    state = initState({ prevState: state });
+    token = scanToken(state);
+  } while (token.type === 'whitespace');
+  return token;
+}
+
 /**
  * Parser
  */
@@ -115,6 +124,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
   while (prevState.position < topLevelState.end) {
     const tokenState = initState({ prevState });
     const token = scanToken(tokenState, dialect);
+    const nextToken = nextNonWhitespaceToken(tokenState);
 
     if (!statementParser) {
       // ignore blank tokens before the start of a CTE / not part of a statement
@@ -193,7 +203,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
       }
     }
 
-    statementParser.addToken(token);
+    statementParser.addToken(token, nextToken);
     topLevelStatement.tokens.push(token);
     prevState = tokenState;
 
@@ -581,7 +591,6 @@ function stateMachineStatementParser(
 ): StatementParser {
   let currentStepIndex = 0;
   let prevToken: Token | undefined;
-  let prevPrevToken: Token | undefined;
   let prevNonWhitespaceToken: Token | undefined;
 
   let lastBlockOpener: Token | undefined;
@@ -606,7 +615,6 @@ function stateMachineStatementParser(
   };
 
   const setPrevToken = (token: Token) => {
-    prevPrevToken = prevToken;
     prevToken = token;
     if (token.type !== 'whitespace') {
       prevNonWhitespaceToken = token;
@@ -618,7 +626,7 @@ function stateMachineStatementParser(
       return statement;
     },
 
-    addToken(token: Token) {
+    addToken(token: Token, nextToken: Token) {
       /* eslint no-param-reassign: 0 */
       if (statement.endStatement) {
         throw new Error('This statement has already got to the end.');
@@ -650,7 +658,13 @@ function stateMachineStatementParser(
       if (
         token.type === 'keyword' &&
         blockOpeners[dialect].includes(token.value) &&
-        prevPrevToken?.value.toUpperCase() !== 'END'
+        prevNonWhitespaceToken?.value.toUpperCase() !== 'END' &&
+        (token.value.toUpperCase() !== 'BEGIN' ||
+          (token.value.toUpperCase() === 'BEGIN' &&
+            nextToken.value.toUpperCase() !== 'TRANSACTION' &&
+            (dialect !== 'sqlite' ||
+              (dialect === 'sqlite' &&
+                !['DEFERRED', 'IMMEDIATE', 'EXCLUSIVE'].includes(nextToken.value.toUpperCase())))))
       ) {
         if (
           ['oracle', 'bigquery'].includes(dialect) &&
