@@ -28,6 +28,11 @@ const KEYWORDS = [
   'BEGIN',
   'DECLARE',
   'CASE',
+  'LOOP',
+  'IF',
+  'REPEAT',
+  'WHILE',
+  'FOR',
   'PROCEDURE',
 ];
 

@@ -57,7 +57,14 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   ANON_BLOCK: 'ANON_BLOCK',
 };
 
-const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION', 'CREATE_PROCEDURE', 'ANON_BLOCK'];
+const statementsWithEnds = [
+  'CREATE_TRIGGER',
+  'CREATE_FUNCTION',
+  'CREATE_PROCEDURE',
+  'ANON_BLOCK',
+  'UNKNOWN',
+];
+
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
   psql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
@@ -65,7 +72,7 @@ const blockOpeners: Record<Dialect, string[]> = {
   mssql: ['BEGIN', 'CASE'],
   sqlite: ['BEGIN', 'CASE'],
   oracle: ['DECLARE', 'BEGIN', 'CASE'],
-  bigquery: ['BEGIN', 'CASE'],
+  bigquery: ['BEGIN', 'CASE', 'IF', 'LOOP', 'REPEAT', 'WHILE', 'FOR'],
 };
 
 interface ParseOptions {
@@ -581,7 +588,6 @@ function stateMachineStatementParser(
 ): StatementParser {
   let currentStepIndex = 0;
   let prevToken: Token | undefined;
-  let prevPrevToken: Token | undefined;
   let prevNonWhitespaceToken: Token | undefined;
 
   let lastBlockOpener: Token | undefined;
@@ -606,7 +612,6 @@ function stateMachineStatementParser(
   };
 
   const setPrevToken = (token: Token) => {
-    prevPrevToken = prevToken;
     prevToken = token;
     if (token.type !== 'whitespace') {
       prevNonWhitespaceToken = token;
@@ -627,7 +632,8 @@ function stateMachineStatementParser(
       if (
         statement.type &&
         token.type === 'semicolon' &&
-        (!statementsWithEnds.includes(statement.type) || (openBlocks === 0 && statement.canEnd))
+        (!statementsWithEnds.includes(statement.type) ||
+          (openBlocks === 0 && (statement.type === 'UNKNOWN' || statement.canEnd)))
       ) {
         statement.endStatement = ';';
         return;
@@ -653,7 +659,7 @@ function stateMachineStatementParser(
         prevPrevToken?.value.toUpperCase() !== 'END'
       ) {
         if (
-          ['oracle', 'bigquery'].includes(dialect) &&
+          dialect === 'oracle' &&
           lastBlockOpener?.value === 'DECLARE' &&
           token.value.toUpperCase() === 'BEGIN'
         ) {
@@ -667,8 +673,7 @@ function stateMachineStatementParser(
         setPrevToken(token);
         if (statement.type === 'ANON_BLOCK' && !anonBlockStarted) {
           anonBlockStarted = true;
-          // don't return
-        } else {
+        } else if (statement.type) {
           return;
         }
       }
@@ -683,6 +688,7 @@ function stateMachineStatementParser(
       if (statement.type && statement.start >= 0) {
         // statement has already been identified
         // just wait until end of the statement
+        setPrevToken(token);
         return;
       }
 
