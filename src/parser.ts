@@ -673,7 +673,7 @@ function stateMachineStatementParser(
 
       if (
         token.type === 'keyword' &&
-        blockOpeners[dialect].includes(token.value) &&
+        blockOpeners[dialect].includes(token.value.toUpperCase()) &&
         prevNonWhitespaceToken?.value.toUpperCase() !== 'END' &&
         (token.value.toUpperCase() !== 'BEGIN' ||
           (token.value.toUpperCase() === 'BEGIN' &&
