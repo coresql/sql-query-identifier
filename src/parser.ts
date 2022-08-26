@@ -663,7 +663,10 @@ function stateMachineStatementParser(
         prevNonWhitespaceToken?.value.toUpperCase() !== 'END' &&
         (token.value.toUpperCase() !== 'BEGIN' ||
           (token.value.toUpperCase() === 'BEGIN' &&
-            nextToken.value.toUpperCase() !== 'TRANSACTION'))
+            nextToken.value.toUpperCase() !== 'TRANSACTION' &&
+            (dialect !== 'sqlite' ||
+              (dialect === 'sqlite' &&
+                !['DEFERRED', 'IMMEDIATE', 'EXCLUSIVE'].includes(nextToken.value.toUpperCase())))))
       ) {
         if (
           ['oracle', 'bigquery'].includes(dialect) &&
