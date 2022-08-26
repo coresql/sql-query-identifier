@@ -364,35 +364,74 @@ describe('identifier', () => {
     });
   });
 
-  it('should identify transactions', () => {
-    const statements = ['BEGIN TRANSACTION;', 'SELECT 1;', 'COMMIT;'];
-    const actual = identify(statements.join('\n'), { strict: false });
-    const expected = [
-      {
-        start: 0,
-        end: 17,
-        text: statements[0],
-        type: 'UNKNOWN',
-        executionType: 'UNKNOWN',
-        parameters: [],
-      },
-      {
-        start: 19,
-        end: 27,
-        text: statements[1],
-        type: 'SELECT',
-        executionType: 'LISTING',
-        parameters: [],
-      },
-      {
-        start: 29,
-        end: 35,
-        text: statements[2],
-        type: 'UNKNOWN',
-        executionType: 'UNKNOWN',
-        parameters: [],
-      },
-    ];
-    expect(actual).to.eql(expected);
+  describe('identifying transactions', () => {
+    it('should identify transactions', () => {
+      const statements = ['BEGIN TRANSACTION;', 'SELECT 1;', 'COMMIT;'];
+      const actual = identify(statements.join('\n'), { strict: false });
+      const expected = [
+        {
+          start: 0,
+          end: 17,
+          text: statements[0],
+          type: 'UNKNOWN',
+          executionType: 'UNKNOWN',
+          parameters: [],
+        },
+        {
+          start: 19,
+          end: 27,
+          text: statements[1],
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+        },
+        {
+          start: 29,
+          end: 35,
+          text: statements[2],
+          type: 'UNKNOWN',
+          executionType: 'UNKNOWN',
+          parameters: [],
+        },
+      ];
+      expect(actual).to.eql(expected);
+    });
+
+    describe('identifying keywords for sqlite transactions', () => {
+      ['DEFERRED', 'IMMEDIATE', 'EXCLUSIVE'].forEach((type) => {
+        it(`identifies BEGIN ${type} TRANSACTION`, () => {
+          const statements = [`BEGIN ${type} TRANSACTION;`, 'SELECT 1;', 'COMMIT;'];
+          const actual = identify(statements.join('\n'), { dialect: 'sqlite', strict: false });
+          const offset = type.length + 1;
+          const expected = [
+            {
+              start: 0,
+              end: 17 + offset,
+              text: statements[0],
+              type: 'UNKNOWN',
+              executionType: 'UNKNOWN',
+              parameters: [],
+            },
+            {
+              start: 19 + offset,
+              end: 27 + offset,
+              text: statements[1],
+              type: 'SELECT',
+              executionType: 'LISTING',
+              parameters: [],
+            },
+            {
+              start: 29 + offset,
+              end: 35 + offset,
+              text: statements[2],
+              type: 'UNKNOWN',
+              executionType: 'UNKNOWN',
+              parameters: [],
+            },
+          ];
+          expect(actual).to.eql(expected);
+        });
+      });
+    });
   });
 });
