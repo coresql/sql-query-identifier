@@ -591,7 +591,6 @@ function stateMachineStatementParser(
 ): StatementParser {
   let currentStepIndex = 0;
   let prevToken: Token | undefined;
-  let prevPrevToken: Token | undefined;
   let prevNonWhitespaceToken: Token | undefined;
 
   let lastBlockOpener: Token | undefined;
@@ -616,7 +615,6 @@ function stateMachineStatementParser(
   };
 
   const setPrevToken = (token: Token) => {
-    prevPrevToken = prevToken;
     prevToken = token;
     if (token.type !== 'whitespace') {
       prevNonWhitespaceToken = token;
