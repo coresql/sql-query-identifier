@@ -61,4 +61,11 @@ describe('Parser for bigquery', () => {
       });
     });
   });
+
+  it('parses BEGIN statement as ANON_BLOCK', () => {
+    const result = parse(`BEGIN SELECT 1; END; SELECT 1;`, false, 'bigquery');
+    expect(result.body.length).to.eql(2);
+    expect(result.body[0].type).to.eql('ANON_BLOCK');
+    expect(result.body[1].type).to.eql('SELECT');
+  });
 });

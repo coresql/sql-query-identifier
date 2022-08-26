@@ -273,12 +273,16 @@ function createStatementParserByToken(token: Token, options: ParseOptions): Stat
         return createDeleteStatementParser(options);
       case 'TRUNCATE':
         return createTruncateStatementParser(options);
-      case 'DECLARE':
       case 'BEGIN':
+        if (['bigquery', 'oracle'].includes(options.dialect)) {
+          return createBlockStatementParser(options);
+        }
+        break;
+      case 'DECLARE':
         if (options.dialect === 'oracle') {
           return createBlockStatementParser(options);
         }
-      // eslint-disable-next-line no-fallthrough
+        break;
       default:
         break;
     }
@@ -324,7 +328,7 @@ function createBlockStatementParser(options: ParseOptions) {
       preCanGoToNext: () => false,
       validation: {
         acceptTokens: [
-          { type: 'keyword', value: 'DECLARE' },
+          ...(options.dialect === 'oracle' ? [{ type: 'keyword', value: 'DECLARE' }] : []),
           { type: 'keyword', value: 'BEGIN' },
         ],
       },
