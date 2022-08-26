@@ -201,7 +201,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
         continue;
       }
 
-      statementParser = createStatementParserByToken(token, { isStrict, dialect });
+      statementParser = createStatementParserByToken(token, nextToken, { isStrict, dialect });
       if (cteState.isCte) {
         statementParser.getStatement().start = cteState.state.start;
         cteState.isCte = false;
@@ -254,7 +254,11 @@ function initState({ input, prevState }: { input?: string; prevState?: State }):
   };
 }
 
-function createStatementParserByToken(token: Token, options: ParseOptions): StatementParser {
+function createStatementParserByToken(
+  token: Token,
+  nextToken: Token,
+  options: ParseOptions,
+): StatementParser {
   if (token.type === 'keyword') {
     switch (token.value.toUpperCase()) {
       case 'SELECT':
@@ -274,7 +278,7 @@ function createStatementParserByToken(token: Token, options: ParseOptions): Stat
       case 'TRUNCATE':
         return createTruncateStatementParser(options);
       case 'BEGIN':
-        if (['bigquery', 'oracle'].includes(options.dialect)) {
+        if (['bigquery', 'oracle'].includes(options.dialect) && nextToken.value !== 'TRANSACTION') {
           return createBlockStatementParser(options);
         }
         break;
