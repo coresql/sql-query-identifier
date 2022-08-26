@@ -657,7 +657,7 @@ function stateMachineStatementParser(
         return;
       }
 
-      if (token.value.toUpperCase() === 'END') {
+      if (openBlocks > 0 && token.value.toUpperCase() === 'END') {
         openBlocks--;
         if (openBlocks === 0) {
           statement.canEnd = true;
