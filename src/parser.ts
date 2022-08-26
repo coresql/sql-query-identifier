@@ -57,7 +57,14 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   ANON_BLOCK: 'ANON_BLOCK',
 };
 
-const statementsWithEnds = ['CREATE_TRIGGER', 'CREATE_FUNCTION', 'CREATE_PROCEDURE', 'ANON_BLOCK'];
+const statementsWithEnds = [
+  'CREATE_TRIGGER',
+  'CREATE_FUNCTION',
+  'CREATE_PROCEDURE',
+  'ANON_BLOCK',
+  'UNKNOWN',
+];
+
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
   psql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
@@ -65,7 +72,7 @@ const blockOpeners: Record<Dialect, string[]> = {
   mssql: ['BEGIN', 'CASE'],
   sqlite: ['BEGIN', 'CASE'],
   oracle: ['DECLARE', 'BEGIN', 'CASE'],
-  bigquery: ['BEGIN', 'CASE'],
+  bigquery: ['BEGIN', 'CASE', 'IF', 'LOOP', 'REPEAT', 'WHILE', 'FOR'],
 };
 
 interface ParseOptions {
@@ -194,7 +201,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
         continue;
       }
 
-      statementParser = createStatementParserByToken(token, { isStrict, dialect });
+      statementParser = createStatementParserByToken(token, nextToken, { isStrict, dialect });
       if (cteState.isCte) {
         statementParser.getStatement().start = cteState.state.start;
         cteState.isCte = false;
@@ -247,7 +254,11 @@ function initState({ input, prevState }: { input?: string; prevState?: State }):
   };
 }
 
-function createStatementParserByToken(token: Token, options: ParseOptions): StatementParser {
+function createStatementParserByToken(
+  token: Token,
+  nextToken: Token,
+  options: ParseOptions,
+): StatementParser {
   if (token.type === 'keyword') {
     switch (token.value.toUpperCase()) {
       case 'SELECT':
@@ -266,12 +277,16 @@ function createStatementParserByToken(token: Token, options: ParseOptions): Stat
         return createDeleteStatementParser(options);
       case 'TRUNCATE':
         return createTruncateStatementParser(options);
-      case 'DECLARE':
       case 'BEGIN':
+        if (['bigquery', 'oracle'].includes(options.dialect) && nextToken.value !== 'TRANSACTION') {
+          return createBlockStatementParser(options);
+        }
+        break;
+      case 'DECLARE':
         if (options.dialect === 'oracle') {
           return createBlockStatementParser(options);
         }
-      // eslint-disable-next-line no-fallthrough
+        break;
       default:
         break;
     }
@@ -317,7 +332,7 @@ function createBlockStatementParser(options: ParseOptions) {
       preCanGoToNext: () => false,
       validation: {
         acceptTokens: [
-          { type: 'keyword', value: 'DECLARE' },
+          ...(options.dialect === 'oracle' ? [{ type: 'keyword', value: 'DECLARE' }] : []),
           { type: 'keyword', value: 'BEGIN' },
         ],
       },
@@ -635,7 +650,8 @@ function stateMachineStatementParser(
       if (
         statement.type &&
         token.type === 'semicolon' &&
-        (!statementsWithEnds.includes(statement.type) || (openBlocks === 0 && statement.canEnd))
+        (!statementsWithEnds.includes(statement.type) ||
+          (openBlocks === 0 && (statement.type === 'UNKNOWN' || statement.canEnd)))
       ) {
         statement.endStatement = ';';
         return;
@@ -667,7 +683,7 @@ function stateMachineStatementParser(
                 !['DEFERRED', 'IMMEDIATE', 'EXCLUSIVE'].includes(nextToken.value.toUpperCase())))))
       ) {
         if (
-          ['oracle', 'bigquery'].includes(dialect) &&
+          dialect === 'oracle' &&
           lastBlockOpener?.value === 'DECLARE' &&
           token.value.toUpperCase() === 'BEGIN'
         ) {
@@ -681,8 +697,7 @@ function stateMachineStatementParser(
         setPrevToken(token);
         if (statement.type === 'ANON_BLOCK' && !anonBlockStarted) {
           anonBlockStarted = true;
-          // don't return
-        } else {
+        } else if (statement.type) {
           return;
         }
       }
@@ -697,6 +712,7 @@ function stateMachineStatementParser(
       if (statement.type && statement.start >= 0) {
         // statement has already been identified
         // just wait until end of the statement
+        setPrevToken(token);
         return;
       }
 
