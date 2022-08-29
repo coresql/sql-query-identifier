@@ -1381,6 +1381,30 @@ describe('identifier', () => {
       expect(actual).to.eql(expected);
     });
 
+    it('Should parse lower case block opener in query correctly', () => {
+      const sql = `CREATE OR REPLACE PROCEDURE foo.bar (col string)
+        BEGIN
+        if foo is not null then
+            SET foo = 'bar';
+        end if;
+
+        SELECT 1;
+        END;`;
+      const actual = identify(sql, { dialect: 'bigquery', strict: false });
+      const expected = [
+        {
+          start: 0,
+          end: 170,
+          text: sql,
+          type: 'CREATE_PROCEDURE',
+          executionType: 'MODIFICATION',
+          parameters: [],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
     it('Should identify a lone END', () => {
       const sql = 'END;';
       const actual = identify(sql, { strict: false });
