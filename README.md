@@ -2,7 +2,7 @@ sql-query-identifier
 ===================
 
 [![Build Status](https://github.com/sqlectron/sql-query-identifier/workflows/Test/badge.svg?branch=master)](https://github.com/sqlectron/sql-query-identifier/actions?query=workflow%3ATest+branch%3Amaster)
-[![npm version](https://badge.fury.io/js/sql-query-identifier.svg)](https://badge.fury.io/js/sql-query-identifier)
+[![npm version](https://badge.fury.io/js/sql-query-identifier.svg)](https://npmjs.com/package/sql-query-identifier)
 [![view demo](https://img.shields.io/badge/view-demo-blue.svg)](https://sqlectron.github.io/sql-query-identifier/)
 
 Identifies the types of each statement in a SQL query (also provide the start, end and the query text).
@@ -58,7 +58,7 @@ This way you have sure is a valid query before trying to identify the types.
 * ALTER_FUNCTION
 * ALTER_INDEX
 * ALTER_PROCEDURE
-* ANON_BLOCK (Oracle Database only)
+* ANON_BLOCK (BigQuery and Oracle dialects only)
 * UNKNOWN (only available if strict mode is disabled)
 
 ## Execution types
@@ -68,7 +68,7 @@ Execution types allow to know what is the query behavior
 * `LISTING:` is when the query list the data
 * `MODIFICATION:` is when the query modificate the database somehow (structure or data)
 * `INFORMATION:` is show some data information such as a profile data
-* `ANON_BLOCK: ` is for an anonymous block query which may contain multiple statements of unknown type (Oracle Database only)
+* `ANON_BLOCK: ` is for an anonymous block query which may contain multiple statements of unknown type (BigQuery and Oracle dialects only)
 * `UNKNOWN`: (only available if strict mode is disabled)
 
 ## Installation

@@ -1398,6 +1398,23 @@ describe('identifier', () => {
           text: sql,
           type: 'CREATE_PROCEDURE',
           executionType: 'MODIFICATION',
+                    parameters: [],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('Should identify a lone END', () => {
+      const sql = 'END;';
+      const actual = identify(sql, { strict: false });
+      const expected = [
+        {
+          start: 0,
+          end: 3,
+          text: sql,
+          type: 'UNKNOWN',
+          executionType: 'UNKNOWN',
           parameters: [],
         },
       ];
