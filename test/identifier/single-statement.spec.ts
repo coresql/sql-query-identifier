@@ -1398,7 +1398,7 @@ describe('identifier', () => {
           text: sql,
           type: 'CREATE_PROCEDURE',
           executionType: 'MODIFICATION',
-                    parameters: [],
+          parameters: [],
         },
       ];
 
