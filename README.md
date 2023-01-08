@@ -42,7 +42,7 @@ This way you have sure is a valid query before trying to identify the types.
 * CREATE_FUNCTION
 * CREATE_INDEX
 * CREATE_PROCEDURE
-* SHOW_DATABASES
+* SHOW_DATABASES (Mysql dialects only)
 * SHOW_KEYS (Mysql dialects only)
 * SHOW_INDEX (Mysql dialects only)
 * SHOW_TABLE (Mysql dialects only) (Refers to SHOW TABLE STATUS)
