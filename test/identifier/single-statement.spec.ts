@@ -522,6 +522,112 @@ describe('identifier', () => {
       });
     });
 
+    describe('identify SHOW statements', () => {
+      (['mysql'] as Dialect[]).forEach((dialect) => {
+        it(`identify "SHOW KEYS" statements for ${dialect}`, () => {
+          const sqlStatement = 'SHOW KEYS;';
+          const actual = identify(sqlStatement);
+          const expected = [
+            {
+              start: 0,
+              end: sqlStatement.length - 1,
+              text: sqlStatement,
+              type: 'SHOW_KEYS',
+              executionType: 'LISTING',
+              parameters: [],
+            },
+          ];
+
+          expect(actual).to.eql(expected);
+        });
+
+        it(`identify "SHOW DATABASES" statements for ${dialect}`, () => {
+          const sqlStatement = 'SHOW DATABASES;';
+          const actual = identify(sqlStatement);
+          const expected = [
+            {
+              start: 0,
+              end: sqlStatement.length - 1,
+              text: sqlStatement,
+              type: 'SHOW_DATABASES',
+              executionType: 'LISTING',
+              parameters: [],
+            },
+          ];
+
+          expect(actual).to.eql(expected);
+        });
+
+        it(`identify "SHOW_INDEX" statements for ${dialect}`, () => {
+          const sqlStatement = 'SHOW INDEX;';
+          const actual = identify(sqlStatement);
+          const expected = [
+            {
+              start: 0,
+              end: sqlStatement.length - 1,
+              text: sqlStatement,
+              type: 'SHOW_INDEX',
+              executionType: 'LISTING',
+              parameters: [],
+            },
+          ];
+
+          expect(actual).to.eql(expected);
+        });
+
+        it(`identify "SHOW_TABLE_STATUS" statements for ${dialect}`, () => {
+          const sqlStatement = 'SHOW TABLE STATUS;';
+          const actual = identify(sqlStatement);
+          const expected = [
+            {
+              start: 0,
+              end: sqlStatement.length - 1,
+              text: sqlStatement,
+              type: 'SHOW_TABLE',
+              executionType: 'LISTING',
+              parameters: [],
+            },
+          ];
+
+          expect(actual).to.eql(expected);
+        });
+
+        it(`identify "SHOW_TABLES" statements for ${dialect}`, () => {
+          const sqlStatement = 'SHOW TABLES;';
+          const actual = identify(sqlStatement);
+          const expected = [
+            {
+              start: 0,
+              end: sqlStatement.length - 1,
+              text: sqlStatement,
+              type: 'SHOW_TABLES',
+              executionType: 'LISTING',
+              parameters: [],
+            },
+          ];
+
+          expect(actual).to.eql(expected);
+        });
+
+        it(`identify "SHOW_COLUMNS" statements for ${dialect}`, () => {
+          const sqlStatement = 'SHOW COLUMNS;';
+          const actual = identify(sqlStatement);
+          const expected = [
+            {
+              start: 0,
+              end: sqlStatement.length - 1,
+              text: sqlStatement,
+              type: 'SHOW_COLUMNS',
+              executionType: 'LISTING',
+              parameters: [],
+            },
+          ];
+
+          expect(actual).to.eql(expected);
+        });
+      });
+    });
+
     describe('identify "CREATE FUNCTION" statements', () => {
       it('should identify postgres "CREATE FUNCTION" statement with LANGUAGE at end', () => {
         const sql = `CREATE FUNCTION quarterly_summary_func(start_date date DEFAULT CURRENT_TIMESTAMP)

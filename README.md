@@ -42,6 +42,12 @@ This way you have sure is a valid query before trying to identify the types.
 * CREATE_FUNCTION
 * CREATE_INDEX
 * CREATE_PROCEDURE
+* SHOW_DATABASES
+* SHOW_KEYS (Mysql dialects only)
+* SHOW_INDEX (Mysql dialects only)
+* SHOW_TABLE (Mysql dialects only) (Refers to SHOW TABLE STATUS)
+* SHOW_TABLES (Mysql dialects only)
+* SHOW_COLUMNS (Mysql dialects only)
 * DROP_DATABASE
 * DROP_SCHEMA
 * DROP_TABLE
@@ -67,7 +73,6 @@ Execution types allow to know what is the query behavior
 
 * `LISTING:` is when the query list the data
 * `MODIFICATION:` is when the query modificate the database somehow (structure or data)
-* `INFORMATION:` is show some data information such as a profile data
 * `ANON_BLOCK: ` is for an anonymous block query which may contain multiple statements of unknown type (BigQuery and Oracle dialects only)
 * `UNKNOWN`: (only available if strict mode is disabled)
 

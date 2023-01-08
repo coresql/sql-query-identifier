@@ -20,7 +20,6 @@ interface StatementParser {
  * Execution types allow to know what is the query behavior
  *  - LISTING: is when the query list the data
  *  - MODIFICATION: is when the query modificate the database somehow (structure or data)
- *  - INFORMATION: is show some data information such as a profile data
  *  - UNKNOWN
  */
 export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
@@ -37,6 +36,12 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   CREATE_FUNCTION: 'MODIFICATION',
   CREATE_INDEX: 'MODIFICATION',
   CREATE_PROCEDURE: 'MODIFICATION',
+  SHOW_DATABASES: 'LISTING',
+  SHOW_KEYS: 'LISTING',
+  SHOW_INDEX: 'LISTING',
+  SHOW_TABLE: 'LISTING', // for SHOW TABLE STATUS
+  SHOW_TABLES: 'LISTING',
+  SHOW_COLUMNS: 'LISTING',
   DROP_DATABASE: 'MODIFICATION',
   DROP_SCHEMA: 'MODIFICATION',
   DROP_TABLE: 'MODIFICATION',
@@ -265,6 +270,8 @@ function createStatementParserByToken(
         return createSelectStatementParser(options);
       case 'CREATE':
         return createCreateStatementParser(options);
+      case 'SHOW':
+        return createShowStatementParser(options);
       case 'DROP':
         return createDropStatementParser(options);
       case 'ALTER':
@@ -572,6 +579,46 @@ function createTruncateStatementParser(options: ParseOptions) {
         if (statement.start < 0) {
           statement.start = token.start;
         }
+      },
+      postCanGoToNext: () => true,
+    },
+  ];
+
+  return stateMachineStatementParser(statement, steps, options);
+}
+
+function createShowStatementParser(options: ParseOptions) {
+  const statement = createInitialStatement();
+
+  const steps: Step[] = [
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        acceptTokens: [{ type: 'keyword', value: 'SHOW' }],
+      },
+      add: (token) => {
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
+      },
+      postCanGoToNext: () => true,
+    },
+    // Database/Table/Columns/...
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        requireBefore: ['whitespace'],
+        acceptTokens: [
+          { type: 'keyword', value: 'DATABASES' },
+          { type: 'keyword', value: 'KEYS' },
+          { type: 'keyword', value: 'INDEX' },
+          { type: 'keyword', value: 'COLUMNS' },
+          { type: 'keyword', value: 'TABLES' },
+          { type: 'keyword', value: 'TABLE' },
+        ],
+      },
+      add: (token) => {
+        statement.type = `SHOW_${token.value.toUpperCase().replace(' ', '_')}` as StatementType;
       },
       postCanGoToNext: () => true,
     },

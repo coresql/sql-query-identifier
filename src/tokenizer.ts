@@ -34,6 +34,12 @@ const KEYWORDS = [
   'WHILE',
   'FOR',
   'PROCEDURE',
+  'SHOW',
+  'DATABASES',
+  'KEYS',
+  'TABLES',
+  'COLUMNS',
+  'STATUS',
 ];
 
 const INDIVIDUALS: Record<string, Token['type']> = {
