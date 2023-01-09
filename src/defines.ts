@@ -7,7 +7,7 @@ export const DIALECTS = [
   'bigquery',
   'generic',
 ] as const;
-export type Dialect = typeof DIALECTS[number];
+export type Dialect = (typeof DIALECTS)[number];
 export type StatementType =
   | 'INSERT'
   | 'UPDATE'
