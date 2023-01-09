@@ -1,7 +1,7 @@
 sql-query-identifier
 ===================
 
-[![Build Status](https://github.com/sqlectron/sql-query-identifier/workflows/Test/badge.svg?branch=master)](https://github.com/sqlectron/sql-query-identifier/actions?query=workflow%3ATest+branch%3Amaster)
+[![Build Status](https://github.com/sqlectron/sql-query-identifier/workflows/Test/badge.svg?branch=main)](https://github.com/sqlectron/sql-query-identifier/actions?query=workflow%3ATest+branch%3Amain)
 [![npm version](https://badge.fury.io/js/sql-query-identifier.svg)](https://npmjs.com/package/sql-query-identifier)
 [![view demo](https://img.shields.io/badge/view-demo-blue.svg)](https://sqlectron.github.io/sql-query-identifier/)
 
