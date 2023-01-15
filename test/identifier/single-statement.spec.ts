@@ -533,7 +533,7 @@ describe('identifier', () => {
               end: sqlStatement.length - 1,
               text: sqlStatement,
               type: 'SHOW_KEYS',
-              executionType: 'LISTING',
+              executionType: 'INFORMATION',
               parameters: [],
             },
           ];
@@ -550,7 +550,7 @@ describe('identifier', () => {
               end: sqlStatement.length - 1,
               text: sqlStatement,
               type: 'SHOW_DATABASES',
-              executionType: 'LISTING',
+              executionType: 'INFORMATION',
               parameters: [],
             },
           ];
@@ -567,7 +567,7 @@ describe('identifier', () => {
               end: sqlStatement.length - 1,
               text: sqlStatement,
               type: 'SHOW_INDEX',
-              executionType: 'LISTING',
+              executionType: 'INFORMATION',
               parameters: [],
             },
           ];
@@ -584,7 +584,7 @@ describe('identifier', () => {
               end: sqlStatement.length - 1,
               text: sqlStatement,
               type: 'SHOW_TABLE',
-              executionType: 'LISTING',
+              executionType: 'INFORMATION',
               parameters: [],
             },
           ];
@@ -601,7 +601,7 @@ describe('identifier', () => {
               end: sqlStatement.length - 1,
               text: sqlStatement,
               type: 'SHOW_TABLES',
-              executionType: 'LISTING',
+              executionType: 'INFORMATION',
               parameters: [],
             },
           ];
@@ -618,7 +618,7 @@ describe('identifier', () => {
               end: sqlStatement.length - 1,
               text: sqlStatement,
               type: 'SHOW_COLUMNS',
-              executionType: 'LISTING',
+              executionType: 'INFORMATION',
               parameters: [],
             },
           ];
