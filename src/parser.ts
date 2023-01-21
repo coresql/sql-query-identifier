@@ -20,6 +20,7 @@ interface StatementParser {
  * Execution types allow to know what is the query behavior
  *  - LISTING: is when the query list the data
  *  - MODIFICATION: is when the query modificate the database somehow (structure or data)
+ *  - INFORMATION: is show some data information such as a profile data
  *  - UNKNOWN
  */
 export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
@@ -271,7 +272,6 @@ function createStatementParserByToken(
       case 'CREATE':
         return createCreateStatementParser(options);
       case 'SHOW':
-        console.log(options.dialect);
         if (['mysql', 'generic'].includes(options.dialect)) {
           return createShowStatementParser(options);
         }
