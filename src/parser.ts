@@ -271,7 +271,11 @@ function createStatementParserByToken(
       case 'CREATE':
         return createCreateStatementParser(options);
       case 'SHOW':
-        return createShowStatementParser(options);
+        console.log(options.dialect);
+        if (['mysql', 'generic'].includes(options.dialect)) {
+          return createShowStatementParser(options);
+        }
+        break;
       case 'DROP':
         return createDropStatementParser(options);
       case 'ALTER':

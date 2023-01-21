@@ -523,10 +523,16 @@ describe('identifier', () => {
     });
 
     describe('identify SHOW statements', () => {
-      (['mysql'] as Dialect[]).forEach((dialect) => {
+      (['mysql', 'generic', 'mssql'] as Dialect[]).forEach((dialect) => {
         it(`identify "SHOW KEYS" statements for ${dialect}`, () => {
           const sqlStatement = 'SHOW KEYS;';
-          const actual = identify(sqlStatement);
+          const testFunction = () => identify(sqlStatement, { dialect });
+          if (dialect === 'mssql') {
+            expect(testFunction).to.throw('Invalid statement parser "SHOW"');
+            return;
+          }
+
+          const actual = identify(sqlStatement, { dialect });
           const expected = [
             {
               start: 0,
@@ -543,7 +549,12 @@ describe('identifier', () => {
 
         it(`identify "SHOW DATABASES" statements for ${dialect}`, () => {
           const sqlStatement = 'SHOW DATABASES;';
-          const actual = identify(sqlStatement);
+          const testFunction = () => identify(sqlStatement, { dialect });
+          if (dialect === 'mssql') {
+            expect(testFunction).to.throw('Invalid statement parser "SHOW"');
+            return;
+          }
+          const actual = identify(sqlStatement, { dialect });
           const expected = [
             {
               start: 0,
@@ -560,7 +571,12 @@ describe('identifier', () => {
 
         it(`identify "SHOW_INDEX" statements for ${dialect}`, () => {
           const sqlStatement = 'SHOW INDEX;';
-          const actual = identify(sqlStatement);
+          const testFunction = () => identify(sqlStatement, { dialect });
+          if (dialect === 'mssql') {
+            expect(testFunction).to.throw('Invalid statement parser "SHOW"');
+            return;
+          }
+          const actual = identify(sqlStatement, { dialect });
           const expected = [
             {
               start: 0,
@@ -577,7 +593,12 @@ describe('identifier', () => {
 
         it(`identify "SHOW_TABLE_STATUS" statements for ${dialect}`, () => {
           const sqlStatement = 'SHOW TABLE STATUS;';
-          const actual = identify(sqlStatement);
+          const testFunction = () => identify(sqlStatement, { dialect });
+          if (dialect === 'mssql') {
+            expect(testFunction).to.throw('Invalid statement parser "SHOW"');
+            return;
+          }
+          const actual = identify(sqlStatement, { dialect });
           const expected = [
             {
               start: 0,
@@ -594,7 +615,12 @@ describe('identifier', () => {
 
         it(`identify "SHOW_TABLES" statements for ${dialect}`, () => {
           const sqlStatement = 'SHOW TABLES;';
-          const actual = identify(sqlStatement);
+          const testFunction = () => identify(sqlStatement, { dialect });
+          if (dialect === 'mssql') {
+            expect(testFunction).to.throw('Invalid statement parser "SHOW"');
+            return;
+          }
+          const actual = identify(sqlStatement, { dialect });
           const expected = [
             {
               start: 0,
@@ -611,7 +637,12 @@ describe('identifier', () => {
 
         it(`identify "SHOW_COLUMNS" statements for ${dialect}`, () => {
           const sqlStatement = 'SHOW COLUMNS;';
-          const actual = identify(sqlStatement);
+          const testFunction = () => identify(sqlStatement, { dialect });
+          if (dialect === 'mssql') {
+            expect(testFunction).to.throw('Invalid statement parser "SHOW"');
+            return;
+          }
+          const actual = identify(sqlStatement, { dialect });
           const expected = [
             {
               start: 0,
