@@ -226,9 +226,15 @@ describe('parser', () => {
             end: 14,
           },
           {
-            type: 'unknown',
-            value: ' Profile',
+            type: 'whitespace',
+            value: ' ',
             start: 15,
+            end: 15,
+          },
+          {
+            type: 'keyword',
+            value: 'Profile',
+            start: 16,
             end: 22,
           },
           {
@@ -338,9 +344,15 @@ describe('parser', () => {
             end: 12,
           },
           {
-            type: 'unknown',
-            value: ' Profile',
+            type: 'whitespace',
+            value: ' ',
             start: 13,
+            end: 13,
+          },
+          {
+            type: 'keyword',
+            value: 'Profile',
+            start: 14,
             end: 20,
           },
           {

@@ -524,137 +524,62 @@ describe('identifier', () => {
 
     describe('identify SHOW statements', () => {
       (['mysql', 'generic', 'mssql'] as Dialect[]).forEach((dialect) => {
-        it(`identify "SHOW KEYS" statements for ${dialect}`, () => {
-          const sqlStatement = 'SHOW KEYS;';
-          const testFunction = () => identify(sqlStatement, { dialect });
-          if (dialect === 'mssql') {
-            expect(testFunction).to.throw('Invalid statement parser "SHOW"');
-            return;
-          }
+        [
+          ['BINARY', "SHOW BINARY LOGS 'blerns';"],
+          ['BINLOG', "SHOW BINLOG EVENTS 'blerns';"],
+          ['CHARACTER', "SHOW CHARACTER SET 'blerns';"],
+          ['COLLATION', "SHOW COLLATION 'blerns';"],
+          ['COLUMNS', "SHOW COLUMNS 'blerns';"],
+          ['CREATE', "SHOW CREATE DATABASE 'blerns';"],
+          ['DATABASES', "SHOW DATABASES 'blerns';"],
+          ['ENGINE', "SHOW ENGINE 'blerns';"],
+          ['ENGINES', "SHOW ENGINES 'blerns';"],
+          ['ERRORS', "SHOW ERRORS 'blerns';"],
+          ['EVENTS', "SHOW EVENTS 'blerns';"],
+          ['FUNCTION', "SHOW FUNCTION CODE 'blerns';"],
+          ['GRANTS', "SHOW GRANTS 'blerns';"],
+          ['INDEX', "SHOW INDEX 'blerns';"],
+          ['MASTER', "SHOW MASTER STATUS 'blerns';"],
+          ['OPEN', "SHOW OPEN TABLES 'blerns';"],
+          ['PLUGINS', "SHOW PLUGINS 'blerns';"],
+          ['PRIVILEGES', "SHOW PRIVILEGES 'blerns';"],
+          ['PROCEDURE', "SHOW PROCEDURE CODE 'blerns';"],
+          ['PROCESSLIST', "SHOW PROCESSLIST 'blerns';"],
+          ['PROFILE', "SHOW PROFILE 'blerns';"],
+          ['PROFILES', "SHOW PROFILES 'blerns';"],
+          ['RELAYLOG', "SHOW RELAYLOG EVENTS 'blerns';"],
+          ['REPLICAS', "SHOW REPLICAS 'blerns';"],
+          ['SLAVE', 'SHOW SLAVE HOSTS;'],
+          ['REPLICA', "SHOW REPLICA STATUS 'blerns';"],
+          ['STATUS', "SHOW STATUS 'blerns';"],
+          ['TABLE', "SHOW TABLE STATUS 'blerns';"],
+          ['TABLES', "SHOW TABLES 'blerns';"],
+          ['TRIGGERS', "SHOW TRIGGERS 'blerns';"],
+          ['VARIABLES', "SHOW VARIABLES 'blerns';"],
+          ['WARNINGS', "SHOW WARNINGS 'blerns';"],
+        ].forEach(([type, sql]) => {
+          it(`identify "SHOW ${type}" statements for ${dialect}`, () => {
+            const sqlStatement = sql;
+            const testFunction = () => identify(sqlStatement, { dialect });
+            if (dialect === 'mssql') {
+              expect(testFunction).to.throw('Invalid statement parser "SHOW"');
+              return;
+            }
 
-          const actual = identify(sqlStatement, { dialect });
-          const expected = [
-            {
-              start: 0,
-              end: sqlStatement.length - 1,
-              text: sqlStatement,
-              type: 'SHOW_KEYS',
-              executionType: 'INFORMATION',
-              parameters: [],
-            },
-          ];
+            const actual = identify(sqlStatement, { dialect });
+            const expected = [
+              {
+                start: 0,
+                end: sqlStatement.length - 1,
+                text: sqlStatement,
+                type: `SHOW_${type}`,
+                executionType: 'INFORMATION',
+                parameters: [],
+              },
+            ];
 
-          expect(actual).to.eql(expected);
-        });
-
-        it(`identify "SHOW DATABASES" statements for ${dialect}`, () => {
-          const sqlStatement = 'SHOW DATABASES;';
-          const testFunction = () => identify(sqlStatement, { dialect });
-          if (dialect === 'mssql') {
-            expect(testFunction).to.throw('Invalid statement parser "SHOW"');
-            return;
-          }
-          const actual = identify(sqlStatement, { dialect });
-          const expected = [
-            {
-              start: 0,
-              end: sqlStatement.length - 1,
-              text: sqlStatement,
-              type: 'SHOW_DATABASES',
-              executionType: 'INFORMATION',
-              parameters: [],
-            },
-          ];
-
-          expect(actual).to.eql(expected);
-        });
-
-        it(`identify "SHOW_INDEX" statements for ${dialect}`, () => {
-          const sqlStatement = 'SHOW INDEX;';
-          const testFunction = () => identify(sqlStatement, { dialect });
-          if (dialect === 'mssql') {
-            expect(testFunction).to.throw('Invalid statement parser "SHOW"');
-            return;
-          }
-          const actual = identify(sqlStatement, { dialect });
-          const expected = [
-            {
-              start: 0,
-              end: sqlStatement.length - 1,
-              text: sqlStatement,
-              type: 'SHOW_INDEX',
-              executionType: 'INFORMATION',
-              parameters: [],
-            },
-          ];
-
-          expect(actual).to.eql(expected);
-        });
-
-        it(`identify "SHOW_TABLE_STATUS" statements for ${dialect}`, () => {
-          const sqlStatement = 'SHOW TABLE STATUS;';
-          const testFunction = () => identify(sqlStatement, { dialect });
-          if (dialect === 'mssql') {
-            expect(testFunction).to.throw('Invalid statement parser "SHOW"');
-            return;
-          }
-          const actual = identify(sqlStatement, { dialect });
-          const expected = [
-            {
-              start: 0,
-              end: sqlStatement.length - 1,
-              text: sqlStatement,
-              type: 'SHOW_TABLE',
-              executionType: 'INFORMATION',
-              parameters: [],
-            },
-          ];
-
-          expect(actual).to.eql(expected);
-        });
-
-        it(`identify "SHOW_TABLES" statements for ${dialect}`, () => {
-          const sqlStatement = 'SHOW TABLES;';
-          const testFunction = () => identify(sqlStatement, { dialect });
-          if (dialect === 'mssql') {
-            expect(testFunction).to.throw('Invalid statement parser "SHOW"');
-            return;
-          }
-          const actual = identify(sqlStatement, { dialect });
-          const expected = [
-            {
-              start: 0,
-              end: sqlStatement.length - 1,
-              text: sqlStatement,
-              type: 'SHOW_TABLES',
-              executionType: 'INFORMATION',
-              parameters: [],
-            },
-          ];
-
-          expect(actual).to.eql(expected);
-        });
-
-        it(`identify "SHOW_COLUMNS" statements for ${dialect}`, () => {
-          const sqlStatement = 'SHOW COLUMNS;';
-          const testFunction = () => identify(sqlStatement, { dialect });
-          if (dialect === 'mssql') {
-            expect(testFunction).to.throw('Invalid statement parser "SHOW"');
-            return;
-          }
-          const actual = identify(sqlStatement, { dialect });
-          const expected = [
-            {
-              start: 0,
-              end: sqlStatement.length - 1,
-              text: sqlStatement,
-              type: 'SHOW_COLUMNS',
-              executionType: 'INFORMATION',
-              parameters: [],
-            },
-          ];
-
-          expect(actual).to.eql(expected);
+            expect(actual).to.eql(expected);
+          });
         });
       });
     });
