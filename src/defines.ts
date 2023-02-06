@@ -22,6 +22,39 @@ export type StatementType =
   | 'CREATE_FUNCTION'
   | 'CREATE_INDEX'
   | 'CREATE_PROCEDURE'
+  | 'SHOW_BINARY'
+  | 'SHOW_BINLOG'
+  | 'SHOW_CHARACTER'
+  | 'SHOW_COLLATION'
+  | 'SHOW_CREATE'
+  | 'SHOW_ENGINE'
+  | 'SHOW_ENGINES'
+  | 'SHOW_ERRORS'
+  | 'SHOW_EVENTS'
+  | 'SHOW_FUNCTION'
+  | 'SHOW_GRANTS'
+  | 'SHOW_MASTER'
+  | 'SHOW_OPEN'
+  | 'SHOW_PLUGINS'
+  | 'SHOW_PRIVILEGES'
+  | 'SHOW_PROCEDURE'
+  | 'SHOW_PROCESSLIST'
+  | 'SHOW_PROFILE'
+  | 'SHOW_PROFILES'
+  | 'SHOW_RELAYLOG'
+  | 'SHOW_REPLICAS'
+  | 'SHOW_SLAVE'
+  | 'SHOW_REPLICA'
+  | 'SHOW_STATUS'
+  | 'SHOW_TRIGGERS'
+  | 'SHOW_VARIABLES'
+  | 'SHOW_WARNINGS'
+  | 'SHOW_DATABASES'
+  | 'SHOW_KEYS'
+  | 'SHOW_INDEX'
+  | 'SHOW_TABLE'
+  | 'SHOW_TABLES'
+  | 'SHOW_COLUMNS'
   | 'DROP_DATABASE'
   | 'DROP_SCHEMA'
   | 'DROP_TABLE'
@@ -41,7 +74,7 @@ export type StatementType =
   | 'ANON_BLOCK'
   | 'UNKNOWN';
 
-export type ExecutionType = 'LISTING' | 'MODIFICATION' | 'ANON_BLOCK' | 'UNKNOWN';
+export type ExecutionType = 'LISTING' | 'MODIFICATION' | 'INFORMATION' | 'ANON_BLOCK' | 'UNKNOWN';
 
 export interface IdentifyOptions {
   strict?: boolean;

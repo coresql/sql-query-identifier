@@ -29,6 +29,8 @@ This way you have sure is a valid query before trying to identify the types.
 
 ## Current Available Types
 
+For the show statements, please refer to the [MySQL Docs about SHOW Statements](https://dev.mysql.com/doc/refman/8.0/en/show.html).
+
 * INSERT
 * UPDATE
 * DELETE
@@ -59,6 +61,38 @@ This way you have sure is a valid query before trying to identify the types.
 * ALTER_INDEX
 * ALTER_PROCEDURE
 * ANON_BLOCK (BigQuery and Oracle dialects only)
+* SHOW_BINARY (MySQL and generic dialects only)
+* SHOW_BINLOG (MySQL and generic dialects only)
+* SHOW_CHARACTER (MySQL and generic dialects only)
+* SHOW_COLLATION (MySQL and generic dialects only)
+* SHOW_COLUMNS (MySQL and generic dialects only)
+* SHOW_CREATE (MySQL and generic dialects only)
+* SHOW_DATABASES (MySQL and generic dialects only)
+* SHOW_ENGINE (MySQL and generic dialects only)
+* SHOW_ENGINES (MySQL and generic dialects only)
+* SHOW_ERRORS (MySQL and generic dialects only)
+* SHOW_EVENTS (MySQL and generic dialects only)
+* SHOW_FUNCTION (MySQL and generic dialects only)
+* SHOW_GRANTS (MySQL and generic dialects only)
+* SHOW_INDEX (MySQL and generic dialects only)
+* SHOW_MASTER (MySQL and generic dialects only)
+* SHOW_OPEN (MySQL and generic dialects only)
+* SHOW_PLUGINS (MySQL and generic dialects only)
+* SHOW_PRIVILEGES (MySQL and generic dialects only)
+* SHOW_PROCEDURE (MySQL and generic dialects only)
+* SHOW_PROCESSLIST (MySQL and generic dialects only)
+* SHOW_PROFILE (MySQL and generic dialects only)
+* SHOW_PROFILES (MySQL and generic dialects only)
+* SHOW_RELAYLOG (MySQL and generic dialects only)
+* SHOW_REPLICAS (MySQL and generic dialects only)
+* SHOW_SLAVE (MySQL and generic dialects only)
+* SHOW_REPLICA (MySQL and generic dialects only)
+* SHOW_STATUS (MySQL and generic dialects only)
+* SHOW_TABLE (MySQL and generic dialects only)
+* SHOW_TABLES (MySQL and generic dialects only)
+* SHOW_TRIGGERS (MySQL and generic dialects only)
+* SHOW_VARIABLES (MySQL and generic dialects only)
+* SHOW_WARNINGS (MySQL and generic dialects only)
 * UNKNOWN (only available if strict mode is disabled)
 
 ## Execution types

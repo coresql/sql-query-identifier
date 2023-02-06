@@ -37,6 +37,39 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   CREATE_FUNCTION: 'MODIFICATION',
   CREATE_INDEX: 'MODIFICATION',
   CREATE_PROCEDURE: 'MODIFICATION',
+  SHOW_BINARY: 'LISTING',
+  SHOW_BINLOG: 'LISTING',
+  SHOW_CHARACTER: 'LISTING',
+  SHOW_COLLATION: 'LISTING',
+  SHOW_CREATE: 'LISTING',
+  SHOW_ENGINE: 'LISTING',
+  SHOW_ENGINES: 'LISTING',
+  SHOW_ERRORS: 'LISTING',
+  SHOW_EVENTS: 'LISTING',
+  SHOW_FUNCTION: 'LISTING',
+  SHOW_GRANTS: 'LISTING',
+  SHOW_MASTER: 'LISTING',
+  SHOW_OPEN: 'LISTING',
+  SHOW_PLUGINS: 'LISTING',
+  SHOW_PRIVILEGES: 'LISTING',
+  SHOW_PROCEDURE: 'LISTING',
+  SHOW_PROCESSLIST: 'LISTING',
+  SHOW_PROFILE: 'LISTING',
+  SHOW_PROFILES: 'LISTING',
+  SHOW_RELAYLOG: 'LISTING',
+  SHOW_REPLICAS: 'LISTING',
+  SHOW_SLAVE: 'LISTING',
+  SHOW_REPLICA: 'LISTING',
+  SHOW_STATUS: 'LISTING',
+  SHOW_TRIGGERS: 'LISTING',
+  SHOW_VARIABLES: 'LISTING',
+  SHOW_WARNINGS: 'LISTING',
+  SHOW_DATABASES: 'LISTING',
+  SHOW_KEYS: 'LISTING',
+  SHOW_INDEX: 'LISTING',
+  SHOW_TABLE: 'LISTING', // for SHOW TABLE STATUS
+  SHOW_TABLES: 'LISTING',
+  SHOW_COLUMNS: 'LISTING',
   DROP_DATABASE: 'MODIFICATION',
   DROP_SCHEMA: 'MODIFICATION',
   DROP_TABLE: 'MODIFICATION',
@@ -265,6 +298,11 @@ function createStatementParserByToken(
         return createSelectStatementParser(options);
       case 'CREATE':
         return createCreateStatementParser(options);
+      case 'SHOW':
+        if (['mysql', 'generic'].includes(options.dialect)) {
+          return createShowStatementParser(options);
+        }
+        break;
       case 'DROP':
         return createDropStatementParser(options);
       case 'ALTER':
@@ -572,6 +610,74 @@ function createTruncateStatementParser(options: ParseOptions) {
         if (statement.start < 0) {
           statement.start = token.start;
         }
+      },
+      postCanGoToNext: () => true,
+    },
+  ];
+
+  return stateMachineStatementParser(statement, steps, options);
+}
+
+function createShowStatementParser(options: ParseOptions) {
+  const statement = createInitialStatement();
+
+  const steps: Step[] = [
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        acceptTokens: [{ type: 'keyword', value: 'SHOW' }],
+      },
+      add: (token) => {
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
+      },
+      postCanGoToNext: () => true,
+    },
+    // Database/Table/Columns/...
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        requireBefore: ['whitespace'],
+        acceptTokens: [
+          { type: 'keyword', value: 'DATABASES' },
+          { type: 'keyword', value: 'DATABASE' },
+          { type: 'keyword', value: 'KEYS' },
+          { type: 'keyword', value: 'INDEX' },
+          { type: 'keyword', value: 'COLUMNS' },
+          { type: 'keyword', value: 'TABLES' },
+          { type: 'keyword', value: 'TABLE' },
+          { type: 'keyword', value: 'BINARY' },
+          { type: 'keyword', value: 'BINLOG' },
+          { type: 'keyword', value: 'CHARACTER' },
+          { type: 'keyword', value: 'COLLATION' },
+          { type: 'keyword', value: 'CREATE' },
+          { type: 'keyword', value: 'ENGINE' },
+          { type: 'keyword', value: 'ENGINES' },
+          { type: 'keyword', value: 'ERRORS' },
+          { type: 'keyword', value: 'EVENTS' },
+          { type: 'keyword', value: 'FUNCTION' },
+          { type: 'keyword', value: 'GRANTS' },
+          { type: 'keyword', value: 'MASTER' },
+          { type: 'keyword', value: 'OPEN' },
+          { type: 'keyword', value: 'PLUGINS' },
+          { type: 'keyword', value: 'PRIVILEGES' },
+          { type: 'keyword', value: 'PROCEDURE' },
+          { type: 'keyword', value: 'PROCESSLIST' },
+          { type: 'keyword', value: 'PROFILE' },
+          { type: 'keyword', value: 'PROFILES' },
+          { type: 'keyword', value: 'RELAYLOG' },
+          { type: 'keyword', value: 'REPLICAS' },
+          { type: 'keyword', value: 'REPLICA' },
+          { type: 'keyword', value: 'SLAVE' },
+          { type: 'keyword', value: 'STATUS' },
+          { type: 'keyword', value: 'TRIGGERS' },
+          { type: 'keyword', value: 'VARIABLES' },
+          { type: 'keyword', value: 'WARNINGS' },
+        ],
+      },
+      add: (token) => {
+        statement.type = `SHOW_${token.value.toUpperCase().replace(' ', '_')}` as StatementType;
       },
       postCanGoToNext: () => true,
     },

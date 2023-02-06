@@ -522,6 +522,68 @@ describe('identifier', () => {
       });
     });
 
+    describe('identify SHOW statements', () => {
+      (['mysql', 'generic', 'mssql'] as Dialect[]).forEach((dialect) => {
+        [
+          ['BINARY', "SHOW BINARY LOGS 'blerns';"],
+          ['BINLOG', "SHOW BINLOG EVENTS 'blerns';"],
+          ['CHARACTER', "SHOW CHARACTER SET 'blerns';"],
+          ['COLLATION', "SHOW COLLATION 'blerns';"],
+          ['COLUMNS', "SHOW COLUMNS 'blerns';"],
+          ['CREATE', "SHOW CREATE DATABASE 'blerns';"],
+          ['DATABASES', "SHOW DATABASES 'blerns';"],
+          ['ENGINE', "SHOW ENGINE 'blerns';"],
+          ['ENGINES', "SHOW ENGINES 'blerns';"],
+          ['ERRORS', "SHOW ERRORS 'blerns';"],
+          ['EVENTS', "SHOW EVENTS 'blerns';"],
+          ['FUNCTION', "SHOW FUNCTION CODE 'blerns';"],
+          ['GRANTS', "SHOW GRANTS 'blerns';"],
+          ['INDEX', "SHOW INDEX 'blerns';"],
+          ['MASTER', "SHOW MASTER STATUS 'blerns';"],
+          ['OPEN', "SHOW OPEN TABLES 'blerns';"],
+          ['PLUGINS', "SHOW PLUGINS 'blerns';"],
+          ['PRIVILEGES', "SHOW PRIVILEGES 'blerns';"],
+          ['PROCEDURE', "SHOW PROCEDURE CODE 'blerns';"],
+          ['PROCESSLIST', "SHOW PROCESSLIST 'blerns';"],
+          ['PROFILE', "SHOW PROFILE 'blerns';"],
+          ['PROFILES', "SHOW PROFILES 'blerns';"],
+          ['RELAYLOG', "SHOW RELAYLOG EVENTS 'blerns';"],
+          ['REPLICAS', "SHOW REPLICAS 'blerns';"],
+          ['SLAVE', 'SHOW SLAVE HOSTS;'],
+          ['REPLICA', "SHOW REPLICA STATUS 'blerns';"],
+          ['STATUS', "SHOW STATUS 'blerns';"],
+          ['TABLE', "SHOW TABLE STATUS 'blerns';"],
+          ['TABLES', "SHOW TABLES 'blerns';"],
+          ['TRIGGERS', "SHOW TRIGGERS 'blerns';"],
+          ['VARIABLES', "SHOW VARIABLES 'blerns';"],
+          ['WARNINGS', "SHOW WARNINGS 'blerns';"],
+        ].forEach(([type, sql]) => {
+          it(`identify "SHOW ${type}" statements for ${dialect}`, () => {
+            const sqlStatement = sql;
+            const testFunction = () => identify(sqlStatement, { dialect });
+            if (dialect === 'mssql') {
+              expect(testFunction).to.throw('Invalid statement parser "SHOW"');
+              return;
+            }
+
+            const actual = identify(sqlStatement, { dialect });
+            const expected = [
+              {
+                start: 0,
+                end: sqlStatement.length - 1,
+                text: sqlStatement,
+                type: `SHOW_${type}`,
+                executionType: 'LISTING',
+                parameters: [],
+              },
+            ];
+
+            expect(actual).to.eql(expected);
+          });
+        });
+      });
+    });
+
     describe('identify "CREATE FUNCTION" statements', () => {
       it('should identify postgres "CREATE FUNCTION" statement with LANGUAGE at end', () => {
         const sql = `CREATE FUNCTION quarterly_summary_func(start_date date DEFAULT CURRENT_TIMESTAMP)
