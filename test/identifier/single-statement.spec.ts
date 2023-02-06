@@ -573,7 +573,7 @@ describe('identifier', () => {
                 end: sqlStatement.length - 1,
                 text: sqlStatement,
                 type: `SHOW_${type}`,
-                executionType: 'INFORMATION',
+                executionType: 'LISTING',
                 parameters: [],
               },
             ];
