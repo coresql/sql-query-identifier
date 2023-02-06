@@ -29,6 +29,8 @@ This way you have sure is a valid query before trying to identify the types.
 
 ## Current Available Types
 
+For the show statements, please refer to the [MySQL Docs about SHOW Statements](https://dev.mysql.com/doc/refman/8.0/en/show.html).
+
 * INSERT
 * UPDATE
 * DELETE
@@ -59,8 +61,6 @@ This way you have sure is a valid query before trying to identify the types.
 * ALTER_INDEX
 * ALTER_PROCEDURE
 * ANON_BLOCK (BigQuery and Oracle dialects only)
-* UNKNOWN (only available if strict mode is disabled)
-* (For the following, please refer to the [MySQL Docs about SHOW Statements](https://dev.mysql.com/doc/refman/8.0/en/show.html))
 * SHOW_BINARY (MySQL and generic dialects only)
 * SHOW_BINLOG (MySQL and generic dialects only)
 * SHOW_CHARACTER (MySQL and generic dialects only)
@@ -93,6 +93,7 @@ This way you have sure is a valid query before trying to identify the types.
 * SHOW_TRIGGERS (MySQL and generic dialects only)
 * SHOW_VARIABLES (MySQL and generic dialects only)
 * SHOW_WARNINGS (MySQL and generic dialects only)
+* UNKNOWN (only available if strict mode is disabled)
 
 ## Execution types
 
