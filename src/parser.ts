@@ -98,6 +98,15 @@ const statementsWithEnds = [
   'UNKNOWN',
 ];
 
+
+// keywords that come directly before a table name.
+// v1 - keeping it very simple.
+const PRE_TABLE_KEYWORDS = [
+  'FROM',
+  'JOIN',
+  'INTO',
+]
+
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
   psql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
@@ -118,6 +127,7 @@ function createInitialStatement(): Statement {
     start: -1,
     end: 0,
     parameters: [],
+    tables: []
   };
 }
 
@@ -171,7 +181,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
       if (!cteState.isCte && ignoreOutsideBlankTokens.includes(token.type)) {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
-        continue;
+
       } else if (
         !cteState.isCte &&
         token.type === 'keyword' &&
@@ -181,7 +191,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
         topLevelStatement.tokens.push(token);
         cteState.state = tokenState;
         prevState = tokenState;
-        continue;
+
         // If we're scanning in a CTE, handle someone putting a semicolon anywhere (after 'with',
         // after semicolon, etc.) along it to "early terminate".
       } else if (cteState.isCte && token.type === 'semicolon') {
@@ -193,12 +203,13 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
           type: 'UNKNOWN',
           executionType: 'UNKNOWN',
           parameters: [],
+          tables: []
         });
         cteState.isCte = false;
         cteState.asSeen = false;
         cteState.statementEnd = false;
         cteState.parens = 0;
-        continue;
+
       } else if (cteState.isCte && !cteState.statementEnd) {
         if (cteState.asSeen) {
           if (token.value === '(') {
@@ -215,14 +226,14 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
 
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
-        continue;
+
       } else if (cteState.isCte && cteState.statementEnd && token.value === ',') {
         cteState.asSeen = false;
         cteState.statementEnd = false;
 
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
-        continue;
+
         // Ignore blank tokens after the end of the CTE till start of statement
       } else if (
         cteState.isCte &&
@@ -231,28 +242,30 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
       ) {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
-        continue;
-      }
 
-      statementParser = createStatementParserByToken(token, nextToken, { isStrict, dialect });
-      if (cteState.isCte) {
-        statementParser.getStatement().start = cteState.state.start;
-        cteState.isCte = false;
-        cteState.asSeen = false;
-        cteState.statementEnd = false;
+      } else {
+        statementParser = createStatementParserByToken(token, nextToken, { isStrict, dialect });
+        if (cteState.isCte) {
+          statementParser.getStatement().start = cteState.state.start;
+          cteState.isCte = false;
+          cteState.asSeen = false;
+          cteState.statementEnd = false;
+        }
+
+      }
+    } else {
+      statementParser.addToken(token, nextToken);
+      topLevelStatement.tokens.push(token);
+      prevState = tokenState;
+
+      const statement = statementParser.getStatement();
+      if (statement.endStatement) {
+        statement.end = token.end;
+        topLevelStatement.body.push(statement as ConcreteStatement);
+        statementParser = null;
       }
     }
 
-    statementParser.addToken(token, nextToken);
-    topLevelStatement.tokens.push(token);
-    prevState = tokenState;
-
-    const statement = statementParser.getStatement();
-    if (statement.endStatement) {
-      statement.end = token.end;
-      topLevelStatement.body.push(statement as ConcreteStatement);
-      statementParser = null;
-    }
   }
 
   // last statement without ending key
@@ -805,6 +818,16 @@ function stateMachineStatementParser(
           anonBlockStarted = true;
         } else if (statement.type) {
           return;
+        }
+      }
+
+      console.log("token [pre table check]", token)
+      if (
+        PRE_TABLE_KEYWORDS.includes(token.value)
+      ) {
+        const tableValue = nextToken.value.toLowerCase()
+        if (!statement.tables.includes(tableValue)) {
+          statement.tables.push(tableValue)
         }
       }
 

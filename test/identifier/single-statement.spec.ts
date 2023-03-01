@@ -413,6 +413,7 @@ describe('identifier', () => {
                 type: 'CREATE_PROCEDURE',
                 executionType: 'MODIFICATION',
                 parameters: [],
+                tables: ['mydataset.customers'], // FIXME: currently returns mydataset
               },
             ];
             expect(actual).to.eql(expected);
@@ -438,6 +439,7 @@ describe('identifier', () => {
               type: 'CREATE_PROCEDURE',
               executionType: 'MODIFICATION',
               parameters: [],
+              tables: ['mydataset.customers'], // FIXME: currently returns mydataset
             },
           ];
           expect(actual).to.eql(expected);
@@ -473,6 +475,7 @@ describe('identifier', () => {
                   type: 'DROP_PROCEDURE',
                   executionType: 'MODIFICATION',
                   parameters: [],
+                  tables: []
                 },
               ];
               expect(actual).to.eql(expected);
@@ -501,6 +504,7 @@ describe('identifier', () => {
                 type: 'ALTER_PROCEDURE',
                 executionType: 'MODIFICATION',
                 parameters: [],
+                tables: [],
               },
             ];
             expect(actual).to.eql(expected);
@@ -1254,6 +1258,7 @@ describe('identifier', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
+            tables: ['table'] // FIXME: currently returns cte_name as table
           },
         ];
 
@@ -1275,6 +1280,7 @@ describe('identifier', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
+            tables: [] // FIXME: currently returns cte_name as table
           },
         ];
 
@@ -1313,6 +1319,7 @@ describe('identifier', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
+            tables: [], // FIXME - this currently returns cte1, cte2, cte3 as tables
           },
         ];
 

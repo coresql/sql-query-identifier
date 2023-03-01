@@ -17,6 +17,7 @@ describe('identify', () => {
         type: 'SELECT',
         executionType: 'LISTING',
         parameters: ['$1', '$2'],
+        tables: ['foo'],
       },
     ]);
   });

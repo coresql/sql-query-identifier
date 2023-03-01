@@ -88,6 +88,7 @@ export interface IdentifyResult {
   type: StatementType;
   executionType: ExecutionType;
   parameters: string[];
+  tables?: string[]
 }
 
 export interface Statement {
@@ -101,6 +102,7 @@ export interface Statement {
   algorithm?: number;
   sqlSecurity?: number;
   parameters: string[];
+  tables: string[];
 }
 
 export interface ConcreteStatement extends Statement {
@@ -124,6 +126,7 @@ export interface Token {
     | 'semicolon'
     | 'keyword'
     | 'parameter'
+    | 'table'
     | 'unknown';
   value: string;
   start: number;

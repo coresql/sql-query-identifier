@@ -16,6 +16,7 @@ describe('identifier', () => {
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: ['persons'],
         },
         {
           end: 76,
@@ -24,6 +25,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: ['persons']
         },
       ];
 

@@ -65,6 +65,7 @@ const KEYWORDS = [
   'WARNINGS',
 ];
 
+
 const INDIVIDUALS: Record<string, Token['type']> = {
   ';': 'semicolon',
 };
@@ -253,6 +254,7 @@ function scanString(state: State, endToken: Char): Token {
   };
 }
 
+
 function scanParameter(state: State, dialect: Dialect): Token {
   if (['mysql', 'generic', 'sqlite'].includes(dialect)) {
     return {
@@ -413,6 +415,7 @@ function isString(ch: Char, dialect: Dialect): boolean {
   const stringStart: Char[] = dialect === 'mysql' ? ["'", '"'] : ["'"];
   return stringStart.includes(ch);
 }
+
 
 function isParameter(ch: Char, state: State, dialect: Dialect): boolean {
   let pStart = '?'; // ansi standard - sqlite, mysql

@@ -32,6 +32,7 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
       executionType: statement.executionType,
       // we want to sort the postgres params: $1 $2 $3, regardless of the order they appear
       parameters: dialect === 'psql' ? statement.parameters.sort() : statement.parameters,
+      tables: statement.tables || [],
     };
     return result;
   });

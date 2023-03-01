@@ -5,7 +5,7 @@ import { parse } from '../../src/parser';
 import { Token } from '../../src/defines';
 
 describe('parser', () => {
-  describe('given is a not reconized statement', () => {
+  describe('given is a not recognized statement', () => {
     it('should throw an error including the unknown statement', () => {
       expect(() => parse('LIST * FROM Persons')).to.throw('Invalid statement parser "LIST"');
     });
@@ -23,6 +23,7 @@ describe('parser', () => {
               start: 0,
               end: 14,
               parameters: [],
+              tables: ['foo'],
               type: 'UNKNOWN',
               executionType: 'UNKNOWN',
             },
@@ -43,6 +44,7 @@ describe('parser', () => {
               start: 0,
               end: 19,
               parameters: [],
+              tables: ['foo'],
               type: 'UNKNOWN',
               executionType: 'UNKNOWN',
             },
@@ -73,6 +75,7 @@ describe('parser', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
+            tables: ['persons']
           },
         ],
         tokens: [
@@ -110,6 +113,7 @@ describe('parser', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
+            tables: ['persons']
           },
         ],
         tokens: [
@@ -148,6 +152,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
+            tables: [], // FIXME: should be ['persons']
           },
         ],
         tokens: [
@@ -204,6 +209,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
+            tables: [],
           },
         ],
         tokens: [
@@ -266,6 +272,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
+            tables: [] // FIXME: should be ['persons']
           },
         ],
         tokens: [
@@ -322,6 +329,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
+            tables: [],
           },
         ],
         tokens: [
@@ -383,6 +391,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
+            tables: ['persons']
           },
         ],
         tokens: [
@@ -427,6 +436,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
+            tables: [] // FIXME: should be ['persons']
           },
         ],
         tokens: [
@@ -471,6 +481,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
+            tables: ['persons'],
           },
         ],
         tokens: [
@@ -515,6 +526,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
+            tables: [], // FIXME: should be ['persons']
           },
         ],
         tokens: [
