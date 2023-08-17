@@ -283,9 +283,7 @@ function scanParameter(state: State, dialect: Dialect): Token {
   }
 
   if (dialect === 'mssql') {
-    while(isAlphaNumeric(peek(state))) {
-      read(state);
-    }
+    while(isAlphaNumeric(peek(state))) read(state);
 
     const value = state.input.slice(state.start, state.position + 1);
     return {
@@ -407,7 +405,7 @@ function isWhitespace(ch: Char): boolean {
 }
 
 function isAlphaNumeric(ch: Char): boolean {
-  return ch !== null && /[a-zA-Z0-9_]/.test(ch);
+  return ch !== null && /\w/.test(ch);
 }
 
 function isString(ch: Char, dialect: Dialect): boolean {
