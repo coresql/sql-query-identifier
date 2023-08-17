@@ -283,12 +283,9 @@ function scanParameter(state: State, dialect: Dialect): Token {
   }
 
   if (dialect === 'mssql') {
-    let nextChar: Char;
-    do {
-      nextChar = read(state);
-    } while (!isWhitespace(nextChar) && nextChar !== null);
-
-    if (isWhitespace(nextChar)) unread(state);
+    while(isAlphaNumeric(peek(state))) {
+      read(state);
+    }
 
     const value = state.input.slice(state.start, state.position + 1);
     return {
@@ -407,6 +404,10 @@ function skipWord(state: State, value: string): Token {
 
 function isWhitespace(ch: Char): boolean {
   return ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r';
+}
+
+function isAlphaNumeric(ch: Char): boolean {
+  return ch !== null && /[a-zA-Z0-9_]/.test(ch);
 }
 
 function isString(ch: Char, dialect: Dialect): boolean {

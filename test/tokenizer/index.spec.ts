@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { scanToken } from '../../src/tokenizer';
 import type { Dialect } from '../../src/defines';
+import { parse } from '../../src/parser';
 
 describe('scan', () => {
   const initState = (input: string) => ({
@@ -352,6 +353,29 @@ describe('scan', () => {
           end: 1,
         };
         expect(actual).to.eql(expected);
+      });
+
+      it('should not include trailing non-alphanumerics for mssql', () => {
+        [
+          {
+            actual: scanToken(initState(':one,'), 'mssql'),
+            expected: {
+              type: 'parameter',
+              value: ':one',
+              start: 0,
+              end: 3,
+            },
+          },
+          {
+            actual: scanToken(initState(':two)'), 'mssql'),
+            expected: {
+              type: 'parameter',
+              value: ':two',
+              start: 0,
+              end: 3,
+            },
+          },
+        ].forEach(({ actual, expected }) => expect(actual).to.eql(expected));
       });
     });
   });
