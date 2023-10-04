@@ -353,6 +353,29 @@ describe('scan', () => {
         };
         expect(actual).to.eql(expected);
       });
+
+      it('should not include trailing non-alphanumerics for mssql', () => {
+        [
+          {
+            actual: scanToken(initState(':one,'), 'mssql'),
+            expected: {
+              type: 'parameter',
+              value: ':one',
+              start: 0,
+              end: 3,
+            },
+          },
+          {
+            actual: scanToken(initState(':two)'), 'mssql'),
+            expected: {
+              type: 'parameter',
+              value: ':two',
+              start: 0,
+              end: 3,
+            },
+          },
+        ].forEach(({ actual, expected }) => expect(actual).to.eql(expected));
+      });
     });
   });
 });
