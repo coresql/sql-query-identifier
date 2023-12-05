@@ -854,9 +854,11 @@ function stateMachineStatementParser(
         return;
       }
 
+      // Table/View modifiers
       if (
-        ['psql', 'sqlite'].includes(dialect) &&
-        ['TEMP', 'TEMPORARY'].includes(token.value.toUpperCase())
+        (dialect === 'psql' && ['TEMP', 'TEMPORARY'].includes(token.value.toUpperCase())) ||
+        (dialect === 'sqlite' &&
+          ['TEMP', 'TEMPORARY', 'VIRTUAL'].includes(token.value.toUpperCase()))
       ) {
         setPrevToken(token);
         return;
