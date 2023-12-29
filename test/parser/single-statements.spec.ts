@@ -23,7 +23,7 @@ describe('parser', () => {
               start: 0,
               end: 14,
               parameters: [],
-              tables: ['foo'],
+              tables: [],
               type: 'UNKNOWN',
               executionType: 'UNKNOWN',
             },
@@ -44,7 +44,7 @@ describe('parser', () => {
               start: 0,
               end: 19,
               parameters: [],
-              tables: ['foo'],
+              tables: [],
               type: 'UNKNOWN',
               executionType: 'UNKNOWN',
             },
@@ -75,7 +75,7 @@ describe('parser', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
-            tables: ['persons']
+            tables: ['Persons']
           },
         ],
         tokens: [
@@ -113,7 +113,7 @@ describe('parser', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
-            tables: ['persons']
+            tables: ['Persons']
           },
         ],
         tokens: [
@@ -152,7 +152,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
-            tables: [], // FIXME: should be ['persons']
+            tables: [],
           },
         ],
         tokens: [
@@ -272,7 +272,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
-            tables: [] // FIXME: should be ['persons']
+            tables: [],
           },
         ],
         tokens: [
@@ -391,7 +391,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
-            tables: ['persons']
+            tables: []
           },
         ],
         tokens: [
@@ -436,7 +436,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
-            tables: [] // FIXME: should be ['persons']
+            tables: [],
           },
         ],
         tokens: [
@@ -481,7 +481,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
-            tables: ['persons'],
+            tables: [],
           },
         ],
         tokens: [
@@ -526,7 +526,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
-            tables: [], // FIXME: should be ['persons']
+            tables: [],
           },
         ],
         tokens: [

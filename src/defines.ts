@@ -103,6 +103,7 @@ export interface Statement {
   sqlSecurity?: number;
   parameters: string[];
   tables: string[];
+  isCte?: boolean;
 }
 
 export interface ConcreteStatement extends Statement {

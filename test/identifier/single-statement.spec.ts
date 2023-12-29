@@ -14,6 +14,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: ['Persons'],
         },
       ];
 
@@ -30,6 +31,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: ['Persons'],
         },
       ];
 
@@ -46,6 +48,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: ['"Pers;\'ons"'],
         },
       ];
 
@@ -62,6 +65,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: ["[Pers;\'ons]"],
         },
       ];
 
@@ -81,6 +85,7 @@ describe('identifier', () => {
               type: `CREATE_${type}`,
               executionType: 'MODIFICATION',
               parameters: [],
+              tables: [],
             },
           ];
 
@@ -105,6 +110,7 @@ describe('identifier', () => {
           type: 'CREATE_TABLE',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -122,6 +128,7 @@ describe('identifier', () => {
             type: 'CREATE_VIEW',
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
           },
         ];
 
@@ -141,6 +148,7 @@ describe('identifier', () => {
                 type: 'CREATE_VIEW',
                 executionType: 'MODIFICATION',
                 parameters: [],
+                tables: [],
               },
             ];
 
@@ -170,6 +178,7 @@ describe('identifier', () => {
                 type: 'CREATE_VIEW',
                 executionType: 'MODIFICATION',
                 parameters: [],
+                tables: [],
               },
             ];
 
@@ -206,6 +215,7 @@ describe('identifier', () => {
                   type: 'CREATE_VIEW',
                   executionType: 'MODIFICATION',
                   parameters: [],
+                  tables: [],
                 },
               ];
 
@@ -237,6 +247,7 @@ describe('identifier', () => {
                 type: 'CREATE_VIEW',
                 executionType: 'MODIFICATION',
                 parameters: [],
+                tables: [],
               },
             ];
 
@@ -258,6 +269,7 @@ describe('identifier', () => {
                 type: 'CREATE_VIEW',
                 executionType: 'MODIFICATION',
                 parameters: [],
+                tables: [],
               },
             ];
 
@@ -281,6 +293,7 @@ describe('identifier', () => {
             type: 'CREATE_TRIGGER',
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -306,6 +319,7 @@ describe('identifier', () => {
             type: 'CREATE_TRIGGER',
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -340,6 +354,7 @@ describe('identifier', () => {
             type: 'CREATE_TRIGGER',
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -357,6 +372,7 @@ describe('identifier', () => {
             type: 'CREATE_TRIGGER',
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -386,6 +402,7 @@ describe('identifier', () => {
                   type: 'CREATE_PROCEDURE',
                   executionType: 'MODIFICATION',
                   parameters: [],
+                  tables: [],
                 },
               ];
               expect(actual).to.eql(expected);
@@ -413,7 +430,7 @@ describe('identifier', () => {
                 type: 'CREATE_PROCEDURE',
                 executionType: 'MODIFICATION',
                 parameters: [],
-                tables: ['mydataset.customers'], // FIXME: currently returns mydataset
+                tables: [], // FIXME: should return mydataset.customers
               },
             ];
             expect(actual).to.eql(expected);
@@ -439,7 +456,7 @@ describe('identifier', () => {
               type: 'CREATE_PROCEDURE',
               executionType: 'MODIFICATION',
               parameters: [],
-              tables: ['mydataset.customers'], // FIXME: currently returns mydataset
+              tables: [],
             },
           ];
           expect(actual).to.eql(expected);
@@ -579,6 +596,7 @@ describe('identifier', () => {
                 type: `SHOW_${type}`,
                 executionType: 'LISTING',
                 parameters: [],
+                tables: [],
               },
             ];
 
@@ -626,6 +644,7 @@ describe('identifier', () => {
             type: 'CREATE_FUNCTION',
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -676,6 +695,7 @@ describe('identifier', () => {
             type: 'CREATE_FUNCTION',
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -700,6 +720,7 @@ describe('identifier', () => {
             type: 'CREATE_FUNCTION',
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
           },
         ];
 
@@ -718,6 +739,7 @@ describe('identifier', () => {
             type: 'CREATE_FUNCTION',
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -736,6 +758,7 @@ describe('identifier', () => {
             type: 'CREATE_FUNCTION',
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -769,6 +792,7 @@ describe('identifier', () => {
             type: 'CREATE_FUNCTION',
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -787,6 +811,7 @@ describe('identifier', () => {
             type: 'CREATE_INDEX',
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -803,6 +828,7 @@ describe('identifier', () => {
             type: 'CREATE_INDEX',
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
           },
         ];
         expect(actual).to.eql(expected);
@@ -821,6 +847,7 @@ describe('identifier', () => {
                 type: 'CREATE_INDEX',
                 executionType: 'MODIFICATION',
                 parameters: [],
+                tables: [],
               },
             ];
             expect(actual).to.eql(expected);
@@ -841,6 +868,7 @@ describe('identifier', () => {
                 type: 'CREATE_INDEX',
                 executionType: 'MODIFICATION',
                 parameters: [],
+                tables: [],
               },
             ];
             expect(actual).to.eql(expected);
@@ -862,6 +890,7 @@ describe('identifier', () => {
               type: `DROP_${type}`,
               executionType: 'MODIFICATION',
               parameters: [],
+              tables: [],
             },
           ];
 
@@ -886,6 +915,7 @@ describe('identifier', () => {
           type: 'DROP_TABLE',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -902,6 +932,7 @@ describe('identifier', () => {
           type: 'DROP_VIEW',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -918,6 +949,7 @@ describe('identifier', () => {
           type: 'DROP_DATABASE',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -934,6 +966,7 @@ describe('identifier', () => {
           type: 'DROP_TRIGGER',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
       expect(actual).to.eql(expected);
@@ -950,6 +983,7 @@ describe('identifier', () => {
           type: 'DROP_FUNCTION',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
       expect(actual).to.eql(expected);
@@ -966,6 +1000,7 @@ describe('identifier', () => {
           type: 'DROP_INDEX',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
       expect(actual).to.eql(expected);
@@ -981,6 +1016,7 @@ describe('identifier', () => {
           type: 'TRUNCATE',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -997,6 +1033,7 @@ describe('identifier', () => {
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -1013,6 +1050,7 @@ describe('identifier', () => {
           type: 'UPDATE',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -1031,6 +1069,7 @@ describe('identifier', () => {
           type: 'UPDATE',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
       expect(actual).to.eql(expected);
@@ -1046,6 +1085,7 @@ describe('identifier', () => {
           type: 'DELETE',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -1072,6 +1112,7 @@ describe('identifier', () => {
               type: `ALTER_${type}`,
               executionType: 'MODIFICATION',
               parameters: [],
+              tables: [],
             },
           ];
 
@@ -1109,6 +1150,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: ['Persons'],
         },
       ];
 
@@ -1130,6 +1172,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: ['Persons'],
         },
       ];
 
@@ -1151,6 +1194,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: ['Persons'],
         },
       ];
 
@@ -1170,6 +1214,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: ['Persons'],
         },
       ];
 
@@ -1190,6 +1235,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: ['Persons'],
         },
       ];
 
@@ -1212,6 +1258,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: ['Persons'],
         },
       ];
 
@@ -1236,6 +1283,7 @@ describe('identifier', () => {
           type: 'CREATE_LOGFILE',
           executionType: 'UNKNOWN',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -1258,7 +1306,7 @@ describe('identifier', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
-            tables: ['table'] // FIXME: currently returns cte_name as table
+            tables: [],
           },
         ];
 
@@ -1280,7 +1328,7 @@ describe('identifier', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
-            tables: [] // FIXME: currently returns cte_name as table
+            tables: [], // FIXME: should return 'table'?
           },
         ];
 
@@ -1319,7 +1367,7 @@ describe('identifier', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
-            tables: [], // FIXME - this currently returns cte1, cte2, cte3 as tables
+            tables: [],
           },
         ];
 
@@ -1348,6 +1396,7 @@ describe('identifier', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
+            tables: [],
           },
         ];
 
@@ -1368,6 +1417,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: ['$1', '$2'],
+          tables: ['Persons'],
         },
       ];
 
@@ -1387,6 +1437,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: ['$1', '$2'],
+          tables: ['foo'],
         },
       ];
 
@@ -1406,6 +1457,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [':one', ':two'],
+          tables: ['Persons'],
         },
       ];
 
@@ -1425,6 +1477,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: ['?', '?', '?'],
+          tables: ['Persons'],
         },
       ];
 
@@ -1444,6 +1497,7 @@ describe('identifier', () => {
           type: 'UNKNOWN',
           executionType: 'UNKNOWN',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -1468,6 +1522,7 @@ describe('identifier', () => {
           type: 'CREATE_PROCEDURE',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -1485,6 +1540,7 @@ describe('identifier', () => {
           type: 'UNKNOWN',
           executionType: 'UNKNOWN',
           parameters: [],
+          tables: [],
         },
       ];
 

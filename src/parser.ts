@@ -101,11 +101,7 @@ const statementsWithEnds = [
 
 // keywords that come directly before a table name.
 // v1 - keeping it very simple.
-const PRE_TABLE_KEYWORDS = [
-  'FROM',
-  'JOIN',
-  'INTO',
-]
+const PRE_TABLE_KEYWORDS = /from|join|into/i
 
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
@@ -131,11 +127,11 @@ function createInitialStatement(): Statement {
   };
 }
 
-function nextNonWhitespaceToken(state: State): Token {
+function nextNonWhitespaceToken(state: State, dialect: Dialect = "generic"): Token {
   let token: Token;
   do {
     state = initState({ prevState: state });
-    token = scanToken(state);
+    token = scanToken(state, dialect);
   } while (token.type === 'whitespace');
   return token;
 }
@@ -174,7 +170,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
   while (prevState.position < topLevelState.end) {
     const tokenState = initState({ prevState });
     const token = scanToken(tokenState, dialect);
-    const nextToken = nextNonWhitespaceToken(tokenState);
+    const nextToken = nextNonWhitespaceToken(tokenState, dialect);
 
     if (!statementParser) {
       // ignore blank tokens before the start of a CTE / not part of a statement
@@ -247,6 +243,7 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
         statementParser = createStatementParserByToken(token, nextToken, { isStrict, dialect });
         if (cteState.isCte) {
           statementParser.getStatement().start = cteState.state.start;
+          statementParser.getStatement().isCte = true;
           cteState.isCte = false;
           cteState.asSeen = false;
           cteState.statementEnd = false;
@@ -821,11 +818,11 @@ function stateMachineStatementParser(
         }
       }
 
-      console.log("token [pre table check]", token)
       if (
-        PRE_TABLE_KEYWORDS.includes(token.value)
+        // TODO: tokenize this?
+        token.value.match(PRE_TABLE_KEYWORDS) && !statement.isCte && statement.type === 'SELECT'
       ) {
-        const tableValue = nextToken.value.toLowerCase()
+        const tableValue = nextToken.value
         if (!statement.tables.includes(tableValue)) {
           statement.tables.push(tableValue)
         }
