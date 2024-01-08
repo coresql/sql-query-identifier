@@ -820,7 +820,7 @@ function stateMachineStatementParser(
 
       if (
         // TODO: tokenize this?
-        token.value.match(PRE_TABLE_KEYWORDS) && !statement.isCte && statement.type === 'SELECT'
+        token.value.match(PRE_TABLE_KEYWORDS) && !statement.isCte && statement.type?.match(/SELECT|INSERT/)
       ) {
         const tableValue = nextToken.value
         if (!statement.tables.includes(tableValue)) {

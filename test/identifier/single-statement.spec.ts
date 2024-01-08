@@ -1033,7 +1033,7 @@ describe('identifier', () => {
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
-          tables: [],
+          tables: ['Persons'],
         },
       ];
 

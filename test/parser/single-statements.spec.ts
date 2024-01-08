@@ -391,7 +391,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
-            tables: []
+            tables: ['Persons']
           },
         ],
         tokens: [

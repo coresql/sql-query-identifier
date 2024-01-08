@@ -16,7 +16,7 @@ describe('identifier', () => {
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
-          tables: [],
+          tables: ['Persons'],
         },
         {
           end: 76,
@@ -46,7 +46,7 @@ describe('identifier', () => {
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
-          tables: [],
+          tables: ['Persons'],
         },
         {
           start: 74,
@@ -260,7 +260,7 @@ describe('identifier', () => {
             type: 'INSERT',
             executionType: 'MODIFICATION',
             parameters: [],
-            tables: [],
+            tables: ['Persons'],
           },
           {
             start: 79,

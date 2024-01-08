@@ -24,7 +24,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
-            tables: [],
+            tables: ['Persons'],
           },
           {
             start: 56,
@@ -95,7 +95,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
-            tables: [],
+            tables: ['Persons'],
           },
           {
             start: 74,
