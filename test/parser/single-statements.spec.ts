@@ -217,6 +217,7 @@ describe('parser', () => {
                   executionType: 'MODIFICATION',
                   endStatement: ';',
                   parameters: [],
+                  tables: [],
                 },
               ],
               tokens: [
@@ -281,6 +282,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
+            tables: [],
           },
         ],
         tokens: [

@@ -1436,8 +1436,6 @@ describe('identifier', () => {
           text: 'SELECT $1,$2 FROM foo WHERE foo.id in ($3, $4)',
           type: 'SELECT',
           executionType: 'LISTING',
-          parameters: ['$1', '$2'],
-          tables: ['foo'],
           parameters: ['$1', '$2', '$3', '$4'],
           tables: ['foo'],
         },
@@ -1479,6 +1477,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [':one', ':two', ':three'],
+          tables: ['Persons'],
         },
       ];
 
