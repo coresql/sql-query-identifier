@@ -75,7 +75,7 @@ describe('parser', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
-            tables: ['Persons']
+            tables: ['Persons'],
           },
         ],
         tokens: [
@@ -113,7 +113,7 @@ describe('parser', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
-            tables: ['Persons']
+            tables: ['Persons'],
           },
         ],
         tokens: [
@@ -391,7 +391,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
-            tables: ['Persons']
+            tables: ['Persons'],
           },
         ],
         tokens: [

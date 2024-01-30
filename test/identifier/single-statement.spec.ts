@@ -65,7 +65,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ["[Pers;\'ons]"],
+          tables: ["[Pers;'ons]"],
         },
       ];
 
@@ -492,7 +492,7 @@ describe('identifier', () => {
                   type: 'DROP_PROCEDURE',
                   executionType: 'MODIFICATION',
                   parameters: [],
-                  tables: []
+                  tables: [],
                 },
               ];
               expect(actual).to.eql(expected);

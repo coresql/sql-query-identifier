@@ -88,7 +88,7 @@ export interface IdentifyResult {
   type: StatementType;
   executionType: ExecutionType;
   parameters: string[];
-  tables?: string[]
+  tables?: string[];
 }
 
 export interface Statement {

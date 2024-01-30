@@ -98,10 +98,9 @@ const statementsWithEnds = [
   'UNKNOWN',
 ];
 
-
 // keywords that come directly before a table name.
 // v1 - keeping it very simple.
-const PRE_TABLE_KEYWORDS = /from|join|into/i
+const PRE_TABLE_KEYWORDS = /from|join|into/i;
 
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
@@ -123,11 +122,11 @@ function createInitialStatement(): Statement {
     start: -1,
     end: 0,
     parameters: [],
-    tables: []
+    tables: [],
   };
 }
 
-function nextNonWhitespaceToken(state: State, dialect: Dialect = "generic"): Token {
+function nextNonWhitespaceToken(state: State, dialect: Dialect = 'generic'): Token {
   let token: Token;
   do {
     state = initState({ prevState: state });
@@ -177,7 +176,6 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
       if (!cteState.isCte && ignoreOutsideBlankTokens.includes(token.type)) {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
-
       } else if (
         !cteState.isCte &&
         token.type === 'keyword' &&
@@ -199,13 +197,12 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
           type: 'UNKNOWN',
           executionType: 'UNKNOWN',
           parameters: [],
-          tables: []
+          tables: [],
         });
         cteState.isCte = false;
         cteState.asSeen = false;
         cteState.statementEnd = false;
         cteState.parens = 0;
-
       } else if (cteState.isCte && !cteState.statementEnd) {
         if (cteState.asSeen) {
           if (token.value === '(') {
@@ -222,7 +219,6 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
 
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
-
       } else if (cteState.isCte && cteState.statementEnd && token.value === ',') {
         cteState.asSeen = false;
         cteState.statementEnd = false;
@@ -238,7 +234,6 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
       ) {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
-
       } else {
         statementParser = createStatementParserByToken(token, nextToken, { isStrict, dialect });
         if (cteState.isCte) {
@@ -248,7 +243,6 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
           cteState.asSeen = false;
           cteState.statementEnd = false;
         }
-
       }
     } else {
       statementParser.addToken(token, nextToken);
@@ -262,7 +256,6 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
         statementParser = null;
       }
     }
-
   }
 
   // last statement without ending key
@@ -820,11 +813,13 @@ function stateMachineStatementParser(
 
       if (
         // TODO: tokenize this?
-        token.value.match(PRE_TABLE_KEYWORDS) && !statement.isCte && statement.type?.match(/SELECT|INSERT/)
+        PRE_TABLE_KEYWORDS.exec(token.value) &&
+        !statement.isCte &&
+        statement.type?.match(/SELECT|INSERT/)
       ) {
-        const tableValue = nextToken.value
+        const tableValue = nextToken.value;
         if (!statement.tables.includes(tableValue)) {
-          statement.tables.push(tableValue)
+          statement.tables.push(tableValue);
         }
       }
 

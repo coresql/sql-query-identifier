@@ -25,7 +25,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['Persons']
+          tables: ['Persons'],
         },
       ];
 
@@ -55,7 +55,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['Persons']
+          tables: ['Persons'],
         },
       ];
 
