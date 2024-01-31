@@ -1425,18 +1425,20 @@ describe('identifier', () => {
     });
 
     it('Should extract positional Parameters with trailing commas', () => {
-      const actual = identify('SELECT $1,$2 FROM foo', {
+      const actual = identify('SELECT $1,$2 FROM foo WHERE foo.id in ($3, $4)', {
         dialect: 'psql',
         strict: true,
       });
       const expected = [
         {
           start: 0,
-          end: 20,
-          text: 'SELECT $1,$2 FROM foo',
+          end: 45,
+          text: 'SELECT $1,$2 FROM foo WHERE foo.id in ($3, $4)',
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: ['$1', '$2'],
+          tables: ['foo'],
+          parameters: ['$1', '$2', '$3', '$4'],
           tables: ['foo'],
         },
       ];
@@ -1458,6 +1460,25 @@ describe('identifier', () => {
           executionType: 'LISTING',
           parameters: [':one', ':two'],
           tables: ['Persons'],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('Should extract named Parameters with trailing commas', () => {
+      const actual = identify('SELECT * FROM Persons where x in (:one, :two, :three)', {
+        dialect: 'mssql',
+        strict: true,
+      });
+      const expected = [
+        {
+          start: 0,
+          end: 52,
+          text: 'SELECT * FROM Persons where x in (:one, :two, :three)',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [':one', ':two', ':three'],
         },
       ];
 

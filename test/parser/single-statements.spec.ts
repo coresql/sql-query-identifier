@@ -192,6 +192,134 @@ describe('parser', () => {
       expect(actual).to.eql(expected);
     });
 
+    ['TEMP', 'TEMPORARY'].forEach((type) => {
+      describe(`it should parse "CREATE ${type} TABLE" statement`, () => {
+        ['psql', 'sqlite'].forEach((dialect) => {
+          it(`for ${dialect}`, () => {
+            const actual = parse(
+              `CREATE ${type} TABLE Persons (PersonID int, Name varchar(255));`,
+              true,
+              dialect as 'psql' | 'sqlite',
+            );
+
+            actual.tokens = aggregateUnknownTokens(actual.tokens);
+
+            const expected = {
+              type: 'QUERY',
+              start: 0,
+              end: 54 + type.length + 1,
+              body: [
+                // nodes
+                {
+                  start: 0,
+                  end: 54 + type.length + 1,
+                  type: 'CREATE_TABLE',
+                  executionType: 'MODIFICATION',
+                  endStatement: ';',
+                  parameters: [],
+                },
+              ],
+              tokens: [
+                {
+                  type: 'keyword',
+                  value: 'CREATE',
+                  start: 0,
+                  end: 5,
+                },
+                {
+                  type: 'unknown',
+                  value: ` ${type} `,
+                  start: 6,
+                  end: 6 + type.length + 1,
+                },
+                {
+                  type: 'keyword',
+                  value: 'TABLE',
+                  start: 6 + type.length + 2,
+                  end: 6 + type.length + 1 + 5,
+                },
+                {
+                  type: 'unknown',
+                  value: ' Persons (PersonID int, Name varchar(255))',
+                  start: 6 + type.length + 1 + 5 + 1,
+                  end: 6 + type.length + 1 + 5 + 42,
+                },
+                {
+                  type: 'semicolon',
+                  value: ';',
+                  start: 6 + type.length + 1 + 5 + 42 + 1,
+                  end: 6 + type.length + 1 + 5 + 42 + 1,
+                },
+              ],
+            };
+
+            expect(actual).to.eql(expected);
+          });
+        });
+      });
+    });
+
+    it('should parse "CREATE VIRTUAL TABLE" statement for sqlite', () => {
+      const actual = parse(
+        `CREATE VIRTUAL TABLE Persons (PersonID int, Name varchar(255));`,
+        true,
+        'sqlite',
+      );
+
+      actual.tokens = aggregateUnknownTokens(actual.tokens);
+
+      const expected = {
+        type: 'QUERY',
+        start: 0,
+        end: 62,
+        body: [
+          // nodes
+          {
+            start: 0,
+            end: 62,
+            type: 'CREATE_TABLE',
+            executionType: 'MODIFICATION',
+            endStatement: ';',
+            parameters: [],
+          },
+        ],
+        tokens: [
+          {
+            type: 'keyword',
+            value: 'CREATE',
+            start: 0,
+            end: 5,
+          },
+          {
+            type: 'unknown',
+            value: ` VIRTUAL `,
+            start: 6,
+            end: 14,
+          },
+          {
+            type: 'keyword',
+            value: 'TABLE',
+            start: 15,
+            end: 19,
+          },
+          {
+            type: 'unknown',
+            value: ' Persons (PersonID int, Name varchar(255))',
+            start: 20,
+            end: 61,
+          },
+          {
+            type: 'semicolon',
+            value: ';',
+            start: 62,
+            end: 62,
+          },
+        ],
+      };
+
+      expect(actual).to.eql(expected);
+    });
+
     it('should parse "CREATE DATABASE" statement', () => {
       const actual = parse('CREATE DATABASE Profile;');
       actual.tokens = aggregateUnknownTokens(actual.tokens);
