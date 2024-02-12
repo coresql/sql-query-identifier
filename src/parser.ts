@@ -100,7 +100,7 @@ const statementsWithEnds = [
 
 // keywords that come directly before a table name.
 // v1 - keeping it very simple.
-const PRE_TABLE_KEYWORDS = /from|join|into/i;
+const PRE_TABLE_KEYWORDS = /^from$|^join$|^into$/i;
 
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
@@ -115,6 +115,7 @@ const blockOpeners: Record<Dialect, string[]> = {
 interface ParseOptions {
   isStrict: boolean;
   dialect: Dialect;
+  identifyTables: boolean;
 }
 
 function createInitialStatement(): Statement {
@@ -126,7 +127,7 @@ function createInitialStatement(): Statement {
   };
 }
 
-function nextNonWhitespaceToken(state: State, dialect: Dialect = 'generic'): Token {
+function nextNonWhitespaceToken(state: State, dialect: Dialect): Token {
   let token: Token;
   do {
     state = initState({ prevState: state });
@@ -138,7 +139,12 @@ function nextNonWhitespaceToken(state: State, dialect: Dialect = 'generic'): Tok
 /**
  * Parser
  */
-export function parse(input: string, isStrict = true, dialect: Dialect = 'generic'): ParseResult {
+export function parse(
+  input: string,
+  isStrict = true,
+  dialect: Dialect = 'generic',
+  identifyTables = false,
+): ParseResult {
   const topLevelState = initState({ input });
   const topLevelStatement: ParseResult = {
     type: 'QUERY',
@@ -235,7 +241,11 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
       } else {
-        statementParser = createStatementParserByToken(token, nextToken, { isStrict, dialect });
+        statementParser = createStatementParserByToken(token, nextToken, {
+          isStrict,
+          dialect,
+          identifyTables,
+        });
         if (cteState.isCte) {
           statementParser.getStatement().start = cteState.state.start;
           statementParser.getStatement().isCte = true;
@@ -711,7 +721,7 @@ function createUnknownStatementParser(options: ParseOptions) {
 function stateMachineStatementParser(
   statement: Statement,
   steps: Step[],
-  { isStrict, dialect }: ParseOptions,
+  { isStrict, dialect, identifyTables }: ParseOptions,
 ): StatementParser {
   let currentStepIndex = 0;
   let prevToken: Token | undefined;
@@ -812,7 +822,7 @@ function stateMachineStatementParser(
       }
 
       if (
-        // TODO: tokenize this?
+        identifyTables &&
         PRE_TABLE_KEYWORDS.exec(token.value) &&
         !statement.isCte &&
         statement.type?.match(/SELECT|INSERT/)

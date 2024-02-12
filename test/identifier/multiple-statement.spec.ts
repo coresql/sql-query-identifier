@@ -16,7 +16,7 @@ describe('identifier', () => {
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
-          tables: ['Persons'],
+          tables: [],
         },
         {
           end: 76,
@@ -25,7 +25,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
@@ -46,7 +46,7 @@ describe('identifier', () => {
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
-          tables: ['Persons'],
+          tables: [],
         },
         {
           start: 74,
@@ -55,7 +55,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
@@ -88,7 +88,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['table'],
+          tables: [],
         },
       ];
 
@@ -260,7 +260,7 @@ describe('identifier', () => {
             type: 'INSERT',
             executionType: 'MODIFICATION',
             parameters: [],
-            tables: ['Persons'],
+            tables: [],
           },
           {
             start: 79,
@@ -278,7 +278,7 @@ describe('identifier', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
-            tables: ['Persons'],
+            tables: [],
           },
         ];
 
@@ -310,7 +310,7 @@ describe('identifier', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
-            tables: ['foo'],
+            tables: [],
           },
         ];
 
@@ -343,7 +343,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['foo'],
+          tables: [],
         },
       ];
 
@@ -375,7 +375,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['foo'],
+          tables: [],
         },
       ];
 

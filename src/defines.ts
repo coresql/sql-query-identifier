@@ -79,6 +79,7 @@ export type ExecutionType = 'LISTING' | 'MODIFICATION' | 'INFORMATION' | 'ANON_B
 export interface IdentifyOptions {
   strict?: boolean;
   dialect?: Dialect;
+  identifyTables?: boolean;
 }
 
 export interface IdentifyResult {
@@ -88,7 +89,7 @@ export interface IdentifyResult {
   type: StatementType;
   executionType: ExecutionType;
   parameters: string[];
-  tables?: string[];
+  tables: string[];
 }
 
 export interface Statement {

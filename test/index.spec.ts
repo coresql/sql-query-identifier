@@ -17,7 +17,23 @@ describe('identify', () => {
         type: 'SELECT',
         executionType: 'LISTING',
         parameters: ['$1', '$2'],
-        tables: ['foo'],
+        tables: [],
+      },
+    ]);
+  });
+
+  it('should identify tables in simple for basic cases', () => {
+    expect(
+      identify('SELECT * FROM foo JOIN bar ON foo.id = bar.id', { identifyTables: true }),
+    ).to.eql([
+      {
+        start: 0,
+        end: 44,
+        text: 'SELECT * FROM foo JOIN bar ON foo.id = bar.id',
+        type: 'SELECT',
+        executionType: 'LISTING',
+        parameters: [],
+        tables: ['foo', 'bar'],
       },
     ]);
   });

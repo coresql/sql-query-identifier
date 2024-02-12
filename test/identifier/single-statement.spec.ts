@@ -14,7 +14,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
@@ -31,7 +31,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
@@ -48,7 +48,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['"Pers;\'ons"'],
+          tables: [],
         },
       ];
 
@@ -65,7 +65,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ["[Pers;'ons]"],
+          tables: [],
         },
       ];
 
@@ -1033,7 +1033,7 @@ describe('identifier', () => {
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
@@ -1150,7 +1150,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
@@ -1172,7 +1172,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
@@ -1194,7 +1194,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
@@ -1214,7 +1214,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
@@ -1235,7 +1235,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
@@ -1258,7 +1258,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
@@ -1417,7 +1417,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: ['$1', '$2'],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
@@ -1437,7 +1437,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: ['$1', '$2', '$3', '$4'],
-          tables: ['foo'],
+          tables: [],
         },
       ];
 
@@ -1457,7 +1457,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [':one', ':two'],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
@@ -1477,7 +1477,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [':one', ':two', ':three'],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
@@ -1497,7 +1497,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: ['?', '?', '?'],
-          tables: ['Persons'],
+          tables: [],
         },
       ];
 
