@@ -121,11 +121,15 @@ function createInitialStatement(): Statement {
   };
 }
 
-function nextNonWhitespaceToken(state: State): Token {
+function nextNonWhitespaceToken(
+  state: State,
+  dialect: Dialect,
+  enableCrossDBparameters: boolean,
+): Token {
   let token: Token;
   do {
     state = initState({ prevState: state });
-    token = scanToken(state);
+    token = scanToken(state, dialect, enableCrossDBparameters);
   } while (token.type === 'whitespace');
   return token;
 }
@@ -133,7 +137,12 @@ function nextNonWhitespaceToken(state: State): Token {
 /**
  * Parser
  */
-export function parse(input: string, isStrict = true, dialect: Dialect = 'generic'): ParseResult {
+export function parse(
+  input: string,
+  isStrict = true,
+  dialect: Dialect = 'generic',
+  enableCrossDBParameters = false,
+): ParseResult {
   const topLevelState = initState({ input });
   const topLevelStatement: ParseResult = {
     type: 'QUERY',
@@ -163,8 +172,8 @@ export function parse(input: string, isStrict = true, dialect: Dialect = 'generi
 
   while (prevState.position < topLevelState.end) {
     const tokenState = initState({ prevState });
-    const token = scanToken(tokenState, dialect);
-    const nextToken = nextNonWhitespaceToken(tokenState);
+    const token = scanToken(tokenState, dialect, enableCrossDBParameters);
+    const nextToken = nextNonWhitespaceToken(tokenState, dialect, enableCrossDBParameters);
 
     if (!statementParser) {
       // ignore blank tokens before the start of a CTE / not part of a statement

@@ -879,6 +879,62 @@ describe('parser', () => {
         expect(actual.tokens).to.eql(expected);
         expect(actual.body[0].parameters).to.eql([':foo', ':bar']);
       });
+
+      it('should extract multiple parameters non strictly', () => {
+        const actual = parse(
+          'select x from a where x = ? and y = :foo and z = $1',
+          true,
+          'generic',
+          true,
+        );
+        actual.tokens = aggregateUnknownTokens(actual.tokens);
+        const expected: Token[] = [
+          {
+            type: 'keyword',
+            value: 'select',
+            start: 0,
+            end: 5,
+          },
+          {
+            type: 'unknown',
+            value: ' x from a where x = ',
+            start: 6,
+            end: 25,
+          },
+          {
+            type: 'parameter',
+            value: '?',
+            start: 26,
+            end: 26,
+          },
+          {
+            type: 'unknown',
+            value: ' and y = ',
+            start: 27,
+            end: 35,
+          },
+          {
+            type: 'parameter',
+            value: ':foo',
+            start: 36,
+            end: 39,
+          },
+          {
+            type: 'unknown',
+            value: ' and z = ',
+            start: 40,
+            end: 48,
+          },
+          {
+            type: 'parameter',
+            value: '$1',
+            start: 49,
+            end: 50,
+          },
+        ];
+        expect(actual.tokens).to.eql(expected);
+        expect(actual.body[0].parameters).to.eql(['?', ':foo', '$1']);
+      });
     });
   });
 });

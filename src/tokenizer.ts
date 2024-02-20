@@ -76,7 +76,11 @@ const ENDTOKENS: Record<string, Char> = {
   '[': ']',
 };
 
-export function scanToken(state: State, dialect: Dialect = 'generic'): Token {
+export function scanToken(
+  state: State,
+  dialect: Dialect = 'generic',
+  enableCrossDBParameters = false,
+): Token {
   const ch = read(state);
 
   if (isWhitespace(ch)) {
@@ -97,6 +101,10 @@ export function scanToken(state: State, dialect: Dialect = 'generic'): Token {
 
   if (isParameter(ch, state, dialect)) {
     return scanParameter(state, dialect);
+  }
+
+  if (enableCrossDBParameters && isCrossDBParameter(ch, state)) {
+    return scanCrossDBParameter(state);
   }
 
   if (isDollarQuotedString(state)) {
@@ -253,45 +261,80 @@ function scanString(state: State, endToken: Char): Token {
   };
 }
 
+function scanMysqlParameter(state: State): Token {
+  return {
+    type: 'parameter',
+    value: state.input.slice(state.start, state.position + 1),
+    start: state.start,
+    end: state.start,
+  };
+}
+
+function scanPsqlParameter(state: State): Token {
+  let nextChar: Char;
+
+  do {
+    nextChar = read(state);
+  } while (nextChar !== null && !isNaN(Number(nextChar)) && !isWhitespace(nextChar));
+
+  if (nextChar !== null) unread(state);
+
+  const value = state.input.slice(state.start, state.position + 1);
+
+  return {
+    type: 'parameter',
+    value,
+    start: state.start,
+    end: state.start + value.length - 1,
+  };
+}
+
+function scanMssqlParameter(state: State): Token {
+  while (isAlphaNumeric(peek(state))) read(state);
+
+  const value = state.input.slice(state.start, state.position + 1);
+  return {
+    type: 'parameter',
+    value,
+    start: state.start,
+    end: state.start + value.length - 1,
+  };
+}
+
 function scanParameter(state: State, dialect: Dialect): Token {
   if (['mysql', 'generic', 'sqlite'].includes(dialect)) {
-    return {
-      type: 'parameter',
-      value: state.input.slice(state.start, state.position + 1),
-      start: state.start,
-      end: state.start,
-    };
+    return scanMysqlParameter(state);
   }
 
   if (dialect === 'psql') {
-    let nextChar: Char;
-
-    do {
-      nextChar = read(state);
-    } while (nextChar !== null && !isNaN(Number(nextChar)) && !isWhitespace(nextChar));
-
-    if (nextChar !== null) unread(state);
-
-    const value = state.input.slice(state.start, state.position + 1);
-
-    return {
-      type: 'parameter',
-      value,
-      start: state.start,
-      end: state.start + value.length - 1,
-    };
+    return scanPsqlParameter(state);
   }
 
   if (dialect === 'mssql') {
-    while (isAlphaNumeric(peek(state))) read(state);
+    return scanMssqlParameter(state);
+  }
 
-    const value = state.input.slice(state.start, state.position + 1);
-    return {
-      type: 'parameter',
-      value,
-      start: state.start,
-      end: state.start + value.length - 1,
-    };
+  return {
+    type: 'parameter',
+    value: 'unknown',
+    start: state.start,
+    end: state.end,
+  };
+}
+
+function scanCrossDBParameter(state: State): Token {
+  const ch = state.input.slice(state.start, state.position + 1);
+
+  if (ch === '?') {
+    return scanMysqlParameter(state);
+  }
+
+  if (ch === '$') {
+    return scanPsqlParameter(state);
+  }
+
+  if (ch === ':') {
+    return scanMssqlParameter(state);
   }
 
   return {
@@ -425,6 +468,22 @@ function isParameter(ch: Char, state: State, dialect: Dialect): boolean {
   if (dialect === 'mssql') pStart = ':';
 
   return ch === pStart;
+}
+
+function isCrossDBParameter(ch: Char, state: State): boolean {
+  if (ch === '?' || ch === ':') {
+    return true;
+  }
+
+  if (ch === '$') {
+    const nextChar = peek(state);
+    if (nextChar === null || isNaN(Number(nextChar))) {
+      return false;
+    }
+    return true;
+  }
+
+  return false;
 }
 
 function isDollarQuotedString(state: State): boolean {

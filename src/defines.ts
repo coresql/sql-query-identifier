@@ -79,6 +79,7 @@ export type ExecutionType = 'LISTING' | 'MODIFICATION' | 'INFORMATION' | 'ANON_B
 export interface IdentifyOptions {
   strict?: boolean;
   dialect?: Dialect;
+  enableCrossDBParameters?: boolean;
 }
 
 export interface IdentifyResult {
