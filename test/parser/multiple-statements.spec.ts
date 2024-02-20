@@ -24,6 +24,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
+            tables: [],
           },
           {
             start: 56,
@@ -31,6 +32,7 @@ describe('parser', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
+            tables: [],
           },
         ],
         tokens: [
@@ -93,6 +95,7 @@ describe('parser', () => {
             executionType: 'MODIFICATION',
             endStatement: ';',
             parameters: [],
+            tables: [],
           },
           {
             start: 74,
@@ -100,6 +103,7 @@ describe('parser', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
+            tables: [],
           },
         ],
         tokens: [

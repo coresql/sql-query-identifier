@@ -21,7 +21,7 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
     throw new Error(`Unknown dialect. Allowed values: ${DIALECTS.join(', ')}`);
   }
 
-  const result = parse(query, isStrict, dialect);
+  const result = parse(query, isStrict, dialect, options.identifyTables);
 
   return result.body.map((statement) => {
     const result: IdentifyResult = {
@@ -32,6 +32,7 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
       executionType: statement.executionType,
       // we want to sort the postgres params: $1 $2 $3, regardless of the order they appear
       parameters: dialect === 'psql' ? statement.parameters.sort() : statement.parameters,
+      tables: statement.tables || [],
     };
     return result;
   });
