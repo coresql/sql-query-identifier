@@ -98,6 +98,10 @@ const statementsWithEnds = [
   'UNKNOWN',
 ];
 
+// keywords that come directly before a table name.
+// v1 - keeping it very simple.
+const PRE_TABLE_KEYWORDS = /^from$|^join$|^into$/i;
+
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
   psql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
@@ -111,6 +115,7 @@ const blockOpeners: Record<Dialect, string[]> = {
 interface ParseOptions {
   isStrict: boolean;
   dialect: Dialect;
+  identifyTables: boolean;
 }
 
 function createInitialStatement(): Statement {
@@ -118,6 +123,7 @@ function createInitialStatement(): Statement {
     start: -1,
     end: 0,
     parameters: [],
+    tables: [],
   };
 }
 
@@ -141,6 +147,7 @@ export function parse(
   input: string,
   isStrict = true,
   dialect: Dialect = 'generic',
+  identifyTables = false,
   enableCrossDBParameters = false,
 ): ParseResult {
   const topLevelState = initState({ input });
@@ -180,7 +187,6 @@ export function parse(
       if (!cteState.isCte && ignoreOutsideBlankTokens.includes(token.type)) {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
-        continue;
       } else if (
         !cteState.isCte &&
         token.type === 'keyword' &&
@@ -190,7 +196,7 @@ export function parse(
         topLevelStatement.tokens.push(token);
         cteState.state = tokenState;
         prevState = tokenState;
-        continue;
+
         // If we're scanning in a CTE, handle someone putting a semicolon anywhere (after 'with',
         // after semicolon, etc.) along it to "early terminate".
       } else if (cteState.isCte && token.type === 'semicolon') {
@@ -202,12 +208,12 @@ export function parse(
           type: 'UNKNOWN',
           executionType: 'UNKNOWN',
           parameters: [],
+          tables: [],
         });
         cteState.isCte = false;
         cteState.asSeen = false;
         cteState.statementEnd = false;
         cteState.parens = 0;
-        continue;
       } else if (cteState.isCte && !cteState.statementEnd) {
         if (cteState.asSeen) {
           if (token.value === '(') {
@@ -224,14 +230,13 @@ export function parse(
 
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
-        continue;
       } else if (cteState.isCte && cteState.statementEnd && token.value === ',') {
         cteState.asSeen = false;
         cteState.statementEnd = false;
 
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
-        continue;
+
         // Ignore blank tokens after the end of the CTE till start of statement
       } else if (
         cteState.isCte &&
@@ -240,27 +245,31 @@ export function parse(
       ) {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
-        continue;
+      } else {
+        statementParser = createStatementParserByToken(token, nextToken, {
+          isStrict,
+          dialect,
+          identifyTables,
+        });
+        if (cteState.isCte) {
+          statementParser.getStatement().start = cteState.state.start;
+          statementParser.getStatement().isCte = true;
+          cteState.isCte = false;
+          cteState.asSeen = false;
+          cteState.statementEnd = false;
+        }
       }
+    } else {
+      statementParser.addToken(token, nextToken);
+      topLevelStatement.tokens.push(token);
+      prevState = tokenState;
 
-      statementParser = createStatementParserByToken(token, nextToken, { isStrict, dialect });
-      if (cteState.isCte) {
-        statementParser.getStatement().start = cteState.state.start;
-        cteState.isCte = false;
-        cteState.asSeen = false;
-        cteState.statementEnd = false;
+      const statement = statementParser.getStatement();
+      if (statement.endStatement) {
+        statement.end = token.end;
+        topLevelStatement.body.push(statement as ConcreteStatement);
+        statementParser = null;
       }
-    }
-
-    statementParser.addToken(token, nextToken);
-    topLevelStatement.tokens.push(token);
-    prevState = tokenState;
-
-    const statement = statementParser.getStatement();
-    if (statement.endStatement) {
-      statement.end = token.end;
-      topLevelStatement.body.push(statement as ConcreteStatement);
-      statementParser = null;
     }
   }
 
@@ -717,7 +726,7 @@ function createUnknownStatementParser(options: ParseOptions) {
 function stateMachineStatementParser(
   statement: Statement,
   steps: Step[],
-  { isStrict, dialect }: ParseOptions,
+  { isStrict, dialect, identifyTables }: ParseOptions,
 ): StatementParser {
   let currentStepIndex = 0;
   let prevToken: Token | undefined;
@@ -814,6 +823,18 @@ function stateMachineStatementParser(
           anonBlockStarted = true;
         } else if (statement.type) {
           return;
+        }
+      }
+
+      if (
+        identifyTables &&
+        PRE_TABLE_KEYWORDS.exec(token.value) &&
+        !statement.isCte &&
+        statement.type?.match(/SELECT|INSERT/)
+      ) {
+        const tableValue = nextToken.value;
+        if (!statement.tables.includes(tableValue)) {
+          statement.tables.push(tableValue);
         }
       }
 

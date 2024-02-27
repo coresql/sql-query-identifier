@@ -16,16 +16,18 @@ export type {
 export function identify(query: string, options: IdentifyOptions = {}): IdentifyResult[] {
   const isStrict = typeof options.strict === 'undefined' ? true : options.strict === true;
   const dialect = typeof options.dialect === 'undefined' ? 'generic' : options.dialect;
-  const enableCrossDBParameters =
-    typeof options.enableCrossDBParameters === 'undefined'
-      ? false
-      : options.enableCrossDBParameters;
 
   if (!DIALECTS.includes(dialect)) {
     throw new Error(`Unknown dialect. Allowed values: ${DIALECTS.join(', ')}`);
   }
 
-  const result = parse(query, isStrict, dialect, enableCrossDBParameters);
+  const result = parse(
+    query,
+    isStrict,
+    dialect,
+    options.identifyTables,
+    options.enableCrossDBParameters,
+  );
 
   return result.body.map((statement) => {
     const result: IdentifyResult = {
@@ -36,6 +38,7 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
       executionType: statement.executionType,
       // we want to sort the postgres params: $1 $2 $3, regardless of the order they appear
       parameters: dialect === 'psql' ? statement.parameters.sort() : statement.parameters,
+      tables: statement.tables || [],
     };
     return result;
   });

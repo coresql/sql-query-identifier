@@ -16,6 +16,7 @@ describe('identifier', () => {
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -34,6 +35,7 @@ describe('identifier', () => {
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -54,6 +56,7 @@ describe('identifier', () => {
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -75,6 +78,7 @@ describe('identifier', () => {
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
       ];
 

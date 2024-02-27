@@ -16,6 +16,7 @@ describe('identifier', () => {
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
         {
           end: 76,
@@ -24,6 +25,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -44,6 +46,7 @@ describe('identifier', () => {
           type: 'INSERT',
           executionType: 'MODIFICATION',
           parameters: [],
+          tables: [],
         },
         {
           start: 74,
@@ -52,6 +55,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -75,6 +79,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: [],
         },
         {
           start: 35,
@@ -83,6 +88,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -105,6 +111,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: [],
         },
         {
           start: 20,
@@ -113,6 +120,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: [],
         },
         {
           start: 50,
@@ -121,6 +129,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -161,6 +170,7 @@ describe('identifier', () => {
             end: 1043,
             executionType: 'ANON_BLOCK',
             parameters: [],
+            tables: [],
             start: 11,
             text: 'DECLARE\n            PK_NAME VARCHAR(200);\n\n          BEGIN\n            EXECUTE IMMEDIATE (\'CREATE SEQUENCE "untitled_table8_seq"\');\n\n          SELECT\n            cols.column_name INTO PK_NAME\n          FROM\n            all_constraints cons,\n            all_cons_columns cols\n          WHERE\n            cons.constraint_type = \'P\'\n            AND cons.constraint_name = cols.constraint_name\n            AND cons.owner = cols.owner\n            AND cols.table_name = \'untitled_table8\';\n\n          execute immediate (\n            \'create or replace trigger "untitled_table8_autoinc_trg"  BEFORE INSERT on "untitled_table8"  for each row  declare  checking number := 1;  begin    if (:new."\' || PK_NAME || \'" is null) then      while checking >= 1 loop        select "untitled_table8_seq".nextval into :new."\' || PK_NAME || \'" from dual;        select count("\' || PK_NAME || \'") into checking from "untitled_table8"        where "\' || PK_NAME || \'" = :new."\' || PK_NAME || \'";      end loop;    end if;  end;\'\n          );\n\n          END;',
             type: 'ANON_BLOCK',
@@ -208,6 +218,7 @@ describe('identifier', () => {
             end: 167,
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
             start: 11,
             text: 'create table\n            "untitled_table8" (\n              "id" integer not null primary key,\n              "created_at" varchar(255) not null\n            );',
             type: 'CREATE_TABLE',
@@ -216,6 +227,7 @@ describe('identifier', () => {
             end: 1212,
             executionType: 'ANON_BLOCK',
             parameters: [],
+            tables: [],
             start: 180,
             text: 'DECLARE\n            PK_NAME VARCHAR(200);\n\n          BEGIN\n            EXECUTE IMMEDIATE (\'CREATE SEQUENCE "untitled_table8_seq"\');\n\n          SELECT\n            cols.column_name INTO PK_NAME\n          FROM\n            all_constraints cons,\n            all_cons_columns cols\n          WHERE\n            cons.constraint_type = \'P\'\n            AND cons.constraint_name = cols.constraint_name\n            AND cons.owner = cols.owner\n            AND cols.table_name = \'untitled_table8\';\n\n          execute immediate (\n            \'create or replace trigger "untitled_table8_autoinc_trg"  BEFORE INSERT on "untitled_table8"  for each row  declare  checking number := 1;  begin    if (:new."\' || PK_NAME || \'" is null) then      while checking >= 1 loop        select "untitled_table8_seq".nextval into :new."\' || PK_NAME || \'" from dual;        select count("\' || PK_NAME || \'") into checking from "untitled_table8"        where "\' || PK_NAME || \'" = :new."\' || PK_NAME || \'";      end loop;    end if;  end;\'\n          );\n\n          END;',
             type: 'ANON_BLOCK',
@@ -248,6 +260,7 @@ describe('identifier', () => {
             type: 'INSERT',
             executionType: 'MODIFICATION',
             parameters: [],
+            tables: [],
           },
           {
             start: 79,
@@ -256,6 +269,7 @@ describe('identifier', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
+            tables: [],
           },
           {
             start: 250,
@@ -264,6 +278,7 @@ describe('identifier', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
+            tables: [],
           },
         ];
 
@@ -286,6 +301,7 @@ describe('identifier', () => {
             type: 'UNKNOWN',
             executionType: 'UNKNOWN',
             parameters: [],
+            tables: [],
           },
           {
             start: 54,
@@ -294,6 +310,7 @@ describe('identifier', () => {
             type: 'SELECT',
             executionType: 'LISTING',
             parameters: [],
+            tables: [],
           },
         ];
 
@@ -317,6 +334,7 @@ describe('identifier', () => {
           type: 'UNKNOWN',
           executionType: 'UNKNOWN',
           parameters: [],
+          tables: [],
         },
         {
           start: 6,
@@ -325,6 +343,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -347,6 +366,7 @@ describe('identifier', () => {
           type: 'UNKNOWN',
           executionType: 'UNKNOWN',
           parameters: [],
+          tables: [],
         },
         {
           start: 24,
@@ -355,6 +375,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: [],
         },
       ];
 
@@ -376,6 +397,7 @@ describe('identifier', () => {
           type: 'UNKNOWN',
           executionType: 'UNKNOWN',
           parameters: [],
+          tables: [],
         },
         {
           start: 19,
@@ -384,6 +406,7 @@ describe('identifier', () => {
           type: 'SELECT',
           executionType: 'LISTING',
           parameters: [],
+          tables: [],
         },
         {
           start: 29,
@@ -392,6 +415,7 @@ describe('identifier', () => {
           type: 'UNKNOWN',
           executionType: 'UNKNOWN',
           parameters: [],
+          tables: [],
         },
       ];
       expect(actual).to.eql(expected);
@@ -411,6 +435,7 @@ describe('identifier', () => {
               type: 'UNKNOWN',
               executionType: 'UNKNOWN',
               parameters: [],
+              tables: [],
             },
             {
               start: 19 + offset,
@@ -419,6 +444,7 @@ describe('identifier', () => {
               type: 'SELECT',
               executionType: 'LISTING',
               parameters: [],
+              tables: [],
             },
             {
               start: 29 + offset,
@@ -427,6 +453,7 @@ describe('identifier', () => {
               type: 'UNKNOWN',
               executionType: 'UNKNOWN',
               parameters: [],
+              tables: [],
             },
           ];
           expect(actual).to.eql(expected);

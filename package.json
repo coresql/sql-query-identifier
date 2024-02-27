@@ -1,6 +1,6 @@
 {
   "name": "sql-query-identifier",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "A SQL query identifier",
   "license": "MIT",
   "main": "lib/index.js",
@@ -34,12 +34,11 @@
     "prettier": "^2.3.2",
     "terser-webpack-plugin": "^5.1.1",
     "ts-loader": "^8.0.17",
-    "ts-node": "^10.9.1",
+    "ts-node": "^10.9.2",
     "typescript": "^4.1.5",
     "webpack": "^5.11.1",
     "webpack-cli": "^4.3.1"
   },
-  "dependencies": {},
   "engines": {
     "node": ">= 10.13"
   }
