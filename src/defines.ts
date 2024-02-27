@@ -80,6 +80,7 @@ export interface IdentifyOptions {
   strict?: boolean;
   dialect?: Dialect;
   identifyTables?: boolean;
+  enableCrossDBParameters?: boolean;
 }
 
 export interface IdentifyResult {

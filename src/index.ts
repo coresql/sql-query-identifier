@@ -21,7 +21,13 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
     throw new Error(`Unknown dialect. Allowed values: ${DIALECTS.join(', ')}`);
   }
 
-  const result = parse(query, isStrict, dialect, options.identifyTables);
+  const result = parse(
+    query,
+    isStrict,
+    dialect,
+    options.identifyTables,
+    options.enableCrossDBParameters,
+  );
 
   return result.body.map((statement) => {
     const result: IdentifyResult = {
