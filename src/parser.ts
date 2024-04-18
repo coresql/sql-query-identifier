@@ -145,7 +145,7 @@ export function parse(
   isStrict = true,
   dialect: Dialect = 'generic',
   identifyTables = false,
-  paramTypes?: ParamTypes
+  paramTypes?: ParamTypes,
 ): ParseResult {
   const topLevelState = initState({ input });
   const topLevelStatement: ParseResult = {

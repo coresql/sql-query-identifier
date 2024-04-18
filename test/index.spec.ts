@@ -29,7 +29,7 @@ describe('identify', () => {
       numbered: ['$'],
       named: [':'],
       quoted: [':'],
-      custom: [ '\\{[a-zA-Z0-9_]+\\}' ]
+      custom: ['\\{[a-zA-Z0-9_]+\\}'],
     };
     const query = `SELECT * FROM foo WHERE bar = ? AND baz = $1 AND fizz = :fizzz  AND buzz = :"buzz buzz" AND foo2 = {fooo}`;
 
@@ -41,10 +41,10 @@ describe('identify', () => {
         type: 'SELECT',
         executionType: 'LISTING',
         parameters: ['?', '$1', ':fizzz', ':"buzz buzz"', '{fooo}'],
-        tables: []
-      }
-    ])
-  })
+        tables: [],
+      },
+    ]);
+  });
 
   it('should identify tables in simple for basic cases', () => {
     expect(

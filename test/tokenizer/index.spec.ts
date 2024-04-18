@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { scanToken } from '../../src/tokenizer';
-import type { Dialect, ParamTypes } from '../../src/defines';
+import type { Dialect, ParamTypes, Token } from '../../src/defines';
 
 describe('scan', () => {
   const initState = (input: string) => ({
@@ -380,18 +380,19 @@ describe('scan', () => {
       describe('custom parameters', () => {
         it('should allow positional parameters for all dialects', () => {
           const paramTypes: ParamTypes = {
-            positional: true
+            positional: true,
           };
 
           const expected = {
             type: 'parameter',
             value: '?',
             start: 0,
-            end: 0
+            end: 0,
           };
 
-
-          (['mssql', 'psql', 'oracle', 'bigquery', 'sqlite', 'mysql', 'generic'] as Array<Dialect>).forEach((dialect) => {
+          (
+            ['mssql', 'psql', 'oracle', 'bigquery', 'sqlite', 'mysql', 'generic'] as Array<Dialect>
+          ).forEach((dialect) => {
             [
               {
                 actual: scanToken(initState('?'), dialect, paramTypes),
@@ -403,7 +404,7 @@ describe('scan', () => {
 
         it('should allow numeric parameters for all dialects', () => {
           const paramTypes: ParamTypes = {
-            numbered: ["$", "?", ":"]
+            numbered: ['$', '?', ':'],
           };
 
           const expected = [
@@ -411,29 +412,31 @@ describe('scan', () => {
               type: 'parameter',
               value: '$1',
               start: 0,
-              end: 1
+              end: 1,
             },
             {
               type: 'parameter',
               value: '?1',
               start: 0,
-              end: 1
+              end: 1,
             },
             {
               type: 'parameter',
               value: ':1',
               start: 0,
-              end: 1
+              end: 1,
             },
             {
               type: 'parameter',
               value: 'unknown',
               start: 0,
-              end: 8
-            }
+              end: 8,
+            },
           ];
 
-          (['mssql', 'psql', 'oracle', 'bigquery', 'sqlite', 'mysql', 'generic'] as Array<Dialect>).forEach((dialect) => {
+          (
+            ['mssql', 'psql', 'oracle', 'bigquery', 'sqlite', 'mysql', 'generic'] as Array<Dialect>
+          ).forEach((dialect) => {
             [
               {
                 actual: scanToken(initState('$1'), dialect, paramTypes),
@@ -449,15 +452,15 @@ describe('scan', () => {
               },
               {
                 actual: scanToken(initState('$123hello'), dialect, paramTypes), // won't recognize
-                expected: expected[3]
-              }
+                expected: expected[3],
+              },
             ].forEach(({ actual, expected }) => expect(actual).to.eql(expected));
           });
         });
 
         it('should allow named parameters for all dialects', () => {
           const paramTypes: ParamTypes = {
-            named: ["$", "@", ":"]
+            named: ['$', '@', ':'],
           };
 
           const expected = [
@@ -465,29 +468,31 @@ describe('scan', () => {
               type: 'parameter',
               value: '$namedParam',
               start: 0,
-              end: 10
+              end: 10,
             },
             {
               type: 'parameter',
               value: '@namedParam',
               start: 0,
-              end: 10
+              end: 10,
             },
             {
               type: 'parameter',
               value: ':namedParam',
               start: 0,
-              end: 10
+              end: 10,
             },
             {
               type: 'parameter',
               value: '$123hello', // allow starting with a number
               start: 0,
-              end: 8
-            }
+              end: 8,
+            },
           ];
 
-          (['mssql', 'psql', 'oracle', 'bigquery', 'sqlite', 'mysql', 'generic'] as Array<Dialect>).forEach((dialect) => {
+          (
+            ['mssql', 'psql', 'oracle', 'bigquery', 'sqlite', 'mysql', 'generic'] as Array<Dialect>
+          ).forEach((dialect) => {
             [
               {
                 actual: scanToken(initState('$namedParam'), dialect, paramTypes),
@@ -503,78 +508,87 @@ describe('scan', () => {
               },
               {
                 actual: scanToken(initState('$123hello'), dialect, paramTypes),
-                expected: expected[3]
-              }
+                expected: expected[3],
+              },
             ].forEach(({ actual, expected }) => expect(actual).to.eql(expected));
-          })
+          });
         });
 
         // this test will need a refactor depending on how we want to implement quotes
         it('should allow quoted parameters for all dialects', () => {
           const paramTypes: ParamTypes = {
-            quoted: ["$", "@", ":"]
+            quoted: ['$', '@', ':'],
           };
 
-          const expected = [
+          const expected: Array<Token> = [
             {
               type: 'parameter',
               value: '$',
               start: 0,
-              end: 14
+              end: 14,
             },
             {
               type: 'parameter',
               value: '@',
               start: 0,
-              end: 14
+              end: 14,
             },
             {
               type: 'parameter',
               value: ':',
               start: 0,
-              end: 14
-            }
+              end: 14,
+            },
           ];
 
-          ([
-            { dialect: 'mssql', quotes: ['""', '[]'] },
-            { dialect: 'psql', quotes: ['""', '``'] },
-            { dialect: 'oracle', quotes: ['""', '``']},
-            { dialect: 'bigquery', quotes: ['""', '``']},
-            { dialect: 'sqlite', quotes: ['""', '``']},
-            { dialect: 'mysql', quotes: ['""', '``']},
-            { dialect: 'generic', quotes: ['""', '``']},
-          ] as Array<{dialect: Dialect, quotes: Array<string>}>).forEach(({dialect, quotes}) => {
-            const dialectExpected = expected.map((exp) => {
-              return quotes.map((quote) => {
-                return {
-                  ...exp,
-                  value: `${exp.value}${quote[0]}quoted param${quote[1]}`
-                }
-              })
-            }).flat();
-            dialectExpected.map((expected) => ({
-              actual: scanToken(initState(expected.value), dialect, paramTypes),
-              expected
-            })).forEach(({ actual, expected }) => expect(actual).to.eql(expected));
-          })
+          (
+            [
+              { dialect: 'mssql', quotes: ['""', '[]'] },
+              { dialect: 'psql', quotes: ['""', '``'] },
+              { dialect: 'oracle', quotes: ['""', '``'] },
+              { dialect: 'bigquery', quotes: ['""', '``'] },
+              { dialect: 'sqlite', quotes: ['""', '``'] },
+              { dialect: 'mysql', quotes: ['""', '``'] },
+              { dialect: 'generic', quotes: ['""', '``'] },
+            ] as Array<{ dialect: Dialect; quotes: Array<string> }>
+          ).forEach(({ dialect, quotes }) => {
+            const dialectExpected = Array.prototype.concat.apply(
+              [],
+              expected.map((exp) => {
+                return quotes.map((quote) => {
+                  return {
+                    ...exp,
+                    value: `${exp.value}${quote[0]}quoted param${quote[1]}`,
+                  };
+                });
+              }),
+            );
+            dialectExpected
+              .map((expected: Token) => ({
+                actual: scanToken(initState(expected.value), dialect, paramTypes),
+                expected,
+              }))
+              .forEach(({ actual, expected }) => expect(actual).to.eql(expected));
+          });
         });
 
         it('should allow custom parameters for all dialects', () => {
           const paramTypes: ParamTypes = {
-            custom: [ '\\{[a-zA-Z0-9_]+\\}' ]
+            custom: ['\\{[a-zA-Z0-9_]+\\}'],
           };
 
           const expected = {
             type: 'parameter',
             value: '{namedParam}',
             start: 0,
-            end: 11
+            end: 11,
           };
 
-          (['mssql', 'psql', 'oracle', 'bigquery', 'sqlite', 'mysql', 'generic'] as Array<Dialect>).forEach((dialect) => {
+          (
+            ['mssql', 'psql', 'oracle', 'bigquery', 'sqlite', 'mysql', 'generic'] as Array<Dialect>
+          ).forEach((dialect) => {
             expect(scanToken(initState('{namedParam}'), dialect, paramTypes)).to.eql(expected);
-          })
+          });
         });
 
         it('should not have collision between param types', () => {
@@ -583,7 +597,7 @@ describe('scan', () => {
             numbered: [':'],
             named: [':'],
             quoted: [':'],
-            custom: []
+            custom: [],
           };
 
           const expected = [
@@ -591,32 +605,32 @@ describe('scan', () => {
               type: 'parameter',
               value: '?',
               start: 0,
-              end: 0
+              end: 0,
             },
             {
               type: 'parameter',
               value: ':123',
               start: 0,
-              end: 3
+              end: 3,
             },
             {
               type: 'parameter',
               value: ':123hello',
               start: 0,
-              end: 8
+              end: 8,
             },
             {
               type: 'parameter',
               value: ':"named param"',
               start: 0,
-              end: 13
-            }
+              end: 13,
+            },
           ];
 
           expected.forEach((expected) => {
             expect(scanToken(initState(expected.value), 'mssql', paramTypes)).to.eql(expected);
-          })
-        })
+          });
+        });
       });
     });
   });

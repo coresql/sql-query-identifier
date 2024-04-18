@@ -76,7 +76,11 @@ const ENDTOKENS: Record<string, Char> = {
   '[': ']',
 };
 
-export function scanToken(state: State, dialect: Dialect = 'generic', paramTypes?: ParamTypes): Token {
+export function scanToken(
+  state: State,
+  dialect: Dialect = 'generic',
+  paramTypes?: ParamTypes,
+): Token {
   const ch = read(state);
 
   if (isWhitespace(ch)) {
@@ -254,23 +258,30 @@ function scanString(state: State, endToken: Char): Token {
 }
 
 function getCustomParam(state: State, paramTypes: ParamTypes): string | null | undefined {
-  const matches = paramTypes?.custom?.map((regex) => {
-    const reg = new RegExp(`^(?:${regex})`, 'u');
-    return reg.exec(state.input.slice(state.start));
-  }).filter((value) => !!value)[0];
+  const matches = paramTypes?.custom
+    ?.map((regex) => {
+      const reg = new RegExp(`^(?:${regex})`, 'u');
+      return reg.exec(state.input.slice(state.start));
+    })
+    .filter((value) => !!value)[0];
 
   return matches ? matches[0] : null;
 }
 
 function scanCustomParameter(state: State, dialect: Dialect, paramTypes: ParamTypes): Token {
-
   const curCh: any = state.input[state.start];
-  let nextChar = peek(state);
-  let matched = false
+  const nextChar = peek(state);
+  let matched = false;
 
   if (paramTypes.numbered && paramTypes.numbered.length && paramTypes.numbered.includes(curCh)) {
-    const endIndex = state.input.slice(state.start).split('').findIndex((val) => isWhitespace(val));
-    const maybeNumbers = state.input.slice(state.start + 1, endIndex > 0 ? state.start + endIndex : state.end + 1);
+    const endIndex = state.input
+      .slice(state.start)
+      .split('')
+      .findIndex((val) => isWhitespace(val));
+    const maybeNumbers = state.input.slice(
+      state.start + 1,
+      endIndex > 0 ? state.start + endIndex : state.end + 1,
+    );
     if (nextChar !== null && !isNaN(Number(nextChar)) && /^\d+$/.test(maybeNumbers)) {
       let nextChar: Char = null;
       do {
@@ -280,28 +291,37 @@ function scanCustomParameter(state: State, dialect: Dialect, paramTypes: ParamTy
       if (nextChar !== null) unread(state);
       matched = true;
     }
-  } 
-  
+  }
+
   if (!matched && paramTypes.named && paramTypes.named.length && paramTypes.named.includes(curCh)) {
     if (!isQuotedIdentifier(nextChar, dialect)) {
       while (isAlphaNumeric(peek(state))) read(state);
       matched = true;
     }
-  } 
-  
-  if (!matched && paramTypes.quoted && paramTypes.quoted.length && paramTypes.quoted.includes(curCh)) {
+  }
+
+  if (
+    !matched &&
+    paramTypes.quoted &&
+    paramTypes.quoted.length &&
+    paramTypes.quoted.includes(curCh)
+  ) {
     if (isQuotedIdentifier(nextChar, dialect)) {
       const quoteChar = read(state) as string;
       // end when we reach the end quote
-      while ((isAlphaNumeric(peek(state)) || peek(state) === ' ') && peek(state) != ENDTOKENS[quoteChar]) read(state);
+      while (
+        (isAlphaNumeric(peek(state)) || peek(state) === ' ') &&
+        peek(state) != ENDTOKENS[quoteChar]
+      )
+        read(state);
 
       // read the end quote
       read(state);
 
       matched = true;
     }
-  } 
-  
+  }
+
   if (!matched && paramTypes.custom && paramTypes.custom.length) {
     const custom = getCustomParam(state, paramTypes);
 
@@ -309,15 +329,16 @@ function scanCustomParameter(state: State, dialect: Dialect, paramTypes: ParamTy
       read(state, custom.length);
       matched = true;
     }
-  } 
-  
-  if (!matched && !paramTypes.positional) { // not positional, panic
+  }
+
+  if (!matched && !paramTypes.positional) {
+    // not positional, panic
     return {
       type: 'parameter',
       value: 'unknown',
       start: state.start,
-      end: state.end
-    }
+      end: state.end,
+    };
   }
 
   const value = state.input.slice(state.start, state.position + 1);
@@ -498,14 +519,15 @@ function isCustomParam(state: State, paramTypes: ParamTypes): boolean | undefine
   return paramTypes?.custom?.some((regex) => {
     const reg = new RegExp(`^(?:${regex})`, 'uy');
     return reg.test(state.input.slice(state.start));
-  })
+  });
 }
 
 function isParameter(ch: Char, state: State, dialect: Dialect, paramTypes?: ParamTypes): boolean {
   if (paramTypes && ch !== null) {
     const curCh: any = ch;
     const nextChar = peek(state);
-    if (paramTypes.positional && ch === '?' && (nextChar === null || isWhitespace(nextChar))) return true;
+    if (paramTypes.positional && ch === '?' && (nextChar === null || isWhitespace(nextChar)))
+      return true;
 
     if (paramTypes.numbered && paramTypes.numbered.length && paramTypes.numbered.includes(curCh)) {
       if (nextChar !== null && !isNaN(Number(nextChar))) {
@@ -513,15 +535,17 @@ function isParameter(ch: Char, state: State, dialect: Dialect, paramTypes?: Para
       }
     }
 
-    if ((paramTypes.named && paramTypes.named.length && paramTypes.named.includes(curCh)) ||
-        (paramTypes.quoted && paramTypes.quoted.length && paramTypes.quoted.includes(curCh))) {
+    if (
+      (paramTypes.named && paramTypes.named.length && paramTypes.named.includes(curCh)) ||
+      (paramTypes.quoted && paramTypes.quoted.length && paramTypes.quoted.includes(curCh))
+    ) {
       return true;
     }
 
-    if ((paramTypes.custom && paramTypes.custom.length && isCustomParam(state, paramTypes))) {
-      return true
+    if (paramTypes.custom && paramTypes.custom.length && isCustomParam(state, paramTypes)) {
+      return true;
     }
-    
+
     return false;
   }
 

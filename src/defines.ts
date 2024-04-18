@@ -77,19 +77,19 @@ export type StatementType =
 export type ExecutionType = 'LISTING' | 'MODIFICATION' | 'INFORMATION' | 'ANON_BLOCK' | 'UNKNOWN';
 
 export interface ParamTypes {
-  positional?: boolean,
-  numbered?: Array<"?" | ":" | "$">,
-  named?: Array<":" | "@" | "$">,
-  quoted?: Array<":" | "@" | "$">,
+  positional?: boolean;
+  numbered?: Array<'?' | ':' | '$'>;
+  named?: Array<':' | '@' | '$'>;
+  quoted?: Array<':' | '@' | '$'>;
   // regex for identifying that it is a param
-  custom?: Array<string>
+  custom?: Array<string>;
 }
 
 export interface IdentifyOptions {
   strict?: boolean;
   dialect?: Dialect;
   identifyTables?: boolean;
-  paramTypes?: ParamTypes
+  paramTypes?: ParamTypes;
 }
 
 export interface IdentifyResult {
