@@ -254,85 +254,85 @@ function scanString(state: State, endToken: Char): Token {
 }
 
 function getCustomParam(state: State, paramTypes: ParamTypes): string | null | undefined {
-  const matches = paramTypes?.custom?.map(({ regex }) => {
-    const reg = new RegExp(`(?:${regex})`, 'u');
-    return reg.exec(state.input);
+  const matches = paramTypes?.custom?.map((regex) => {
+    const reg = new RegExp(`^(?:${regex})`, 'u');
+    return reg.exec(state.input.slice(state.start));
   }).filter((value) => !!value)[0];
 
   return matches ? matches[0] : null;
 }
 
+function scanCustomParameter(state: State, dialect: Dialect, paramTypes: ParamTypes): Token {
+
+  const curCh: any = state.input[state.start];
+  let nextChar = peek(state);
+  let matched = false
+
+  if (paramTypes.numbered && paramTypes.numbered.length && paramTypes.numbered.includes(curCh)) {
+    const endIndex = state.input.slice(state.start).split('').findIndex((val) => isWhitespace(val));
+    const maybeNumbers = state.input.slice(state.start + 1, endIndex > 0 ? state.start + endIndex : state.end + 1);
+    if (nextChar !== null && !isNaN(Number(nextChar)) && /^\d+$/.test(maybeNumbers)) {
+      let nextChar: Char = null;
+      do {
+        nextChar = read(state);
+      } while (nextChar !== null && !isNaN(Number(nextChar)) && !isWhitespace(nextChar));
+
+      if (nextChar !== null) unread(state);
+      matched = true;
+    }
+  } 
+  
+  if (!matched && paramTypes.named && paramTypes.named.length && paramTypes.named.includes(curCh)) {
+    if (!isQuotedIdentifier(nextChar, dialect)) {
+      while (isAlphaNumeric(peek(state))) read(state);
+      matched = true;
+    }
+  } 
+  
+  if (!matched && paramTypes.quoted && paramTypes.quoted.length && paramTypes.quoted.includes(curCh)) {
+    if (isQuotedIdentifier(nextChar, dialect)) {
+      const quoteChar = read(state) as string;
+      // end when we reach the end quote
+      while ((isAlphaNumeric(peek(state)) || peek(state) === ' ') && peek(state) != ENDTOKENS[quoteChar]) read(state);
+
+      // read the end quote
+      read(state);
+
+      matched = true;
+    }
+  } 
+  
+  if (!matched && paramTypes.custom && paramTypes.custom.length) {
+    const custom = getCustomParam(state, paramTypes);
+
+    if (custom) {
+      read(state, custom.length);
+      matched = true;
+    }
+  } 
+  
+  if (!matched && !paramTypes.positional) { // not positional, panic
+    return {
+      type: 'parameter',
+      value: 'unknown',
+      start: state.start,
+      end: state.end
+    }
+  }
+
+  const value = state.input.slice(state.start, state.position + 1);
+  return {
+    type: 'parameter',
+    value,
+    start: state.start,
+    end: state.start + value.length - 1,
+  };
+}
+
 function scanParameter(state: State, dialect: Dialect, paramTypes?: ParamTypes): Token {
   // user has defined wanted param types, so we only evaluate them
   if (paramTypes) {
-    const curCh: any = state.input[0];
-    let nextChar = peek(state);
-    let matched = false
-
-    // this could be a named parameter that just starts with a number (ugh)
-    if (paramTypes.numbered && paramTypes.numbered.length && paramTypes.numbered.includes(curCh)) {
-      const maybeNumbers = state.input.slice(1, state.input.length);
-      if (nextChar !== null && !isNaN(Number(nextChar)) && /^\d+$/.test(maybeNumbers)) {
-        do {
-          nextChar = read(state);
-        } while (nextChar !== null && !isNaN(Number(nextChar)) && !isWhitespace(nextChar));
-
-        if (nextChar !== null) unread(state);
-        matched = true;
-      }
-    } 
-    
-    if (!matched && paramTypes.named && paramTypes.named.length && paramTypes.named.includes(curCh)) {
-      if (!isQuotedIdentifier(nextChar, dialect)) {
-        while (isAlphaNumeric(peek(state))) read(state);
-        matched = true;
-      }
-    } 
-    
-    if (!matched && paramTypes.quoted && paramTypes.quoted.length && paramTypes.quoted.includes(curCh)) {
-      if (isQuotedIdentifier(nextChar, dialect)) {
-        const endChars = new Map<string, string>([
-          ['"', '"'],
-          ['[', ']'],
-          ['`', '`']
-        ]);
-        const quoteChar = read(state) as string;
-        const end = endChars.get(quoteChar);
-        // end when we reach the end quote
-        while ((isAlphaNumeric(peek(state)) || peek(state) === ' ') && peek(state) != end) read(state);
-
-        // read the end quote
-        read(state);
-
-        matched = true;
-      }
-    } 
-    
-    if (!matched && paramTypes.custom && paramTypes.custom.length) {
-      const custom = getCustomParam(state, paramTypes);
-
-      if (custom) {
-        read(state, custom.length);
-        matched = true;
-      }
-    } 
-    
-    if (!matched && curCh !== '?' && nextChar !== null) { // not positional, panic
-      return {
-        type: 'parameter',
-        value: 'unknown',
-        start: state.start,
-        end: state.end
-      }
-    }
-
-    const value = state.input.slice(state.start, state.position + 1);
-    return {
-      type: 'parameter',
-      value,
-      start: state.start,
-      end: state.start + value.length - 1,
-    };
+    return scanCustomParameter(state, dialect, paramTypes);
   }
 
   if (['mysql', 'generic', 'sqlite'].includes(dialect)) {
@@ -495,9 +495,9 @@ function isString(ch: Char, dialect: Dialect): boolean {
 }
 
 function isCustomParam(state: State, paramTypes: ParamTypes): boolean | undefined {
-  return paramTypes?.custom?.some(({ regex }) => {
-    const reg = new RegExp(`(?:${regex})`, 'uy');
-    return reg.test(state.input);
+  return paramTypes?.custom?.some((regex) => {
+    const reg = new RegExp(`^(?:${regex})`, 'uy');
+    return reg.test(state.input.slice(state.start));
   })
 }
 
@@ -505,7 +505,7 @@ function isParameter(ch: Char, state: State, dialect: Dialect, paramTypes?: Para
   if (paramTypes && ch !== null) {
     const curCh: any = ch;
     const nextChar = peek(state);
-    if (paramTypes.positional && ch === '?' && nextChar === null) return true;
+    if (paramTypes.positional && ch === '?' && (nextChar === null || isWhitespace(nextChar))) return true;
 
     if (paramTypes.numbered && paramTypes.numbered.length && paramTypes.numbered.includes(curCh)) {
       if (nextChar !== null && !isNaN(Number(nextChar))) {

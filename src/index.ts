@@ -22,6 +22,7 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
   }
 
   const result = parse(query, isStrict, dialect, options.identifyTables, options.paramTypes);
+  const sort = dialect === 'psql' && !options.paramTypes;
 
   return result.body.map((statement) => {
     const result: IdentifyResult = {
@@ -31,7 +32,7 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
       type: statement.type,
       executionType: statement.executionType,
       // we want to sort the postgres params: $1 $2 $3, regardless of the order they appear
-      parameters: dialect === 'psql' ? statement.parameters.sort() : statement.parameters,
+      parameters: sort ? statement.parameters.sort() : statement.parameters,
       tables: statement.tables || [],
     };
     return result;

@@ -562,7 +562,7 @@ describe('scan', () => {
 
         it('should allow custom parameters for all dialects', () => {
           const paramTypes: ParamTypes = {
-            custom: [{ regex: '\\{[a-zA-Z0-9_]+\\}' }]
+            custom: [ '\\{[a-zA-Z0-9_]+\\}' ]
           };
 
           const expected = {
@@ -585,6 +585,37 @@ describe('scan', () => {
             quoted: [':'],
             custom: []
           };
+
+          const expected = [
+            {
+              type: 'parameter',
+              value: '?',
+              start: 0,
+              end: 0
+            },
+            {
+              type: 'parameter',
+              value: ':123',
+              start: 0,
+              end: 3
+            },
+            {
+              type: 'parameter',
+              value: ':123hello',
+              start: 0,
+              end: 8
+            },
+            {
+              type: 'parameter',
+              value: ':"named param"',
+              start: 0,
+              end: 13
+            }
+          ];
+
+          expected.forEach((expected) => {
+            expect(scanToken(initState(expected.value), 'mssql', paramTypes)).to.eql(expected);
+          })
         })
       });
     });

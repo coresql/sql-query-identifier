@@ -81,9 +81,8 @@ export interface ParamTypes {
   numbered?: Array<"?" | ":" | "$">,
   named?: Array<":" | "@" | "$">,
   quoted?: Array<":" | "@" | "$">,
-  // regex is for identifying that it is a param, key is how the token is translated to an object value for the formatter,
-  // may not be necessary here, we shal see
-  custom?: Array<{regex: string, key?: (text: string) => string }>
+  // regex for identifying that it is a param
+  custom?: Array<string>
 }
 
 export interface IdentifyOptions {
