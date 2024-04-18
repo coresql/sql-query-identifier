@@ -2,7 +2,7 @@
  * Tokenizer
  */
 
-import type { Token, State, Dialect } from './defines';
+import type { Token, State, Dialect, ParamTypes } from './defines';
 
 type Char = string | null;
 
@@ -76,7 +76,7 @@ const ENDTOKENS: Record<string, Char> = {
   '[': ']',
 };
 
-export function scanToken(state: State, dialect: Dialect = 'generic'): Token {
+export function scanToken(state: State, dialect: Dialect = 'generic', paramTypes?: ParamTypes): Token {
   const ch = read(state);
 
   if (isWhitespace(ch)) {
@@ -95,8 +95,8 @@ export function scanToken(state: State, dialect: Dialect = 'generic'): Token {
     return scanString(state, ENDTOKENS[ch]);
   }
 
-  if (isParameter(ch, state, dialect)) {
-    return scanParameter(state, dialect);
+  if (isParameter(ch, state, dialect, paramTypes)) {
+    return scanParameter(state, dialect, paramTypes);
   }
 
   if (isDollarQuotedString(state)) {
@@ -253,7 +253,88 @@ function scanString(state: State, endToken: Char): Token {
   };
 }
 
-function scanParameter(state: State, dialect: Dialect): Token {
+function getCustomParam(state: State, paramTypes: ParamTypes): string | null | undefined {
+  const matches = paramTypes?.custom?.map(({ regex }) => {
+    const reg = new RegExp(`(?:${regex})`, 'u');
+    return reg.exec(state.input);
+  }).filter((value) => !!value)[0];
+
+  return matches ? matches[0] : null;
+}
+
+function scanParameter(state: State, dialect: Dialect, paramTypes?: ParamTypes): Token {
+  // user has defined wanted param types, so we only evaluate them
+  if (paramTypes) {
+    const curCh: any = state.input[0];
+    let nextChar = peek(state);
+    let matched = false
+
+    // this could be a named parameter that just starts with a number (ugh)
+    if (paramTypes.numbered && paramTypes.numbered.length && paramTypes.numbered.includes(curCh)) {
+      const maybeNumbers = state.input.slice(1, state.input.length);
+      if (nextChar !== null && !isNaN(Number(nextChar)) && /^\d+$/.test(maybeNumbers)) {
+        do {
+          nextChar = read(state);
+        } while (nextChar !== null && !isNaN(Number(nextChar)) && !isWhitespace(nextChar));
+
+        if (nextChar !== null) unread(state);
+        matched = true;
+      }
+    } 
+    
+    if (!matched && paramTypes.named && paramTypes.named.length && paramTypes.named.includes(curCh)) {
+      if (!isQuotedIdentifier(nextChar, dialect)) {
+        while (isAlphaNumeric(peek(state))) read(state);
+        matched = true;
+      }
+    } 
+    
+    if (!matched && paramTypes.quoted && paramTypes.quoted.length && paramTypes.quoted.includes(curCh)) {
+      if (isQuotedIdentifier(nextChar, dialect)) {
+        const endChars = new Map<string, string>([
+          ['"', '"'],
+          ['[', ']'],
+          ['`', '`']
+        ]);
+        const quoteChar = read(state) as string;
+        const end = endChars.get(quoteChar);
+        // end when we reach the end quote
+        while ((isAlphaNumeric(peek(state)) || peek(state) === ' ') && peek(state) != end) read(state);
+
+        // read the end quote
+        read(state);
+
+        matched = true;
+      }
+    } 
+    
+    if (!matched && paramTypes.custom && paramTypes.custom.length) {
+      const custom = getCustomParam(state, paramTypes);
+
+      if (custom) {
+        read(state, custom.length);
+        matched = true;
+      }
+    } 
+    
+    if (!matched && curCh !== '?' && nextChar !== null) { // not positional, panic
+      return {
+        type: 'parameter',
+        value: 'unknown',
+        start: state.start,
+        end: state.end
+      }
+    }
+
+    const value = state.input.slice(state.start, state.position + 1);
+    return {
+      type: 'parameter',
+      value,
+      start: state.start,
+      end: state.start + value.length - 1,
+    };
+  }
+
   if (['mysql', 'generic', 'sqlite'].includes(dialect)) {
     return {
       type: 'parameter',
@@ -413,7 +494,37 @@ function isString(ch: Char, dialect: Dialect): boolean {
   return stringStart.includes(ch);
 }
 
-function isParameter(ch: Char, state: State, dialect: Dialect): boolean {
+function isCustomParam(state: State, paramTypes: ParamTypes): boolean | undefined {
+  return paramTypes?.custom?.some(({ regex }) => {
+    const reg = new RegExp(`(?:${regex})`, 'uy');
+    return reg.test(state.input);
+  })
+}
+
+function isParameter(ch: Char, state: State, dialect: Dialect, paramTypes?: ParamTypes): boolean {
+  if (paramTypes && ch !== null) {
+    const curCh: any = ch;
+    const nextChar = peek(state);
+    if (paramTypes.positional && ch === '?' && nextChar === null) return true;
+
+    if (paramTypes.numbered && paramTypes.numbered.length && paramTypes.numbered.includes(curCh)) {
+      if (nextChar !== null && !isNaN(Number(nextChar))) {
+        return true;
+      }
+    }
+
+    if ((paramTypes.named && paramTypes.named.length && paramTypes.named.includes(curCh)) ||
+        (paramTypes.quoted && paramTypes.quoted.length && paramTypes.quoted.includes(curCh))) {
+      return true;
+    }
+
+    if ((paramTypes.custom && paramTypes.custom.length && isCustomParam(state, paramTypes))) {
+      return true
+    }
+    
+    return false;
+  }
+
   let pStart = '?'; // ansi standard - sqlite, mysql
   if (dialect === 'psql') {
     pStart = '$';

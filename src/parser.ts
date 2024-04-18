@@ -9,6 +9,7 @@ import type {
   Step,
   ParseResult,
   ConcreteStatement,
+  ParamTypes,
 } from './defines';
 
 interface StatementParser {
@@ -144,6 +145,7 @@ export function parse(
   isStrict = true,
   dialect: Dialect = 'generic',
   identifyTables = false,
+  paramTypes?: ParamTypes
 ): ParseResult {
   const topLevelState = initState({ input });
   const topLevelStatement: ParseResult = {
@@ -174,7 +176,7 @@ export function parse(
 
   while (prevState.position < topLevelState.end) {
     const tokenState = initState({ prevState });
-    const token = scanToken(tokenState, dialect);
+    const token = scanToken(tokenState, dialect, paramTypes);
     const nextToken = nextNonWhitespaceToken(tokenState, dialect);
 
     if (!statementParser) {

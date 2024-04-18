@@ -76,10 +76,21 @@ export type StatementType =
 
 export type ExecutionType = 'LISTING' | 'MODIFICATION' | 'INFORMATION' | 'ANON_BLOCK' | 'UNKNOWN';
 
+export interface ParamTypes {
+  positional?: boolean,
+  numbered?: Array<"?" | ":" | "$">,
+  named?: Array<":" | "@" | "$">,
+  quoted?: Array<":" | "@" | "$">,
+  // regex is for identifying that it is a param, key is how the token is translated to an object value for the formatter,
+  // may not be necessary here, we shal see
+  custom?: Array<{regex: string, key?: (text: string) => string }>
+}
+
 export interface IdentifyOptions {
   strict?: boolean;
   dialect?: Dialect;
   identifyTables?: boolean;
+  paramTypes?: ParamTypes
 }
 
 export interface IdentifyResult {
