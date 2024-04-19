@@ -472,8 +472,7 @@ function isCustomParam(state: State, paramTypes: ParamTypes): boolean | undefine
 function isParameter(ch: Char, state: State, paramTypes: ParamTypes): boolean {
   const curCh: any = ch;
   const nextChar = peek(state);
-  if (paramTypes.positional && ch === '?')
-    return true;
+  if (paramTypes.positional && ch === '?') return true;
 
   if (paramTypes.numbered && paramTypes.numbered.length && paramTypes.numbered.includes(curCh)) {
     if (nextChar !== null && !isNaN(Number(nextChar))) {
