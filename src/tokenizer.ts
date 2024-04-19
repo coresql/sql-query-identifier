@@ -79,7 +79,7 @@ const ENDTOKENS: Record<string, Char> = {
 export function scanToken(
   state: State,
   dialect: Dialect = 'generic',
-  paramTypes?: ParamTypes,
+  paramTypes: ParamTypes = { positional: true },
 ): Token {
   const ch = read(state);
 
@@ -99,7 +99,7 @@ export function scanToken(
     return scanString(state, ENDTOKENS[ch]);
   }
 
-  if (isParameter(ch, state, dialect, paramTypes)) {
+  if (isParameter(ch, state, paramTypes)) {
     return scanParameter(state, dialect, paramTypes);
   }
 
@@ -268,19 +268,19 @@ function getCustomParam(state: State, paramTypes: ParamTypes): string | null | u
   return matches ? matches[0] : null;
 }
 
-function scanCustomParameter(state: State, dialect: Dialect, paramTypes: ParamTypes): Token {
+function scanParameter(state: State, dialect: Dialect, paramTypes: ParamTypes): Token {
   const curCh: any = state.input[state.start];
   const nextChar = peek(state);
   let matched = false;
 
   if (paramTypes.numbered && paramTypes.numbered.length && paramTypes.numbered.includes(curCh)) {
     const endIndex = state.input
-      .slice(state.start)
+      .slice(state.start + 1)
       .split('')
-      .findIndex((val) => isWhitespace(val));
+      .findIndex((val) => /^\W+/.test(val));
     const maybeNumbers = state.input.slice(
       state.start + 1,
-      endIndex > 0 ? state.start + endIndex : state.end + 1,
+      endIndex > 0 ? state.start + endIndex + 1 : state.end + 1,
     );
     if (nextChar !== null && !isNaN(Number(nextChar)) && /^\d+$/.test(maybeNumbers)) {
       let nextChar: Char = null;
@@ -312,8 +312,9 @@ function scanCustomParameter(state: State, dialect: Dialect, paramTypes: ParamTy
       while (
         (isAlphaNumeric(peek(state)) || peek(state) === ' ') &&
         peek(state) != ENDTOKENS[quoteChar]
-      )
+      ) {
         read(state);
+      }
 
       // read the end quote
       read(state);
@@ -331,7 +332,7 @@ function scanCustomParameter(state: State, dialect: Dialect, paramTypes: ParamTy
     }
   }
 
-  if (!matched && !paramTypes.positional) {
+  if (!matched && !paramTypes.positional && curCh !== '?') {
     // not positional, panic
     return {
       type: 'parameter',
@@ -347,60 +348,6 @@ function scanCustomParameter(state: State, dialect: Dialect, paramTypes: ParamTy
     value,
     start: state.start,
     end: state.start + value.length - 1,
-  };
-}
-
-function scanParameter(state: State, dialect: Dialect, paramTypes?: ParamTypes): Token {
-  // user has defined wanted param types, so we only evaluate them
-  if (paramTypes) {
-    return scanCustomParameter(state, dialect, paramTypes);
-  }
-
-  if (['mysql', 'generic', 'sqlite'].includes(dialect)) {
-    return {
-      type: 'parameter',
-      value: state.input.slice(state.start, state.position + 1),
-      start: state.start,
-      end: state.start,
-    };
-  }
-
-  if (dialect === 'psql') {
-    let nextChar: Char;
-
-    do {
-      nextChar = read(state);
-    } while (nextChar !== null && !isNaN(Number(nextChar)) && !isWhitespace(nextChar));
-
-    if (nextChar !== null) unread(state);
-
-    const value = state.input.slice(state.start, state.position + 1);
-
-    return {
-      type: 'parameter',
-      value,
-      start: state.start,
-      end: state.start + value.length - 1,
-    };
-  }
-
-  if (dialect === 'mssql') {
-    while (isAlphaNumeric(peek(state))) read(state);
-
-    const value = state.input.slice(state.start, state.position + 1);
-    return {
-      type: 'parameter',
-      value,
-      start: state.start,
-      end: state.start + value.length - 1,
-    };
-  }
-
-  return {
-    type: 'parameter',
-    value: 'unknown',
-    start: state.start,
-    end: state.end,
   };
 }
 
@@ -522,44 +469,30 @@ function isCustomParam(state: State, paramTypes: ParamTypes): boolean | undefine
   });
 }
 
-function isParameter(ch: Char, state: State, dialect: Dialect, paramTypes?: ParamTypes): boolean {
-  if (paramTypes && ch !== null) {
-    const curCh: any = ch;
-    const nextChar = peek(state);
-    if (paramTypes.positional && ch === '?' && (nextChar === null || isWhitespace(nextChar)))
-      return true;
+function isParameter(ch: Char, state: State, paramTypes: ParamTypes): boolean {
+  const curCh: any = ch;
+  const nextChar = peek(state);
+  if (paramTypes.positional && ch === '?')
+    return true;
 
-    if (paramTypes.numbered && paramTypes.numbered.length && paramTypes.numbered.includes(curCh)) {
-      if (nextChar !== null && !isNaN(Number(nextChar))) {
-        return true;
-      }
-    }
-
-    if (
-      (paramTypes.named && paramTypes.named.length && paramTypes.named.includes(curCh)) ||
-      (paramTypes.quoted && paramTypes.quoted.length && paramTypes.quoted.includes(curCh))
-    ) {
+  if (paramTypes.numbered && paramTypes.numbered.length && paramTypes.numbered.includes(curCh)) {
+    if (nextChar !== null && !isNaN(Number(nextChar))) {
       return true;
     }
-
-    if (paramTypes.custom && paramTypes.custom.length && isCustomParam(state, paramTypes)) {
-      return true;
-    }
-
-    return false;
   }
 
-  let pStart = '?'; // ansi standard - sqlite, mysql
-  if (dialect === 'psql') {
-    pStart = '$';
-    const nextChar = peek(state);
-    if (nextChar === null || isNaN(Number(nextChar))) {
-      return false;
-    }
+  if (
+    (paramTypes.named && paramTypes.named.length && paramTypes.named.includes(curCh)) ||
+    (paramTypes.quoted && paramTypes.quoted.length && paramTypes.quoted.includes(curCh))
+  ) {
+    return true;
   }
-  if (dialect === 'mssql') pStart = ':';
 
-  return ch === pStart;
+  if (paramTypes.custom && paramTypes.custom.length && isCustomParam(state, paramTypes)) {
+    return true;
+  }
+
+  return false;
 }
 
 function isDollarQuotedString(state: State): boolean {

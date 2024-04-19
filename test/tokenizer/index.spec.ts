@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { scanToken } from '../../src/tokenizer';
 import type { Dialect, ParamTypes, Token } from '../../src/defines';
+import { defaultParamTypesFor } from '../../src/parser';
 
 describe('scan', () => {
   const initState = (input: string) => ({
@@ -274,7 +275,11 @@ describe('scan', () => {
       ].forEach(([ch, dialect]) => {
         it(`scans just ${ch} as parameter for ${dialect}`, () => {
           const input = `${ch}`;
-          const actual = scanToken(initState(input), dialect as Dialect);
+          const actual = scanToken(
+            initState(input),
+            dialect as Dialect,
+            defaultParamTypesFor(dialect as Dialect),
+          );
           const expected = {
             type: 'parameter',
             value: input,
@@ -286,7 +291,7 @@ describe('scan', () => {
       });
       it('does not scan just $ as parameter for psql', () => {
         const input = '$';
-        const actual = scanToken(initState(input), 'psql');
+        const actual = scanToken(initState(input), 'psql', defaultParamTypesFor('psql'));
         const expected = {
           type: 'unknown',
           value: input,
@@ -304,7 +309,11 @@ describe('scan', () => {
       ].forEach(([ch, dialect]) => {
         it(`should only scan ${ch} from ${ch}1 for ${dialect}`, () => {
           const input = `${ch}1`;
-          const actual = scanToken(initState(input), dialect as Dialect);
+          const actual = scanToken(
+            initState(input),
+            dialect as Dialect,
+            defaultParamTypesFor(dialect as Dialect),
+          );
           const expected = {
             type: 'parameter',
             value: ch,
@@ -320,7 +329,11 @@ describe('scan', () => {
       ].forEach(([ch, dialect]) => {
         it(`should scan ${ch}1 for ${dialect}`, () => {
           const input = `${ch}1`;
-          const actual = scanToken(initState(input), dialect as Dialect);
+          const actual = scanToken(
+            initState(input),
+            dialect as Dialect,
+            defaultParamTypesFor(dialect as Dialect),
+          );
           const expected = {
             type: 'parameter',
             value: input,
@@ -333,7 +346,7 @@ describe('scan', () => {
 
       it('should not scan $a for psql', () => {
         const input = '$a';
-        const actual = scanToken(initState(input), 'psql');
+        const actual = scanToken(initState(input), 'psql', defaultParamTypesFor('psql'));
         const expected = {
           type: 'unknown',
           value: '$',
@@ -344,7 +357,7 @@ describe('scan', () => {
       });
 
       it('should not include trailing non-numbers for psql', () => {
-        const actual = scanToken(initState('$1,'), 'psql');
+        const actual = scanToken(initState('$1,'), 'psql', defaultParamTypesFor('psql'));
         const expected = {
           type: 'parameter',
           value: '$1',
@@ -355,9 +368,10 @@ describe('scan', () => {
       });
 
       it('should not include trailing non-alphanumerics for mssql', () => {
+        const paramTypes = defaultParamTypesFor('mssql');
         [
           {
-            actual: scanToken(initState(':one,'), 'mssql'),
+            actual: scanToken(initState(':one,'), 'mssql', paramTypes),
             expected: {
               type: 'parameter',
               value: ':one',
@@ -366,7 +380,7 @@ describe('scan', () => {
             },
           },
           {
-            actual: scanToken(initState(':two)'), 'mssql'),
+            actual: scanToken(initState(':two)'), 'mssql', paramTypes),
             expected: {
               type: 'parameter',
               value: ':two',
@@ -378,17 +392,19 @@ describe('scan', () => {
       });
 
       describe('custom parameters', () => {
-        it('should allow positional parameters for all dialects', () => {
-          const paramTypes: ParamTypes = {
+        describe('positional parameters', () => {
+          const paramTypes = {
             positional: true,
           };
 
-          const expected = {
-            type: 'parameter',
-            value: '?',
-            start: 0,
-            end: 0,
-          };
+          const expected = [
+            {
+              type: 'parameter',
+              value: '?',
+              start: 0,
+              end: 0,
+            },
+          ];
 
           (
             ['mssql', 'psql', 'oracle', 'bigquery', 'sqlite', 'mysql', 'generic'] as Array<Dialect>
@@ -396,13 +412,17 @@ describe('scan', () => {
             [
               {
                 actual: scanToken(initState('?'), dialect, paramTypes),
-                expected,
+                expected: expected[0],
               },
-            ].forEach(({ actual, expected }) => expect(actual).to.eql(expected));
+            ].forEach(({ actual, expected }) => {
+              it(`should allow positional parameters for ${dialect}`, () => {
+                expect(actual).to.eql(expected);
+              });
+            });
           });
         });
 
-        it('should allow numeric parameters for all dialects', () => {
+        describe('numeric parameters', () => {
           const paramTypes: ParamTypes = {
             numbered: ['$', '?', ':'],
           };
@@ -441,24 +461,32 @@ describe('scan', () => {
               {
                 actual: scanToken(initState('$1'), dialect, paramTypes),
                 expected: expected[0],
+                description: '$ numeric',
               },
               {
                 actual: scanToken(initState('?1'), dialect, paramTypes),
                 expected: expected[1],
+                description: '? numeric',
               },
               {
                 actual: scanToken(initState(':1'), dialect, paramTypes),
                 expected: expected[2],
+                description: ': numeric',
               },
               {
                 actual: scanToken(initState('$123hello'), dialect, paramTypes), // won't recognize
                 expected: expected[3],
+                description: 'numeric trailing alpha',
               },
-            ].forEach(({ actual, expected }) => expect(actual).to.eql(expected));
+            ].forEach(({ actual, expected, description }) => {
+              it(`should allow numeric parameters for ${dialect} - ${description}`, () => {
+                expect(actual).to.eql(expected);
+              });
+            });
           });
         });
 
-        it('should allow named parameters for all dialects', () => {
+        describe('named parameters', () => {
           const paramTypes: ParamTypes = {
             named: ['$', '@', ':'],
           };
@@ -497,30 +525,37 @@ describe('scan', () => {
               {
                 actual: scanToken(initState('$namedParam'), dialect, paramTypes),
                 expected: expected[0],
+                description: '$ named',
               },
               {
                 actual: scanToken(initState('@namedParam'), dialect, paramTypes),
                 expected: expected[1],
+                description: '@ named',
               },
               {
                 actual: scanToken(initState(':namedParam'), dialect, paramTypes),
                 expected: expected[2],
+                description: ': named',
               },
               {
                 actual: scanToken(initState('$123hello'), dialect, paramTypes),
                 expected: expected[3],
+                description: 'named starting with numbers',
               },
-            ].forEach(({ actual, expected }) => expect(actual).to.eql(expected));
+            ].forEach(({ actual, expected, description }) => {
+              it(`should allow named parameters for ${dialect} - ${description}`, () => {
+                expect(actual).to.eql(expected);
+              });
+            });
           });
         });
 
-        // this test will need a refactor depending on how we want to implement quotes
-        it('should allow quoted parameters for all dialects', () => {
+        describe('quoted parameters', () => {
           const paramTypes: ParamTypes = {
             quoted: ['$', '@', ':'],
           };
 
-          const expected: Array<Token> = [
+          const expected = [
             {
               type: 'parameter',
               value: '$',
@@ -557,48 +592,62 @@ describe('scan', () => {
               expected.map((exp) => {
                 return quotes.map((quote) => {
                   return {
-                    ...exp,
-                    value: `${exp.value}${quote[0]}quoted param${quote[1]}`,
+                    expected: {
+                      ...exp,
+                      value: `${exp.value}${quote[0]}quoted param${quote[1]}`,
+                    },
+                    description: `${exp.value} quoted with ${quote[0]}`,
                   };
                 });
               }),
             );
             dialectExpected
-              .map((expected: Token) => ({
-                actual: scanToken(initState(expected.value), dialect, paramTypes),
-                expected,
+              .map(({ expected, description }) => ({
+                actual: scanToken(initState((expected as Token).value), dialect, paramTypes),
+                expected: expected as Token,
+                description: description as string,
               }))
-              .forEach(({ actual, expected }) => expect(actual).to.eql(expected));
+              .forEach(({ actual, expected, description }) => {
+                it(`should allow quoted parameters for ${dialect} - ${description}`, () => {
+                  expect(actual).to.eql(expected);
+                });
+              });
           });
         });
 
-        it('should allow custom parameters for all dialects', () => {
+        describe('custom parameters', () => {
           const paramTypes: ParamTypes = {
             custom: ['\\{[a-zA-Z0-9_]+\\}'],
           };
 
-          const expected = {
-            type: 'parameter',
-            value: '{namedParam}',
-            start: 0,
-            end: 11,
-          };
+          const expected = [
+            {
+              type: 'parameter',
+              value: '{namedParam}',
+              start: 0,
+              end: 11,
+            },
+          ];
 
           (
             ['mssql', 'psql', 'oracle', 'bigquery', 'sqlite', 'mysql', 'generic'] as Array<Dialect>
           ).forEach((dialect) => {
-            expect(scanToken(initState('{namedParam}'), dialect, paramTypes)).to.eql(expected);
+            it(`should allow custom parameters for ${dialect}`, () => {
+              expect(scanToken(initState('{namedParam}'), dialect, paramTypes)).to.eql(expected[0]);
+            });
           });
         });
 
-        it('should not have collision between param types', () => {
+        describe('should not have collision between param types', () => {
           const paramTypes: ParamTypes = {
             positional: true,
             numbered: [':'],
             named: [':'],
             quoted: [':'],
-            custom: [],
+            custom: ['\\{[a-zA-Z0-9_]+\\}'],
           };
+
+          const type = ['positional', 'numeric', 'named', 'quoted', 'custom'];
 
           const expected = [
             {
@@ -625,10 +674,18 @@ describe('scan', () => {
               start: 0,
               end: 13,
             },
+            {
+              type: 'parameter',
+              value: '{namedParam}',
+              start: 0,
+              end: 11,
+            },
           ];
 
-          expected.forEach((expected) => {
-            expect(scanToken(initState(expected.value), 'mssql', paramTypes)).to.eql(expected);
+          expected.forEach((expected, index) => {
+            it(`parameter types don't collide, finds ${type[index]}`, () => {
+              expect(scanToken(initState(expected.value), 'mssql', paramTypes)).to.eql(expected);
+            });
           });
         });
       });
