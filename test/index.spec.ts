@@ -46,6 +46,26 @@ describe('identify', () => {
     ]);
   });
 
+  it('custom params should override defaults for dialect', () => {
+    const paramTypes: ParamTypes = {
+      positional: true
+    };
+
+    const query = 'SELECT * FROM foo WHERE bar = $1 AND bar = :named AND fizz = :`quoted`';
+
+    expect(identify(query, { dialect: 'psql', paramTypes })).to.eql([
+      {
+        start: 0,
+        end: 69,
+        text: query,
+        type: 'SELECT',
+        executionType: 'LISTING',
+        parameters: [],
+        tables: []
+      }
+    ])
+  })
+
   it('should identify tables in simple for basic cases', () => {
     expect(
       identify('SELECT * FROM foo JOIN bar ON foo.id = bar.id', { identifyTables: true }),
