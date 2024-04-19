@@ -48,7 +48,7 @@ describe('identify', () => {
 
   it('custom params should override defaults for dialect', () => {
     const paramTypes: ParamTypes = {
-      positional: true
+      positional: true,
     };
 
     const query = 'SELECT * FROM foo WHERE bar = $1 AND bar = :named AND fizz = :`quoted`';
@@ -61,10 +61,10 @@ describe('identify', () => {
         type: 'SELECT',
         executionType: 'LISTING',
         parameters: [],
-        tables: []
-      }
-    ])
-  })
+        tables: [],
+      },
+    ]);
+  });
 
   it('should identify tables in simple for basic cases', () => {
     expect(
