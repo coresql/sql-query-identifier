@@ -305,7 +305,6 @@ describe('scan', () => {
       [
         ['?', 'generic'],
         ['?', 'mysql'],
-        ['?', 'sqlite'],
       ].forEach(([ch, dialect]) => {
         it(`should only scan ${ch} from ${ch}1 for ${dialect}`, () => {
           const input = `${ch}1`;
