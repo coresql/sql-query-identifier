@@ -447,10 +447,10 @@ describe('scan', () => {
               end: 1,
             },
             {
-              type: 'parameter',
-              value: 'unknown',
+              type: 'unknown',
+              value: '$',
               start: 0,
-              end: 8,
+              end: 0,
             },
           ];
 

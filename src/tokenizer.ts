@@ -331,18 +331,18 @@ function scanParameter(state: State, dialect: Dialect, paramTypes: ParamTypes): 
       matched = true;
     }
   }
+  const value = state.input.slice(state.start, state.position + 1);
 
   if (!matched && !paramTypes.positional && curCh !== '?') {
     // not positional, panic
     return {
-      type: 'parameter',
-      value: 'unknown',
+      type: 'unknown',
+      value: value,
       start: state.start,
-      end: state.end,
+      end: state.start + value.length - 1,
     };
   }
 
-  const value = state.input.slice(state.start, state.position + 1);
   return {
     type: 'parameter',
     value,
