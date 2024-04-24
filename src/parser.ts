@@ -1017,23 +1017,30 @@ function stateMachineStatementParser(
 }
 
 export function defaultParamTypesFor(dialect: Dialect): ParamTypes {
-  if (dialect === 'psql') {
-    return {
-      numbered: ['$'],
-    };
-  } else if (dialect === 'mssql') {
-    return {
-      named: [':'],
-    };
-  } else if (dialect === 'bigquery') {
-    return {
-      positional: true,
-      named: ['@'],
-      quoted: ['@'],
-    };
-  } else {
-    return {
-      positional: true,
-    };
+  switch (dialect) {
+    case 'psql':
+      return {
+        numbered: ['$'],
+      };
+    case 'mssql':
+      return {
+        named: [':'],
+      };
+    case 'bigquery':
+      return {
+        positional: true,
+        named: ['@'],
+        quoted: ['@'],
+      };
+    case 'sqlite':
+      return {
+        positional: true,
+        numbered: ['?'],
+        named: [':', '@'],
+      };
+    default:
+      return {
+        positional: true,
+      };
   }
 }
