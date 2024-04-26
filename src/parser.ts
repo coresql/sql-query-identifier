@@ -164,14 +164,14 @@ export function parse(
     statementEnd: boolean;
     parens: 0;
     state: State;
-    params: Array<string>
+    params: Array<string>;
   } = {
     isCte: false,
     asSeen: false,
     statementEnd: false,
     parens: 0,
     state: topLevelState,
-    params: []
+    params: [],
   };
 
   const ignoreOutsideBlankTokens = ['whitespace', 'comment-inline', 'comment-block', 'semicolon'];

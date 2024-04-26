@@ -66,7 +66,7 @@ describe('identify', () => {
     ]);
   });
 
-  it.only('params should be recognized in a CTE', () => {
+  it('params should be recognized in a CTE', () => {
     const query = `
       WITH foo AS (
         SELECT * FROM bar where user_id = $1::bigint
@@ -82,10 +82,10 @@ describe('identify', () => {
         type: 'SELECT',
         executionType: 'LISTING',
         parameters: ['$1'],
-        tables: []
-      }
-    ])
-  })
+        tables: [],
+      },
+    ]);
+  });
 
   it('should identify tables in simple for basic cases', () => {
     expect(
