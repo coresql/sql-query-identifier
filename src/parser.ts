@@ -164,12 +164,14 @@ export function parse(
     statementEnd: boolean;
     parens: 0;
     state: State;
+    params: Array<string>
   } = {
     isCte: false,
     asSeen: false,
     statementEnd: false,
     parens: 0,
     state: topLevelState,
+    params: []
   };
 
   const ignoreOutsideBlankTokens = ['whitespace', 'comment-inline', 'comment-block', 'semicolon'];
@@ -251,10 +253,16 @@ export function parse(
         if (cteState.isCte) {
           statementParser.getStatement().start = cteState.state.start;
           statementParser.getStatement().isCte = true;
+          statementParser.getStatement().parameters.push(...cteState.params);
+          cteState.params = [];
           cteState.isCte = false;
           cteState.asSeen = false;
           cteState.statementEnd = false;
         }
+      }
+
+      if (cteState.isCte && token.type === 'parameter') {
+        cteState.params.push(token.value);
       }
     } else {
       statementParser.addToken(token, nextToken);
