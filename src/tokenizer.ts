@@ -2,7 +2,7 @@
  * Tokenizer
  */
 
-import type { Token, State, Dialect } from './defines';
+import type { Token, State, Dialect, ParamTypes } from './defines';
 
 type Char = string | null;
 
@@ -76,7 +76,11 @@ const ENDTOKENS: Record<string, Char> = {
   '[': ']',
 };
 
-export function scanToken(state: State, dialect: Dialect = 'generic'): Token {
+export function scanToken(
+  state: State,
+  dialect: Dialect = 'generic',
+  paramTypes: ParamTypes = { positional: true },
+): Token {
   const ch = read(state);
 
   if (isWhitespace(ch)) {
@@ -95,8 +99,8 @@ export function scanToken(state: State, dialect: Dialect = 'generic'): Token {
     return scanString(state, ENDTOKENS[ch]);
   }
 
-  if (isParameter(ch, state, dialect)) {
-    return scanParameter(state, dialect);
+  if (isParameter(ch, state, paramTypes)) {
+    return scanParameter(state, dialect, paramTypes);
   }
 
   if (isDollarQuotedString(state)) {
@@ -253,42 +257,82 @@ function scanString(state: State, endToken: Char): Token {
   };
 }
 
-function scanParameter(state: State, dialect: Dialect): Token {
-  if (['mysql', 'generic', 'sqlite'].includes(dialect)) {
-    return {
-      type: 'parameter',
-      value: state.input.slice(state.start, state.position + 1),
-      start: state.start,
-      end: state.start,
-    };
+function getCustomParam(state: State, paramTypes: ParamTypes): string | null | undefined {
+  const matches = paramTypes?.custom
+    ?.map((regex) => {
+      const reg = new RegExp(`^(?:${regex})`, 'u');
+      return reg.exec(state.input.slice(state.start));
+    })
+    .filter((value) => !!value)[0];
+
+  return matches ? matches[0] : null;
+}
+
+function scanParameter(state: State, dialect: Dialect, paramTypes: ParamTypes): Token {
+  const curCh = state.input[state.start];
+  const nextChar = peek(state);
+  let matched = false;
+
+  if (paramTypes.numbered?.length && paramTypes.numbered.some((type) => type === curCh)) {
+    const endIndex = state.input
+      .slice(state.start + 1)
+      .split('')
+      .findIndex((val) => /^\W+/.test(val));
+    const maybeNumbers = state.input.slice(
+      state.start + 1,
+      endIndex > 0 ? state.start + endIndex + 1 : state.end + 1,
+    );
+    if (nextChar !== null && !isNaN(Number(nextChar)) && /^\d+$/.test(maybeNumbers)) {
+      let nextChar: Char = null;
+      do {
+        nextChar = read(state);
+      } while (nextChar !== null && !isNaN(Number(nextChar)) && !isWhitespace(nextChar));
+
+      if (nextChar !== null) unread(state);
+      matched = true;
+    }
   }
 
-  if (dialect === 'psql') {
-    let nextChar: Char;
-
-    do {
-      nextChar = read(state);
-    } while (nextChar !== null && !isNaN(Number(nextChar)) && !isWhitespace(nextChar));
-
-    if (nextChar !== null) unread(state);
-
-    const value = state.input.slice(state.start, state.position + 1);
-
-    return {
-      type: 'parameter',
-      value,
-      start: state.start,
-      end: state.start + value.length - 1,
-    };
+  if (!matched && paramTypes.named?.length && paramTypes.named.some((type) => type === curCh)) {
+    if (!isQuotedIdentifier(nextChar, dialect)) {
+      while (isAlphaNumeric(peek(state))) read(state);
+      matched = true;
+    }
   }
 
-  if (dialect === 'mssql') {
-    while (isAlphaNumeric(peek(state))) read(state);
+  if (!matched && paramTypes.quoted?.length && paramTypes.quoted.some((type) => type === curCh)) {
+    if (isQuotedIdentifier(nextChar, dialect)) {
+      const quoteChar = read(state) as string;
+      // end when we reach the end quote
+      while (
+        (isAlphaNumeric(peek(state)) || peek(state) === ' ') &&
+        peek(state) != ENDTOKENS[quoteChar]
+      ) {
+        read(state);
+      }
 
-    const value = state.input.slice(state.start, state.position + 1);
+      // read the end quote
+      read(state);
+
+      matched = true;
+    }
+  }
+
+  if (!matched && paramTypes.custom && paramTypes.custom.length) {
+    const custom = getCustomParam(state, paramTypes);
+
+    if (custom) {
+      read(state, custom.length);
+      matched = true;
+    }
+  }
+  const value = state.input.slice(state.start, state.position + 1);
+
+  if (!matched && !paramTypes.positional && curCh !== '?') {
+    // not positional, panic
     return {
-      type: 'parameter',
-      value,
+      type: 'unknown',
+      value: value,
       start: state.start,
       end: state.start + value.length - 1,
     };
@@ -296,9 +340,9 @@ function scanParameter(state: State, dialect: Dialect): Token {
 
   return {
     type: 'parameter',
-    value: 'unknown',
+    value,
     start: state.start,
-    end: state.end,
+    end: state.start + value.length - 1,
   };
 }
 
@@ -413,18 +457,38 @@ function isString(ch: Char, dialect: Dialect): boolean {
   return stringStart.includes(ch);
 }
 
-function isParameter(ch: Char, state: State, dialect: Dialect): boolean {
-  let pStart = '?'; // ansi standard - sqlite, mysql
-  if (dialect === 'psql') {
-    pStart = '$';
-    const nextChar = peek(state);
-    if (nextChar === null || isNaN(Number(nextChar))) {
-      return false;
+function isCustomParam(state: State, customParamType: NonNullable<ParamTypes['custom']>): boolean {
+  return customParamType.some((regex) => {
+    const reg = new RegExp(`^(?:${regex})`, 'uy');
+    return reg.test(state.input.slice(state.start));
+  });
+}
+
+function isParameter(ch: Char, state: State, paramTypes: ParamTypes): boolean {
+  if (!ch) {
+    return false;
+  }
+  const nextChar = peek(state);
+  if (paramTypes.positional && ch === '?') return true;
+
+  if (paramTypes.numbered?.length && paramTypes.numbered.some((type) => ch === type)) {
+    if (nextChar !== null && !isNaN(Number(nextChar))) {
+      return true;
     }
   }
-  if (dialect === 'mssql') pStart = ':';
 
-  return ch === pStart;
+  if (
+    (paramTypes.named?.length && paramTypes.named.some((type) => type === ch)) ||
+    (paramTypes.quoted?.length && paramTypes.quoted.some((type) => type === ch))
+  ) {
+    return true;
+  }
+
+  if (paramTypes.custom?.length && isCustomParam(state, paramTypes.custom)) {
+    return true;
+  }
+
+  return false;
 }
 
 function isDollarQuotedString(state: State): boolean {

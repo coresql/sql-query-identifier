@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { aggregateUnknownTokens } from '../spec-helper';
-import { parse } from '../../src/parser';
+import { defaultParamTypesFor, parse } from '../../src/parser';
 import { Token } from '../../src/defines';
 
 describe('parser', () => {
@@ -725,7 +725,13 @@ describe('parser', () => {
       });
 
       it('should extract PSQL parameters', () => {
-        const actual = parse('select x from a where x = $1', true, 'psql');
+        const actual = parse(
+          'select x from a where x = $1',
+          true,
+          'psql',
+          false,
+          defaultParamTypesFor('psql'),
+        );
         actual.tokens = aggregateUnknownTokens(actual.tokens);
         const expected: Token[] = [
           {
@@ -752,7 +758,13 @@ describe('parser', () => {
       });
 
       it('should extract multiple PSQL parameters', () => {
-        const actual = parse('select x from a where x = $1 and y = $2', true, 'psql');
+        const actual = parse(
+          'select x from a where x = $1 and y = $2',
+          true,
+          'psql',
+          false,
+          defaultParamTypesFor('psql'),
+        );
         actual.tokens = aggregateUnknownTokens(actual.tokens);
         const expected: Token[] = [
           {
@@ -791,7 +803,13 @@ describe('parser', () => {
       });
 
       it('should extract mssql parameters', () => {
-        const actual = parse('select x from a where x = :foo', true, 'mssql');
+        const actual = parse(
+          'select x from a where x = :foo',
+          true,
+          'mssql',
+          false,
+          defaultParamTypesFor('mssql'),
+        );
         actual.tokens = aggregateUnknownTokens(actual.tokens);
         const expected: Token[] = [
           {
@@ -856,7 +874,13 @@ describe('parser', () => {
       });
 
       it('should extract multiple mssql parameters', () => {
-        const actual = parse('select x from a where x = :foo and y = :bar', true, 'mssql');
+        const actual = parse(
+          'select x from a where x = :foo and y = :bar',
+          true,
+          'mssql',
+          false,
+          defaultParamTypesFor('mssql'),
+        );
         actual.tokens = aggregateUnknownTokens(actual.tokens);
         const expected: Token[] = [
           {

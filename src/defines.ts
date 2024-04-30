@@ -76,10 +76,20 @@ export type StatementType =
 
 export type ExecutionType = 'LISTING' | 'MODIFICATION' | 'INFORMATION' | 'ANON_BLOCK' | 'UNKNOWN';
 
+export interface ParamTypes {
+  positional?: boolean;
+  numbered?: ('?' | ':' | '$')[];
+  named?: (':' | '@' | '$')[];
+  quoted?: (':' | '@' | '$')[];
+  // regex for identifying that it is a param
+  custom?: string[];
+}
+
 export interface IdentifyOptions {
   strict?: boolean;
   dialect?: Dialect;
   identifyTables?: boolean;
+  paramTypes?: ParamTypes;
 }
 
 export interface IdentifyResult {
