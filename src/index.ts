@@ -1,5 +1,5 @@
 import { parse, EXECUTION_TYPES, defaultParamTypesFor } from './parser';
-import { DIALECTS, ParamTypes } from './defines';
+import { DIALECTS } from './defines';
 import type { ExecutionType, IdentifyOptions, IdentifyResult, StatementType } from './defines';
 
 export type {
@@ -21,14 +21,8 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
     throw new Error(`Unknown dialect. Allowed values: ${DIALECTS.join(', ')}`);
   }
 
-  let paramTypes: ParamTypes;
-
   // Default parameter types for each dialect
-  if (options.paramTypes) {
-    paramTypes = options.paramTypes;
-  } else {
-    paramTypes = defaultParamTypesFor(dialect);
-  }
+  const paramTypes = options.paramTypes || defaultParamTypesFor(dialect);
 
   const result = parse(query, isStrict, dialect, options.identifyTables, paramTypes);
   const sort = dialect === 'psql' && !options.paramTypes;

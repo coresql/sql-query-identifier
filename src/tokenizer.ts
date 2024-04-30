@@ -269,11 +269,11 @@ function getCustomParam(state: State, paramTypes: ParamTypes): string | null | u
 }
 
 function scanParameter(state: State, dialect: Dialect, paramTypes: ParamTypes): Token {
-  const curCh: any = state.input[state.start];
+  const curCh = state.input[state.start];
   const nextChar = peek(state);
   let matched = false;
 
-  if (paramTypes.numbered && paramTypes.numbered.length && paramTypes.numbered.includes(curCh)) {
+  if (paramTypes.numbered?.length && paramTypes.numbered.some((type) => type === curCh)) {
     const endIndex = state.input
       .slice(state.start + 1)
       .split('')
@@ -293,19 +293,14 @@ function scanParameter(state: State, dialect: Dialect, paramTypes: ParamTypes): 
     }
   }
 
-  if (!matched && paramTypes.named && paramTypes.named.length && paramTypes.named.includes(curCh)) {
+  if (!matched && paramTypes.named?.length && paramTypes.named.some((type) => type === curCh)) {
     if (!isQuotedIdentifier(nextChar, dialect)) {
       while (isAlphaNumeric(peek(state))) read(state);
       matched = true;
     }
   }
 
-  if (
-    !matched &&
-    paramTypes.quoted &&
-    paramTypes.quoted.length &&
-    paramTypes.quoted.includes(curCh)
-  ) {
+  if (!matched && paramTypes.quoted?.length && paramTypes.quoted.some((type) => type === curCh)) {
     if (isQuotedIdentifier(nextChar, dialect)) {
       const quoteChar = read(state) as string;
       // end when we reach the end quote
@@ -462,32 +457,34 @@ function isString(ch: Char, dialect: Dialect): boolean {
   return stringStart.includes(ch);
 }
 
-function isCustomParam(state: State, paramTypes: ParamTypes): boolean | undefined {
-  return paramTypes?.custom?.some((regex) => {
+function isCustomParam(state: State, customParamType: NonNullable<ParamTypes['custom']>): boolean {
+  return customParamType.some((regex) => {
     const reg = new RegExp(`^(?:${regex})`, 'uy');
     return reg.test(state.input.slice(state.start));
   });
 }
 
 function isParameter(ch: Char, state: State, paramTypes: ParamTypes): boolean {
-  const curCh: any = ch;
+  if (!ch) {
+    return false;
+  }
   const nextChar = peek(state);
   if (paramTypes.positional && ch === '?') return true;
 
-  if (paramTypes.numbered && paramTypes.numbered.length && paramTypes.numbered.includes(curCh)) {
+  if (paramTypes.numbered?.length && paramTypes.numbered.some((type) => ch === type)) {
     if (nextChar !== null && !isNaN(Number(nextChar))) {
       return true;
     }
   }
 
   if (
-    (paramTypes.named && paramTypes.named.length && paramTypes.named.includes(curCh)) ||
-    (paramTypes.quoted && paramTypes.quoted.length && paramTypes.quoted.includes(curCh))
+    (paramTypes.named?.length && paramTypes.named.some((type) => type === ch)) ||
+    (paramTypes.quoted?.length && paramTypes.quoted.some((type) => type === ch))
   ) {
     return true;
   }
 
-  if (paramTypes.custom && paramTypes.custom.length && isCustomParam(state, paramTypes)) {
+  if (paramTypes.custom?.length && isCustomParam(state, paramTypes.custom)) {
     return true;
   }
 
