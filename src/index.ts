@@ -1,5 +1,5 @@
 import { parse, EXECUTION_TYPES, defaultParamTypesFor } from './parser';
-import { DIALECTS, ParamTypes } from './defines';
+import { DIALECTS } from './defines';
 import type { ExecutionType, IdentifyOptions, IdentifyResult, StatementType } from './defines';
 
 export type {
