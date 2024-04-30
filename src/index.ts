@@ -24,11 +24,7 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
   let paramTypes: ParamTypes;
 
   // Default parameter types for each dialect
-  if (options.paramTypes) {
-    paramTypes = options.paramTypes;
-  } else {
-    paramTypes = defaultParamTypesFor(dialect);
-  }
+  paramTypes = options.paramTypes || defaultParamTypesFor(dialect);
 
   const result = parse(query, isStrict, dialect, options.identifyTables, paramTypes);
   const sort = dialect === 'psql' && !options.paramTypes;
