@@ -78,11 +78,11 @@ export type ExecutionType = 'LISTING' | 'MODIFICATION' | 'INFORMATION' | 'ANON_B
 
 export interface ParamTypes {
   positional?: boolean;
-  numbered?: Array<'?' | ':' | '$'>;
-  named?: Array<':' | '@' | '$'>;
-  quoted?: Array<':' | '@' | '$'>;
+  numbered?: ('?' | ':' | '$')[];
+  named?: (':' | '@' | '$')[];
+  quoted?: (':' | '@' | '$')[];
   // regex for identifying that it is a param
-  custom?: Array<string>;
+  custom?: string[];
 }
 
 export interface IdentifyOptions {
