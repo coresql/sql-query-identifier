@@ -457,10 +457,7 @@ function isString(ch: Char, dialect: Dialect): boolean {
   return stringStart.includes(ch);
 }
 
-function isCustomParam(
-  state: State,
-  customParamType: NonNullable<ParamTypes['custom']>,
-): boolean | undefined {
+function isCustomParam(state: State, customParamType: NonNullable<ParamTypes['custom']>): boolean {
   return customParamType.some((regex) => {
     const reg = new RegExp(`^(?:${regex})`, 'uy');
     return reg.test(state.input.slice(state.start));
