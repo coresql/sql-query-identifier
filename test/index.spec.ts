@@ -66,6 +66,27 @@ describe('identify', () => {
     ]);
   });
 
+  it('params should be recognized in a CTE', () => {
+    const query = `
+      WITH foo AS (
+        SELECT * FROM bar where user_id = $1::bigint
+      )
+      SELECT * FROM foo
+    `;
+
+    expect(identify(query.trim(), { dialect: 'psql' })).to.eql([
+      {
+        start: 0,
+        end: 97,
+        text: query.trim(),
+        type: 'SELECT',
+        executionType: 'LISTING',
+        parameters: ['$1'],
+        tables: [],
+      },
+    ]);
+  });
+
   it('should identify tables in simple for basic cases', () => {
     expect(
       identify('SELECT * FROM foo JOIN bar ON foo.id = bar.id', { identifyTables: true }),
