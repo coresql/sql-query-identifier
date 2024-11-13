@@ -483,7 +483,7 @@ function isParameter(ch: Char, state: State, paramTypes: ParamTypes): boolean {
   if (ch === ':' && (prevChar === ':' || nextChar === ':')) {
     return false;
   }
-  
+
   if (paramTypes.positional && ch === '?') return true;
 
   if (paramTypes.numbered?.length && paramTypes.numbered.some((type) => ch === type)) {
