@@ -127,3 +127,17 @@ describe('getExecutionType', () => {
     expect(getExecutionType('FAKE_TYPE')).to.equal('UNKNOWN');
   });
 });
+
+// Regression test: https://github.com/beekeeper-studio/beekeeper-studio/issues/2560
+it('Double colon should not be recognized as a param', () => {
+  const result = identify(`
+    DECLARE @g geometry;
+    DECLARE @h geometry;
+    SET @g = geometry::STGeomFromText('POLYGON((0 0, 2 0, 2 2, 0 2, 0 0))', 0);
+    set @h = geometry::STGeomFromText('POLYGON((1 1, 3 1, 3 3, 1 3, 1 1))', 0);
+    SELECT @g.STWithin(@h);
+  `, { strict: false, dialect: 'mssql' as Dialect }) 
+  result.forEach((res) => {
+    expect(res.parameters.length).to.equal(0)
+  })
+})

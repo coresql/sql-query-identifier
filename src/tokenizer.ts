@@ -140,6 +140,14 @@ function unread(state: State): void {
   state.position--;
 }
 
+function peekBack(state: State): Char {
+  if (state.position == 0) {
+    return null;
+  }
+
+  return state.input[state.position - 1];
+}
+
 function peek(state: State): Char {
   if (state.position >= state.input.length - 1) {
     return null;
@@ -469,6 +477,13 @@ function isParameter(ch: Char, state: State, paramTypes: ParamTypes): boolean {
     return false;
   }
   const nextChar = peek(state);
+  const prevChar = peekBack(state);
+
+  // HACK (@day): This is a fix for casts and identifiers that use the `::` syntax
+  if (ch === ':' && (prevChar === ':' || nextChar === ':')) {
+    return false;
+  }
+  
   if (paramTypes.positional && ch === '?') return true;
 
   if (paramTypes.numbered?.length && paramTypes.numbered.some((type) => ch === type)) {
