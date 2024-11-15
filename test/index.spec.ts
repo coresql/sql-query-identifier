@@ -158,4 +158,4 @@ describe('Regression tests', () => {
       expect(res.parameters.length).to.equal(0);
     });
   });
-})
+});
