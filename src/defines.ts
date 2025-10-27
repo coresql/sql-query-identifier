@@ -71,6 +71,9 @@ export type StatementType =
   | 'ALTER_FUNCTION'
   | 'ALTER_INDEX'
   | 'ALTER_PROCEDURE'
+  | 'BEGIN_TRANSACTION'
+  | 'COMMIT'
+  | 'ROLLBACK'
   | 'ANON_BLOCK'
   | 'UNKNOWN';
 

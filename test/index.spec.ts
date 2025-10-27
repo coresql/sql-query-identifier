@@ -3,6 +3,12 @@ import { expect } from 'chai';
 import { ParamTypes } from '../src/defines';
 
 describe('identify', () => {
+  it.only('test', () => {
+    const result = identify("SET search_path = 'cycle_a,cycle_a.data,cycle_a.macros';", { dialect: 'generic', strict: false })
+    console.log("RESULT: ", result)
+    expect(true)
+  })
+
   it('should throw error for invalid dialect', () => {
     expect(() => identify('SELECT * FROM foo', { dialect: 'invalid' as Dialect })).to.throw(
       'Unknown dialect. Allowed values: mssql, sqlite, mysql, oracle, psql, bigquery, generic',
@@ -109,7 +115,7 @@ describe('getExecutionType', () => {
     expect(getExecutionType('SELECT')).to.equal('LISTING');
   });
 
-  ['UPDATE', 'DELETE', 'INSERT', 'TRUNCATE'].forEach((type) => {
+  ['UPDATE', 'DELETE', 'INSERT', 'TRUNCATE', 'BEGIN_TRANSACTION', 'COMMIT', 'ROLLBACK'].forEach((type) => {
     it(`should return MODIFICATION for ${type}`, () => {
       expect(getExecutionType(type)).to.equal('MODIFICATION');
     });
@@ -157,5 +163,91 @@ describe('Regression tests', () => {
     result.forEach((res) => {
       expect(res.parameters.length).to.equal(0);
     });
+  });
+});
+
+describe('Transaction statements', () => {
+  it('should identify BEGIN TRANSACTION', () => {
+    expect(identify('BEGIN TRANSACTION', { strict: false })).to.eql([
+      {
+        start: 0,
+        end: 16,
+        text: 'BEGIN TRANSACTION',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'MODIFICATION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+  });
+
+  it('should identify BEGIN without TRANSACTION keyword', () => {
+    expect(identify('BEGIN;', { strict: false })).to.eql([
+      {
+        start: 0,
+        end: 5,
+        text: 'BEGIN;',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'MODIFICATION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+  });
+
+  it('should identify START TRANSACTION', () => {
+    expect(identify('START TRANSACTION', { strict: false })).to.eql([
+      {
+        start: 0,
+        end: 16,
+        text: 'START TRANSACTION',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'MODIFICATION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+  });
+
+  it('should identify COMMIT', () => {
+    expect(identify('COMMIT', { strict: false })).to.eql([
+      {
+        start: 0,
+        end: 5,
+        text: 'COMMIT',
+        type: 'COMMIT',
+        executionType: 'MODIFICATION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+  });
+
+  it('should identify ROLLBACK', () => {
+    expect(identify('ROLLBACK', { strict: false })).to.eql([
+      {
+        start: 0,
+        end: 7,
+        text: 'ROLLBACK',
+        type: 'ROLLBACK',
+        executionType: 'MODIFICATION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+  });
+
+  it('should still identify BEGIN as ANON_BLOCK for oracle/bigquery when not followed by TRANSACTION', () => {
+    expect(identify('BEGIN select 1; END;', { dialect: 'oracle' })).to.eql([
+      {
+        start: 0,
+        end: 19,
+        text: 'BEGIN select 1; END;',
+        type: 'ANON_BLOCK',
+        executionType: 'ANON_BLOCK',
+        parameters: [],
+        tables: [],
+      },
+    ]);
   });
 });
