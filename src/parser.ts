@@ -730,7 +730,7 @@ function createBeginTransactionStatementParser(options: ParseOptions) {
       validation: {
         acceptTokens: [
           { type: 'keyword', value: 'BEGIN' },
-          { type: 'keyword', value: 'START' }
+          { type: 'keyword', value: 'START' },
         ],
       },
       add: (token) => {
@@ -740,7 +740,7 @@ function createBeginTransactionStatementParser(options: ParseOptions) {
         }
       },
       postCanGoToNext: () => true,
-    }
+    },
   ];
 
   return stateMachineStatementParser(statement, steps, options);

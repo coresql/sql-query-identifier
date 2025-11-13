@@ -3,12 +3,6 @@ import { expect } from 'chai';
 import { ParamTypes } from '../src/defines';
 
 describe('identify', () => {
-  it.only('test', () => {
-    const result = identify("SET search_path = 'cycle_a,cycle_a.data,cycle_a.macros';", { dialect: 'generic', strict: false })
-    console.log("RESULT: ", result)
-    expect(true)
-  })
-
   it('should throw error for invalid dialect', () => {
     expect(() => identify('SELECT * FROM foo', { dialect: 'invalid' as Dialect })).to.throw(
       'Unknown dialect. Allowed values: mssql, sqlite, mysql, oracle, psql, bigquery, generic',
@@ -115,11 +109,13 @@ describe('getExecutionType', () => {
     expect(getExecutionType('SELECT')).to.equal('LISTING');
   });
 
-  ['UPDATE', 'DELETE', 'INSERT', 'TRUNCATE', 'BEGIN_TRANSACTION', 'COMMIT', 'ROLLBACK'].forEach((type) => {
-    it(`should return MODIFICATION for ${type}`, () => {
-      expect(getExecutionType(type)).to.equal('MODIFICATION');
-    });
-  });
+  ['UPDATE', 'DELETE', 'INSERT', 'TRUNCATE', 'BEGIN_TRANSACTION', 'COMMIT', 'ROLLBACK'].forEach(
+    (type) => {
+      it(`should return MODIFICATION for ${type}`, () => {
+        expect(getExecutionType(type)).to.equal('MODIFICATION');
+      });
+    },
+  );
 
   ['CREATE', 'DROP', 'ALTER'].forEach((action) => {
     ['DATABASE', 'SCHEMA', 'TABLE', 'VIEW', 'FUNCTION', 'TRIGGER'].forEach((type) => {
