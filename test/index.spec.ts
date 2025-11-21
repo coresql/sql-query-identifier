@@ -109,13 +109,17 @@ describe('getExecutionType', () => {
     expect(getExecutionType('SELECT')).to.equal('LISTING');
   });
 
-  ['UPDATE', 'DELETE', 'INSERT', 'TRUNCATE', 'BEGIN_TRANSACTION', 'COMMIT', 'ROLLBACK'].forEach(
-    (type) => {
-      it(`should return MODIFICATION for ${type}`, () => {
-        expect(getExecutionType(type)).to.equal('MODIFICATION');
-      });
-    },
-  );
+  ['UPDATE', 'DELETE', 'INSERT', 'TRUNCATE'].forEach((type) => {
+    it(`should return MODIFICATION for ${type}`, () => {
+      expect(getExecutionType(type)).to.equal('MODIFICATION');
+    });
+  });
+
+  ['BEGIN_TRANSACTION', 'COMMIT', 'ROLLBACK'].forEach((type) => {
+    it(`should return TRANSACTION for ${type}`, () => {
+      expect(getExecutionType(type)).to.equal('TRANSACTION');
+    });
+  });
 
   ['CREATE', 'DROP', 'ALTER'].forEach((action) => {
     ['DATABASE', 'SCHEMA', 'TABLE', 'VIEW', 'FUNCTION', 'TRIGGER'].forEach((type) => {
@@ -170,7 +174,7 @@ describe('Transaction statements', () => {
         end: 16,
         text: 'BEGIN TRANSACTION',
         type: 'BEGIN_TRANSACTION',
-        executionType: 'MODIFICATION',
+        executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
       },
@@ -184,7 +188,7 @@ describe('Transaction statements', () => {
         end: 5,
         text: 'BEGIN;',
         type: 'BEGIN_TRANSACTION',
-        executionType: 'MODIFICATION',
+        executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
       },
@@ -198,7 +202,7 @@ describe('Transaction statements', () => {
         end: 16,
         text: 'START TRANSACTION',
         type: 'BEGIN_TRANSACTION',
-        executionType: 'MODIFICATION',
+        executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
       },
@@ -212,7 +216,7 @@ describe('Transaction statements', () => {
         end: 5,
         text: 'COMMIT',
         type: 'COMMIT',
-        executionType: 'MODIFICATION',
+        executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
       },
@@ -226,7 +230,7 @@ describe('Transaction statements', () => {
         end: 7,
         text: 'ROLLBACK',
         type: 'ROLLBACK',
-        executionType: 'MODIFICATION',
+        executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
       },
@@ -245,5 +249,11 @@ describe('Transaction statements', () => {
         tables: [],
       },
     ]);
+  });
+
+  it('should not identify START REPLICA as a transaction', () => {
+    expect(() => identify('START REPLICA;', { dialect: 'mysql' })).to.throw(
+      `Invalid statement parser "START"`,
+    );
   });
 });
