@@ -3,3 +3,4 @@ yarn.lock
 lib/
 node_modules/
 webpack/
+mise.toml

@@ -71,10 +71,19 @@ export type StatementType =
   | 'ALTER_FUNCTION'
   | 'ALTER_INDEX'
   | 'ALTER_PROCEDURE'
+  | 'BEGIN_TRANSACTION'
+  | 'COMMIT'
+  | 'ROLLBACK'
   | 'ANON_BLOCK'
   | 'UNKNOWN';
 
-export type ExecutionType = 'LISTING' | 'MODIFICATION' | 'INFORMATION' | 'ANON_BLOCK' | 'UNKNOWN';
+export type ExecutionType =
+  | 'LISTING'
+  | 'MODIFICATION'
+  | 'INFORMATION'
+  | 'ANON_BLOCK'
+  | 'TRANSACTION'
+  | 'UNKNOWN';
 
 export interface ParamTypes {
   positional?: boolean;
