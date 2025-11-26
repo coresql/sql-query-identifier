@@ -69,11 +69,11 @@ describe('Parser for bigquery', () => {
     expect(result.body[1].type).to.eql('SELECT');
   });
 
-  it('parses BEGIN TRANSACTION as UNKNOWN', () => {
+  it('parses BEGIN TRANSACTION as transaction statement', () => {
     const result = parse(`BEGIN TRANSACTION; SELECT 1; COMMIT;`, false, 'bigquery');
     expect(result.body.length).to.eql(3);
-    expect(result.body[0].type).to.eql('UNKNOWN');
+    expect(result.body[0].type).to.eql('BEGIN_TRANSACTION');
     expect(result.body[1].type).to.eql('SELECT');
-    expect(result.body[2].type).to.eql('UNKNOWN');
+    expect(result.body[2].type).to.eql('COMMIT');
   });
 });

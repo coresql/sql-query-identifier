@@ -87,6 +87,9 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   ALTER_FUNCTION: 'MODIFICATION',
   ALTER_INDEX: 'MODIFICATION',
   ALTER_PROCEDURE: 'MODIFICATION',
+  BEGIN_TRANSACTION: 'TRANSACTION',
+  COMMIT: 'TRANSACTION',
+  ROLLBACK: 'TRANSACTION',
   UNKNOWN: 'UNKNOWN',
   ANON_BLOCK: 'ANON_BLOCK',
 };
@@ -342,7 +345,16 @@ function createStatementParserByToken(
         if (['bigquery', 'oracle'].includes(options.dialect) && nextToken.value !== 'TRANSACTION') {
           return createBlockStatementParser(options);
         }
+        return createBeginTransactionStatementParser(options);
+      case 'START':
+        if (nextToken.value === 'TRANSACTION') {
+          return createBeginTransactionStatementParser(options);
+        }
         break;
+      case 'COMMIT':
+        return createCommitStatementParser(options);
+      case 'ROLLBACK':
+        return createRollbackStatementParser(options);
       case 'DECLARE':
         if (options.dialect === 'oracle') {
           return createBlockStatementParser(options);
@@ -701,6 +713,75 @@ function createShowStatementParser(options: ParseOptions) {
       },
       add: (token) => {
         statement.type = `SHOW_${token.value.toUpperCase().replace(' ', '_')}` as StatementType;
+      },
+      postCanGoToNext: () => true,
+    },
+  ];
+
+  return stateMachineStatementParser(statement, steps, options);
+}
+
+function createBeginTransactionStatementParser(options: ParseOptions) {
+  const statement = createInitialStatement();
+
+  const steps: Step[] = [
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        acceptTokens: [
+          { type: 'keyword', value: 'BEGIN' },
+          { type: 'keyword', value: 'START' },
+        ],
+      },
+      add: (token) => {
+        statement.type = 'BEGIN_TRANSACTION';
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
+      },
+      postCanGoToNext: () => true,
+    },
+  ];
+
+  return stateMachineStatementParser(statement, steps, options);
+}
+
+function createCommitStatementParser(options: ParseOptions) {
+  const statement = createInitialStatement();
+
+  const steps: Step[] = [
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        acceptTokens: [{ type: 'keyword', value: 'COMMIT' }],
+      },
+      add: (token) => {
+        statement.type = 'COMMIT';
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
+      },
+      postCanGoToNext: () => true,
+    },
+  ];
+
+  return stateMachineStatementParser(statement, steps, options);
+}
+
+function createRollbackStatementParser(options: ParseOptions) {
+  const statement = createInitialStatement();
+
+  const steps: Step[] = [
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        acceptTokens: [{ type: 'keyword', value: 'ROLLBACK' }],
+      },
+      add: (token) => {
+        statement.type = 'ROLLBACK';
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
       },
       postCanGoToNext: () => true,
     },

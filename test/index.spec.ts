@@ -115,6 +115,12 @@ describe('getExecutionType', () => {
     });
   });
 
+  ['BEGIN_TRANSACTION', 'COMMIT', 'ROLLBACK'].forEach((type) => {
+    it(`should return TRANSACTION for ${type}`, () => {
+      expect(getExecutionType(type)).to.equal('TRANSACTION');
+    });
+  });
+
   ['CREATE', 'DROP', 'ALTER'].forEach((action) => {
     ['DATABASE', 'SCHEMA', 'TABLE', 'VIEW', 'FUNCTION', 'TRIGGER'].forEach((type) => {
       it(`should return MODIFICATION for ${action}_${type}`, () => {
@@ -157,5 +163,239 @@ describe('Regression tests', () => {
     result.forEach((res) => {
       expect(res.parameters.length).to.equal(0);
     });
+  });
+});
+
+describe('Transaction statements', () => {
+  it('should identify BEGIN TRANSACTION', () => {
+    expect(identify('BEGIN TRANSACTION', { strict: false })).to.eql([
+      {
+        start: 0,
+        end: 16,
+        text: 'BEGIN TRANSACTION',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+  });
+
+  it('should identify BEGIN without TRANSACTION keyword', () => {
+    expect(identify('BEGIN;', { strict: false })).to.eql([
+      {
+        start: 0,
+        end: 5,
+        text: 'BEGIN;',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+  });
+
+  it('should identify START TRANSACTION', () => {
+    expect(identify('START TRANSACTION', { strict: false })).to.eql([
+      {
+        start: 0,
+        end: 16,
+        text: 'START TRANSACTION',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+  });
+
+  it('should identify COMMIT', () => {
+    expect(identify('COMMIT', { strict: false })).to.eql([
+      {
+        start: 0,
+        end: 5,
+        text: 'COMMIT',
+        type: 'COMMIT',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+  });
+
+  it('should identify ROLLBACK', () => {
+    expect(identify('ROLLBACK', { strict: false })).to.eql([
+      {
+        start: 0,
+        end: 7,
+        text: 'ROLLBACK',
+        type: 'ROLLBACK',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+  });
+
+  it('should still identify BEGIN as ANON_BLOCK for oracle/bigquery when not followed by TRANSACTION', () => {
+    expect(identify('BEGIN select 1; END;', { dialect: 'oracle' })).to.eql([
+      {
+        start: 0,
+        end: 19,
+        text: 'BEGIN select 1; END;',
+        type: 'ANON_BLOCK',
+        executionType: 'ANON_BLOCK',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+  });
+
+  it('should not identify START REPLICA as a transaction', () => {
+    expect(() => identify('START REPLICA;', { dialect: 'mysql' })).to.throw(
+      `Invalid statement parser "START"`,
+    );
+  });
+
+  it('Should identify ANSI-ish / generic transaction start syntaxes', () => {
+    expect(identify('START TRANSACTION;', { dialect: 'generic' })).to.eql([
+      {
+        start: 0,
+        end: 17,
+        text: 'START TRANSACTION;',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+
+    expect(identify('BEGIN;', { dialect: 'generic' })).to.eql([
+      {
+        start: 0,
+        end: 5,
+        text: 'BEGIN;',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+  });
+
+  it('Should identify MySQL/MariaDB style transaction start syntaxes', () => {
+    expect(identify('START TRANSACTION;', { dialect: 'mysql' })).to.eql([
+      {
+        start: 0,
+        end: 17,
+        text: 'START TRANSACTION;',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+
+    expect(identify('BEGIN;', { dialect: 'mysql' })).to.eql([
+      {
+        start: 0,
+        end: 5,
+        text: 'BEGIN;',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+
+    expect(identify('BEGIN WORK;', { dialect: 'mysql' })).to.eql([
+      {
+        start: 0,
+        end: 10,
+        text: 'BEGIN WORK;',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+
+    expect(identify('START TRANSACTION READ ONLY;', { dialect: 'mysql' })).to.eql([
+      {
+        start: 0,
+        end: 27,
+        text: 'START TRANSACTION READ ONLY;',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+
+    expect(
+      identify('START TRANSACTION ISOLATION LEVEL SERIALIZABLE;', { dialect: 'mysql' }),
+    ).to.eql([
+      {
+        start: 0,
+        end: 46,
+        text: 'START TRANSACTION ISOLATION LEVEL SERIALIZABLE;',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+  });
+
+  it('Should identify Postgres style transaction start syntaxes', () => {
+    expect(identify('BEGIN;', { dialect: 'psql' })).to.eql([
+      {
+        start: 0,
+        end: 5,
+        text: 'BEGIN;',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+
+    expect(identify('START TRANSACTION;', { dialect: 'psql' })).to.eql([
+      {
+        start: 0,
+        end: 17,
+        text: 'START TRANSACTION;',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+
+    expect(identify('BEGIN TRANSACTION;', { dialect: 'psql' })).to.eql([
+      {
+        start: 0,
+        end: 17,
+        text: 'BEGIN TRANSACTION;',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
+
+    expect(
+      identify('BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;', { dialect: 'psql' }),
+    ).to.eql([
+      {
+        start: 0,
+        end: 49,
+        text: 'BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;',
+        type: 'BEGIN_TRANSACTION',
+        executionType: 'TRANSACTION',
+        parameters: [],
+        tables: [],
+      },
+    ]);
   });
 });
