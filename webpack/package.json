@@ -1,6 +1,6 @@
 {
   "name": "sql-query-identifier",
-  "version": "2.8.0",
+  "version": "2.9.0",
   "description": "A SQL query identifier",
   "license": "MIT",
   "main": "lib/index.js",
@@ -22,6 +22,7 @@
   "devDependencies": {
     "@types/chai": "^4.2.15",
     "@types/mocha": "^8.2.1",
+    "@types/node": "^10.17.60",
     "@typescript-eslint/eslint-plugin": "^4.15.1",
     "@typescript-eslint/parser": "^4.15.1",
     "chai": "^4.2.0",
