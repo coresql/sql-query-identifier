@@ -5,6 +5,7 @@ on:
     types: [published]
 
 permissions:
+  id-token: write
   contents: write
       
 jobs:
@@ -17,12 +18,14 @@ jobs:
           node-version: 24.x
           registry-url: https://registry.npmjs.org/
 
+      # Ensure npm 11.5.1 or later is installed for OIDC
+      - name: Update npm
+        run: npm install -g npm@latest
+        
       - run: npm install
       - run: npm run lint
 
       - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
 
       - run: npm run webpack:prod
       - run: cp package.json webpack/package.json
