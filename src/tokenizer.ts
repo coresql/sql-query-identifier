@@ -409,9 +409,9 @@ function scanWord(state: State): Token {
 
   do {
     nextChar = read(state);
-  } while (isLetter(nextChar));
+  } while (isAlphaNumeric(nextChar));
 
-  if (nextChar !== null && !isLetter(nextChar)) {
+  if (nextChar !== null && !isAlphaNumeric(nextChar)) {
     unread(state);
   }
 

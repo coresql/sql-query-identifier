@@ -24,7 +24,14 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
   // Default parameter types for each dialect
   const paramTypes = options.paramTypes || defaultParamTypesFor(dialect);
 
-  const result = parse(query, isStrict, dialect, options.identifyTables, paramTypes);
+  const result = parse(
+    query,
+    isStrict,
+    dialect,
+    options.identifyTables,
+    options.identifyColumns,
+    paramTypes,
+  );
   const sort = dialect === 'psql' && !options.paramTypes;
 
   return result.body.map((statement) => {
@@ -37,6 +44,7 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
       // we want to sort the postgres params: $1 $2 $3, regardless of the order they appear
       parameters: sort ? statement.parameters.sort() : statement.parameters,
       tables: statement.tables || [],
+      columns: statement.columns || []
     };
     return result;
   });

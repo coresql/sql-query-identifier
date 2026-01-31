@@ -10,6 +10,7 @@ import type {
   ParseResult,
   ConcreteStatement,
   ParamTypes,
+  ColumnReference,
 } from './defines';
 
 interface StatementParser {
@@ -106,6 +107,8 @@ const statementsWithEnds = [
 // v1 - keeping it very simple.
 const PRE_TABLE_KEYWORDS = /^from$|^join$|^into$/i;
 
+const COLUMN_STOP_KEYWORDS = /^FROM$|^WHERE$|^GROUP$|^ORDER$|^HAVING$|^LIMIT$|^OFFSET$|^UNION$|^INTERSECT$|^EXCEPT$/i;
+
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
   psql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
@@ -120,6 +123,7 @@ interface ParseOptions {
   isStrict: boolean;
   dialect: Dialect;
   identifyTables: boolean;
+  identifyColumns: boolean;
 }
 
 function createInitialStatement(): Statement {
@@ -128,6 +132,7 @@ function createInitialStatement(): Statement {
     end: 0,
     parameters: [],
     tables: [],
+    columns: [],
   };
 }
 
@@ -148,6 +153,7 @@ export function parse(
   isStrict = true,
   dialect: Dialect = 'generic',
   identifyTables = false,
+  identifyColumns = false,
   paramTypes?: ParamTypes,
 ): ParseResult {
   const topLevelState = initState({ input });
@@ -211,6 +217,7 @@ export function parse(
           executionType: 'UNKNOWN',
           parameters: [],
           tables: [],
+          columns: [],
         });
         cteState.isCte = false;
         cteState.asSeen = false;
@@ -252,6 +259,7 @@ export function parse(
           isStrict,
           dialect,
           identifyTables,
+          identifyColumns,
         });
         if (cteState.isCte) {
           statementParser.getStatement().start = cteState.state.start;
@@ -812,7 +820,7 @@ function createUnknownStatementParser(options: ParseOptions) {
 function stateMachineStatementParser(
   statement: Statement,
   steps: Step[],
-  { isStrict, dialect, identifyTables }: ParseOptions,
+  { isStrict, dialect, identifyTables, identifyColumns }: ParseOptions,
 ): StatementParser {
   let currentStepIndex = 0;
   let prevToken: Token | undefined;
@@ -822,6 +830,15 @@ function stateMachineStatementParser(
   let anonBlockStarted = false;
 
   let openBlocks = 0;
+
+  // Column parsing state
+  let inSelectClause = false;
+  let columnParsingFinished = false;
+  let selectParensDepth = 0;
+  let currentColumnParts: string[] = [];
+  let currentColumnPart: string | undefined;
+  let currentColumnAlias: string | undefined;
+  let waitingForAlias = false;
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
   const isValidToken = (step: Step, token: Token) => {
@@ -844,6 +861,66 @@ function stateMachineStatementParser(
     if (token.type !== 'whitespace') {
       prevNonWhitespaceToken = token;
     }
+  };
+
+  const buildColumnReference = (parts: string[], alias?: string): ColumnReference | null => {
+    if (parts.length === 0) {
+      return null;
+    }
+
+    // Join all parts for now, then split by dots to handle qualified names
+    const fullName = parts.join('.');
+    let col: ColumnReference | null = null;
+    console.log("BUILDING COLUMN REFERENCE for: ", fullName, "PARTS: ", parts)
+
+    if (parts.length === 1) {
+      // Just column name or wildcard or expression
+      const name = parts[0];
+      col =  {
+        name,
+        isWildcard: name === '*',
+      };
+    } else if (parts.length === 2) {
+      // table.column or table.*
+      const [table, column] = parts;
+      col =  {
+        name: column,
+        table,
+        isWildcard: column === '*',
+      };
+    } else if (parts.length === 3) {
+      // schema.table.column or schema.table.*
+      const [schema, table, column] = parts;
+      col = {
+        name: column,
+        schema,
+        table,
+        isWildcard: column === '*',
+      };
+    } else {
+      // 4+ parts - treat entire thing as column name (edge case)
+      col = {
+        name: fullName,
+        alias,
+        isWildcard: false,
+      };
+    }
+
+    if (!!alias && !!col) {
+      col.alias = alias
+    }
+
+    return col;
+  };
+
+  const columnAlreadyExists = (columns: ColumnReference[], colRef: ColumnReference): boolean => {
+    return columns.some(
+      (col) =>
+        col.name === colRef.name &&
+        col.table === colRef.table &&
+        col.schema === colRef.schema &&
+        col.alias === colRef.alias,
+    );
   };
 
   return {
@@ -921,6 +998,100 @@ function stateMachineStatementParser(
         const tableValue = nextToken.value;
         if (!statement.tables.includes(tableValue)) {
           statement.tables.push(tableValue);
+        }
+      }
+
+      // Column identification logic
+      if (identifyColumns && statement.type === 'SELECT' && !columnParsingFinished) {
+        // Start of SELECT clause
+        if (!inSelectClause) {
+          console.log('is select', token)
+          inSelectClause = true;
+          selectParensDepth = 0;
+          currentColumnParts = [];
+          currentColumnPart = '';
+          currentColumnAlias = undefined;
+          waitingForAlias = false;
+        }
+
+        if (inSelectClause) {
+          console.log('IN select', token.value, token.type)
+          // Check for stop keywords (FROM, WHERE, etc.)
+          if (COLUMN_STOP_KEYWORDS.test(token.value)) {
+            // Finish current column if any
+            if (currentColumnParts.length > 0 || !!currentColumnPart) {
+              if (!!currentColumnPart) {
+                currentColumnParts.push(currentColumnPart);
+              }
+              const colRef = buildColumnReference(currentColumnParts, currentColumnAlias);
+              if (colRef && !columnAlreadyExists(statement.columns, colRef)) {
+                statement.columns.push(colRef);
+              }
+              currentColumnParts = [];
+              currentColumnPart = '';
+              currentColumnAlias = undefined;
+              waitingForAlias = false;
+            }
+            inSelectClause = false;
+            columnParsingFinished = true;
+            selectParensDepth = 0;
+          } else if (token.value.toUpperCase() === 'DISTINCT') {
+            // Skip DISTINCT keyword
+            setPrevToken(token);
+            return;
+          } else if (token.value === '(') {
+            selectParensDepth++;
+            currentColumnPart += token.value;
+          } else if (token.value === ')') {
+            selectParensDepth--;
+            currentColumnPart += token.value;
+          } else if (token.type === 'keyword' && token.value.toUpperCase() === 'AS') {
+            // AS keyword indicates alias is coming
+            waitingForAlias = true;
+          } else if (waitingForAlias && token.type !== 'comment-inline' && token.type !== 'comment-block') {
+            // This is the alias
+            currentColumnAlias = token.value;
+            waitingForAlias = false;
+          } else if (token.value === ',' && selectParensDepth === 0) {
+            // Comma separates columns
+            if (currentColumnParts.length > 0 || !!currentColumnPart) {
+              if (!!currentColumnPart) {
+                currentColumnParts.push(currentColumnPart);
+              }
+              const colRef = buildColumnReference(currentColumnParts, currentColumnAlias);
+              if (colRef && !columnAlreadyExists(statement.columns, colRef)) {
+                statement.columns.push(colRef);
+              }
+            }
+            currentColumnParts = [];
+            currentColumnPart = '';
+            currentColumnAlias = undefined;
+            waitingForAlias = false;
+          } else if (token.value === '.' && selectParensDepth === 0) {
+            // Dot separator for table.column or schema.table.column
+            // Keep building the current column parts
+          } else if (token.type !== 'comment-inline' && token.type !== 'comment-block' && selectParensDepth === 0 && !waitingForAlias) {
+            if (prevToken?.value === '.' && !!currentColumnPart) {
+              // This is after a dot
+              currentColumnParts.push(currentColumnPart);
+              currentColumnPart = token.value;
+            } else if (token.value === '*') {
+              currentColumnParts.push('*');
+            } else {
+              // New identifier (start of column or function name)
+              if ((currentColumnParts.length > 0 || !!currentColumnPart) && prevNonWhitespaceToken?.value !== '.' && prevNonWhitespaceToken?.value !== ',' && prevToken?.type === 'whitespace') {
+                // We have a space-separated token, might be implicit alias
+                // e.g., "column_name alias_name" without AS
+                if (!currentColumnAlias) {
+                  currentColumnAlias = token.value;
+                }
+              } else {
+                currentColumnPart += token.value;
+              }
+            }
+          } else if (selectParensDepth > 0) {
+            currentColumnPart += token.value
+          }
         }
       }
 

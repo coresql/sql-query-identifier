@@ -19,6 +19,7 @@ describe('identify', () => {
         executionType: 'LISTING',
         parameters: ['$1', '$2'],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -42,6 +43,7 @@ describe('identify', () => {
         executionType: 'LISTING',
         parameters: ['?', '$1', ':fizzz', ':"buzz buzz"', '{fooo}'],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -62,6 +64,7 @@ describe('identify', () => {
         executionType: 'LISTING',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -83,6 +86,7 @@ describe('identify', () => {
         executionType: 'LISTING',
         parameters: ['$1'],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -99,6 +103,7 @@ describe('identify', () => {
         executionType: 'LISTING',
         parameters: [],
         tables: ['foo', 'bar'],
+        columns: [],
       },
     ]);
   });
@@ -177,6 +182,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -191,6 +197,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -205,6 +212,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -219,6 +227,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -233,6 +242,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -247,6 +257,7 @@ describe('Transaction statements', () => {
         executionType: 'ANON_BLOCK',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -267,6 +278,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -279,6 +291,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -293,6 +306,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -305,6 +319,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -317,6 +332,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -329,6 +345,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -343,6 +360,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -357,6 +375,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -369,6 +388,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -381,6 +401,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -395,6 +416,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });

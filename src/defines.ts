@@ -94,10 +94,19 @@ export interface ParamTypes {
   custom?: string[];
 }
 
+export interface ColumnReference {
+  name: string;           // Column name, expression, or "*"
+  alias?: string;         // Optional alias from AS clause
+  table?: string;         // Optional table qualifier (e.g., "users" in users.name)
+  schema?: string;        // Optional schema qualifier (e.g., "public" in public.users.name)
+  isWildcard: boolean;    // True for * or table.* or schema.table.*
+}
+
 export interface IdentifyOptions {
   strict?: boolean;
   dialect?: Dialect;
   identifyTables?: boolean;
+  identifyColumns?: boolean;
   paramTypes?: ParamTypes;
 }
 
@@ -109,6 +118,7 @@ export interface IdentifyResult {
   executionType: ExecutionType;
   parameters: string[];
   tables: string[];
+  columns?: ColumnReference[];
 }
 
 export interface Statement {
@@ -123,6 +133,7 @@ export interface Statement {
   sqlSecurity?: number;
   parameters: string[];
   tables: string[];
+  columns: ColumnReference[];
   isCte?: boolean;
 }
 
