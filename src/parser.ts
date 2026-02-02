@@ -832,13 +832,13 @@ function stateMachineStatementParser(
   let openBlocks = 0;
 
   // Column parsing state
-  let inSelectClause = false;
   let columnParsingFinished = false;
   let selectParensDepth = 0;
   let currentColumnParts: string[] = [];
-  let currentColumnPart: string | undefined;
+  let currentColumnPart: string = '';
   let currentColumnAlias: string | undefined;
   let waitingForAlias = false;
+  let skipCurrentColumn = false;
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
   const isValidToken = (step: Step, token: Token) => {
@@ -1004,93 +1004,73 @@ function stateMachineStatementParser(
       // Column identification logic
       if (identifyColumns && statement.type === 'SELECT' && !columnParsingFinished) {
         // Start of SELECT clause
-        if (!inSelectClause) {
-          console.log('is select', token)
-          inSelectClause = true;
-          selectParensDepth = 0;
+        console.log('IN select', token.value, token.type)
+        // Check for stop keywords (FROM, WHERE, etc.)
+        if (COLUMN_STOP_KEYWORDS.test(token.value)) {
+          // Finish current column if any
+          if ((currentColumnParts.length > 0 || !!currentColumnPart) && !skipCurrentColumn) {
+            if (!!currentColumnPart) {
+              currentColumnParts.push(currentColumnPart);
+            }
+            const colRef = buildColumnReference(currentColumnParts, currentColumnAlias);
+            if (colRef && !columnAlreadyExists(statement.columns, colRef)) {
+              statement.columns.push(colRef);
+            }
+          }
+          columnParsingFinished = true;
+        } else if (token.value.toUpperCase() === 'DISTINCT') {
+          // Skip DISTINCT keyword
+          setPrevToken(token);
+        } else if (token.value === '(') {
+          if (selectParensDepth === 0) {
+            skipCurrentColumn = true;
+          }
+          selectParensDepth++;
+        } else if (token.value === ')') {
+          selectParensDepth--;
+        } else if (token.type === 'keyword' && token.value.toUpperCase() === 'AS') {
+          // AS keyword indicates alias is coming
+          waitingForAlias = true;
+        } else if (waitingForAlias && token.type !== 'comment-inline' && token.type !== 'comment-block') {
+          // This is the alias
+          currentColumnAlias = token.value;
+          waitingForAlias = false;
+        } else if (token.value === ',' && selectParensDepth === 0) {
+          // Comma separates columns
+          if ((currentColumnParts.length > 0 || !!currentColumnPart) && !skipCurrentColumn) {
+            if (!!currentColumnPart) {
+              currentColumnParts.push(currentColumnPart);
+            }
+            const colRef = buildColumnReference(currentColumnParts, currentColumnAlias);
+            if (colRef && !columnAlreadyExists(statement.columns, colRef)) {
+              statement.columns.push(colRef);
+            }
+          }
           currentColumnParts = [];
           currentColumnPart = '';
           currentColumnAlias = undefined;
           waitingForAlias = false;
-        }
-
-        if (inSelectClause) {
-          console.log('IN select', token.value, token.type)
-          // Check for stop keywords (FROM, WHERE, etc.)
-          if (COLUMN_STOP_KEYWORDS.test(token.value)) {
-            // Finish current column if any
-            if (currentColumnParts.length > 0 || !!currentColumnPart) {
-              if (!!currentColumnPart) {
-                currentColumnParts.push(currentColumnPart);
+          skipCurrentColumn = false;
+        } else if (token.value === '.' && selectParensDepth === 0) {
+          // Dot separator for table.column or schema.table.column
+          // Keep building the current column parts
+        } else if (token.type !== 'comment-inline' && token.type !== 'comment-block' && selectParensDepth === 0 && !waitingForAlias) {
+          if (prevNonWhitespaceToken?.value === '.' && !!currentColumnPart) {
+            // This is after a dot
+            currentColumnParts.push(currentColumnPart);
+            currentColumnPart = token.value;
+          } else if (token.value === '*' && currentColumnParts.length === 0) {
+            currentColumnParts.push('*');
+          } else {
+            if ((currentColumnParts.length > 0 || !!currentColumnPart) && prevNonWhitespaceToken?.value !== '.' && prevNonWhitespaceToken?.value !== ',' && prevToken?.type === 'whitespace') {
+              // We have a space-separated token, might be implicit alias
+              // e.g., "column_name alias_name" without AS
+              if (!currentColumnAlias) {
+                currentColumnAlias = token.value;
               }
-              const colRef = buildColumnReference(currentColumnParts, currentColumnAlias);
-              if (colRef && !columnAlreadyExists(statement.columns, colRef)) {
-                statement.columns.push(colRef);
-              }
-              currentColumnParts = [];
-              currentColumnPart = '';
-              currentColumnAlias = undefined;
-              waitingForAlias = false;
-            }
-            inSelectClause = false;
-            columnParsingFinished = true;
-            selectParensDepth = 0;
-          } else if (token.value.toUpperCase() === 'DISTINCT') {
-            // Skip DISTINCT keyword
-            setPrevToken(token);
-            return;
-          } else if (token.value === '(') {
-            selectParensDepth++;
-            currentColumnPart += token.value;
-          } else if (token.value === ')') {
-            selectParensDepth--;
-            currentColumnPart += token.value;
-          } else if (token.type === 'keyword' && token.value.toUpperCase() === 'AS') {
-            // AS keyword indicates alias is coming
-            waitingForAlias = true;
-          } else if (waitingForAlias && token.type !== 'comment-inline' && token.type !== 'comment-block') {
-            // This is the alias
-            currentColumnAlias = token.value;
-            waitingForAlias = false;
-          } else if (token.value === ',' && selectParensDepth === 0) {
-            // Comma separates columns
-            if (currentColumnParts.length > 0 || !!currentColumnPart) {
-              if (!!currentColumnPart) {
-                currentColumnParts.push(currentColumnPart);
-              }
-              const colRef = buildColumnReference(currentColumnParts, currentColumnAlias);
-              if (colRef && !columnAlreadyExists(statement.columns, colRef)) {
-                statement.columns.push(colRef);
-              }
-            }
-            currentColumnParts = [];
-            currentColumnPart = '';
-            currentColumnAlias = undefined;
-            waitingForAlias = false;
-          } else if (token.value === '.' && selectParensDepth === 0) {
-            // Dot separator for table.column or schema.table.column
-            // Keep building the current column parts
-          } else if (token.type !== 'comment-inline' && token.type !== 'comment-block' && selectParensDepth === 0 && !waitingForAlias) {
-            if (prevToken?.value === '.' && !!currentColumnPart) {
-              // This is after a dot
-              currentColumnParts.push(currentColumnPart);
-              currentColumnPart = token.value;
-            } else if (token.value === '*') {
-              currentColumnParts.push('*');
             } else {
-              // New identifier (start of column or function name)
-              if ((currentColumnParts.length > 0 || !!currentColumnPart) && prevNonWhitespaceToken?.value !== '.' && prevNonWhitespaceToken?.value !== ',' && prevToken?.type === 'whitespace') {
-                // We have a space-separated token, might be implicit alias
-                // e.g., "column_name alias_name" without AS
-                if (!currentColumnAlias) {
-                  currentColumnAlias = token.value;
-                }
-              } else {
-                currentColumnPart += token.value;
-              }
+              currentColumnPart += token.value;
             }
-          } else if (selectParensDepth > 0) {
-            currentColumnPart += token.value
           }
         }
       }
