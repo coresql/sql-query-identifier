@@ -107,6 +107,25 @@ describe('identify', () => {
       },
     ]);
   });
+
+  it('should identify tables and schema', () => {
+    expect(
+      identify('SELECT * FROM public.foo JOIN public.bar ON foo.id = bar.id', {
+        identifyTables: true,
+      }),
+    ).to.eql([
+      {
+        start: 0,
+        end: 58,
+        text: 'SELECT * FROM public.foo JOIN public.bar ON foo.id = bar.id',
+        type: 'SELECT',
+        executionType: 'LISTING',
+        parameters: [],
+        tables: ['public.foo', 'public.bar'],
+        columns: [],
+      },
+    ]);
+  });
 });
 
 describe('getExecutionType', () => {
