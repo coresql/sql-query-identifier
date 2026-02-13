@@ -13,6 +13,8 @@ import type {
   ColumnReference,
   TableReference,
 } from './defines';
+import { ColumnParser } from './column-parser';
+import { TableParser } from './table-parser';
 
 interface StatementParser {
   addToken: (token: Token, nextToken: Token) => void;
@@ -107,9 +109,6 @@ const statementsWithEnds = [
 // keywords that come directly before a table name.
 // v1 - keeping it very simple.
 const PRE_TABLE_KEYWORDS = /^from$|^join$|^into$/i;
-
-const COLUMN_STOP_KEYWORDS =
-  /^FROM$|^WHERE$|^GROUP$|^ORDER$|^HAVING$|^LIMIT$|^OFFSET$|^UNION$|^INTERSECT$|^EXCEPT$/i;
 
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
@@ -833,14 +832,8 @@ function stateMachineStatementParser(
 
   let openBlocks = 0;
 
-  // Column parsing state
-  let columnParsingFinished = false;
-  let selectParensDepth = 0;
-  let currentColumnParts: string[] = [];
-  let currentColumnPart = '';
-  let currentColumnAlias: string | undefined;
-  let waitingForAlias = false;
-  let skipCurrentColumn = false;
+  let columnParser = new ColumnParser();
+  let tableParser = new TableParser();
 
   // table parsing
   let parsingTable = false;
@@ -936,110 +929,16 @@ function stateMachineStatementParser(
       }
 
       if (identifyTables && !statement.isCte && statement.type?.match(/SELECT|INSERT/)) {
-        if (PRE_TABLE_KEYWORDS.exec(token.value)) {
-          parsingTable = true;
-        } else if (parsingTable) {
-          const val = token.value;
-          if (val !== '.') {
-            currentTableParts.push(val);
-          }
-          if (val !== '.' && nextToken.value !== '.') {
-            // TODO (@day): aliases
-            const tableRef = buildTableReference(currentTableParts);
-            if (tableRef && !tableAlreadyExists(statement.tables, tableRef)) {
-              statement.tables.push(tableRef);
-            }
-            parsingTable = false;
-            currentTableParts = [];
-          }
+        const table = tableParser.processToken(token, nextToken);
+        if (table) {
+          statement.tables.push(table);
         }
       }
 
-      // Column identification logic
-      if (identifyColumns && statement.type === 'SELECT' && !columnParsingFinished) {
-        // Start of SELECT clause
-        console.log('IN select', token.value, token.type);
-        // Check for stop keywords (FROM, WHERE, etc.)
-        if (COLUMN_STOP_KEYWORDS.test(token.value)) {
-          // Finish current column if any
-          if ((currentColumnParts.length > 0 || !!currentColumnPart) && !skipCurrentColumn) {
-            if (currentColumnPart) {
-              currentColumnParts.push(currentColumnPart);
-            }
-            const colRef = buildColumnReference(currentColumnParts, currentColumnAlias);
-            if (colRef && !columnAlreadyExists(statement.columns, colRef)) {
-              statement.columns.push(colRef);
-            }
-          }
-          columnParsingFinished = true;
-        } else if (token.value.toUpperCase() === 'DISTINCT') {
-          // Skip DISTINCT keyword
-          setPrevToken(token);
-        } else if (token.value === '(') {
-          if (selectParensDepth === 0) {
-            skipCurrentColumn = true;
-          }
-          selectParensDepth++;
-        } else if (token.value === ')') {
-          selectParensDepth--;
-        } else if (token.type === 'keyword' && token.value.toUpperCase() === 'AS') {
-          // AS keyword indicates alias is coming
-          waitingForAlias = true;
-        } else if (
-          waitingForAlias &&
-          token.type !== 'comment-inline' &&
-          token.type !== 'comment-block'
-        ) {
-          // This is the alias
-          currentColumnAlias = token.value;
-          waitingForAlias = false;
-        } else if (token.value === ',' && selectParensDepth === 0) {
-          // Comma separates columns
-          if ((currentColumnParts.length > 0 || !!currentColumnPart) && !skipCurrentColumn) {
-            if (currentColumnPart) {
-              currentColumnParts.push(currentColumnPart);
-            }
-            const colRef = buildColumnReference(currentColumnParts, currentColumnAlias);
-            if (colRef && !columnAlreadyExists(statement.columns, colRef)) {
-              statement.columns.push(colRef);
-            }
-          }
-          currentColumnParts = [];
-          currentColumnPart = '';
-          currentColumnAlias = undefined;
-          waitingForAlias = false;
-          skipCurrentColumn = false;
-        } else if (token.value === '.' && selectParensDepth === 0) {
-          // Dot separator for table.column or schema.table.column
-          // Keep building the current column parts
-        } else if (
-          token.type !== 'comment-inline' &&
-          token.type !== 'comment-block' &&
-          selectParensDepth === 0 &&
-          !waitingForAlias
-        ) {
-          if (prevNonWhitespaceToken?.value === '.' && !!currentColumnPart) {
-            // This is after a dot
-            currentColumnParts.push(currentColumnPart);
-            currentColumnPart = token.value;
-          } else if (token.value === '*' && currentColumnParts.length === 0) {
-            currentColumnParts.push('*');
-          } else {
-            if (
-              (currentColumnParts.length > 0 || !!currentColumnPart) &&
-              prevNonWhitespaceToken?.value !== '.' &&
-              prevNonWhitespaceToken?.value !== ',' &&
-              prevToken?.type === 'whitespace'
-            ) {
-              // We have a space-separated token, might be implicit alias
-              // e.g., "column_name alias_name" without AS
-              if (!currentColumnAlias) {
-                currentColumnAlias = token.value;
-              }
-            } else {
-              currentColumnPart += token.value;
-            }
-          }
+      if (identifyColumns && statement.type === 'SELECT' && !columnParser.shouldStop()) {
+        const ref = columnParser.processToken(token, prevToken, prevNonWhitespaceToken);
+        if (ref) {
+          statement.columns.push(ref);
         }
       }
 
@@ -1251,118 +1150,4 @@ export function defaultParamTypesFor(dialect: Dialect): ParamTypes {
         positional: true,
       };
   }
-}
-
-function buildColumnReference(parts: string[], alias?: string): ColumnReference | null {
-  if (parts.length === 0) {
-    return null;
-  }
-
-  // Join all parts for now, then split by dots to handle qualified names
-  const fullName = parts.join('.');
-  let col: ColumnReference | null = null;
-  console.log('BUILDING COLUMN REFERENCE for: ', fullName, 'PARTS: ', parts);
-
-  if (parts.length === 1) {
-    // Just column name or wildcard or expression
-    const name = parts[0];
-    col = {
-      name,
-      isWildcard: name === '*',
-    };
-  } else if (parts.length === 2) {
-    // table.column or table.*
-    const [table, column] = parts;
-    col = {
-      name: column,
-      table,
-      isWildcard: column === '*',
-    };
-  } else if (parts.length === 3) {
-    // schema.table.column or schema.table.*
-    const [schema, table, column] = parts;
-    col = {
-      name: column,
-      schema,
-      table,
-      isWildcard: column === '*',
-    };
-  } else {
-    // 4+ parts - treat entire thing as column name (edge case)
-    col = {
-      name: fullName,
-      isWildcard: false,
-    };
-  }
-
-  if (!!alias && !!col) {
-    col.alias = alias;
-  }
-
-  return col;
-}
-
-function columnAlreadyExists(columns: ColumnReference[], colRef: ColumnReference): boolean {
-  return columns.some(
-    (col) =>
-      col.name === colRef.name &&
-      col.table === colRef.table &&
-      col.schema === colRef.schema &&
-      col.alias === colRef.alias,
-  );
-}
-
-function buildTableReference(parts: string[], alias?: string): TableReference | null {
-  if (parts.length === 0) {
-    return null;
-  }
-
-  // Join all parts for now, then split by dots to handle qualified names
-  const fullName = parts.join('.');
-  let table: TableReference | null = null;
-  console.log('BUILDING TABLE REFERENCE for: ', fullName, 'PARTS: ', parts);
-
-  if (parts.length === 1) {
-    // Just table name
-    const name = parts[0];
-    table = {
-      name,
-    };
-  } else if (parts.length === 2) {
-    // table.column or table.*
-    const [schema, name] = parts;
-    table = {
-      name,
-      schema,
-    };
-  } else if (parts.length === 3) {
-    // schema.table.column or schema.table.*
-    const [database, schema, name] = parts;
-    table = {
-      name,
-      schema,
-      database
-    };
-  } else {
-    // 4+ parts - treat entire thing as table name (edge case)
-    table = {
-      name: fullName
-    };
-  }
-
-  if (!!alias && !!table) {
-    table.alias = alias;
-  }
-
-  return table;
-}
-
-function tableAlreadyExists(tables: TableReference[], tableRef: TableReference): boolean {
-  return tables.some(
-    (table) =>
-      table.name === tableRef.name &&
-      table.schema === tableRef.schema &&
-      table.database === tableRef.database &&
-      table.alias === tableRef.alias,
-  );
 }

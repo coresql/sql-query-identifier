@@ -125,7 +125,7 @@ export interface IdentifyResult {
   executionType: ExecutionType;
   parameters: string[];
   tables: TableReference[];
-  columns?: ColumnReference[];
+  columns: ColumnReference[];
 }
 
 export interface Statement {

@@ -570,7 +570,7 @@ describe('identifier', () => {
           identifyTables: true,
           identifyColumns: true,
         });
-        expect(actual[0].tables).to.eql(['users']);
+        expect(actual[0].tables).to.eql([{ name: 'users' }]);
         expect(actual[0].columns).to.eql([
           { name: 'id', isWildcard: false },
           { name: 'name', isWildcard: false },
@@ -582,7 +582,7 @@ describe('identifier', () => {
           identifyTables: true,
           identifyColumns: true,
         });
-        expect(actual[0].tables).to.eql(['users', 'orders']);
+        expect(actual[0].tables).to.eql([{ name: 'users' }, { name: 'orders' }]);
         expect(actual[0].columns).to.eql([
           { name: 'id', table: 'users', isWildcard: false },
           { name: 'total', table: 'orders', isWildcard: false },
