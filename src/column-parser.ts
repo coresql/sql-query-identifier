@@ -1,4 +1,4 @@
-import { ColumnReference, Token } from "./defines";
+import { ColumnReference, Token } from './defines';
 
 export class ColumnParser {
   private parts: string[] = [];
@@ -10,15 +10,24 @@ export class ColumnParser {
   private finished = false;
   private existing: Set<string> = new Set<string>();
 
-  private STOP_KEYWORDS: Set<string> = new Set<string>(
-    ['FROM', 'WHERE', 'GROUP', 'ORDER', 'HAVING', 'LIMIT', 'OFFSET', 'UNION', 'INTERSECT', 'EXCEPT']
-  )
+  private STOP_KEYWORDS: Set<string> = new Set<string>([
+    'FROM',
+    'WHERE',
+    'GROUP',
+    'ORDER',
+    'HAVING',
+    'LIMIT',
+    'OFFSET',
+    'UNION',
+    'INTERSECT',
+    'EXCEPT',
+  ]);
 
-  shouldStop() {
+  shouldStop(): boolean {
     return this.finished;
   }
 
-  resetState() {
+  resetState(): void {
     this.parts = [];
     this.currentPart = '';
     this.alias = undefined;
@@ -26,7 +35,11 @@ export class ColumnParser {
     this.skipCurrent = false;
   }
 
-  processToken(token: Token, prevToken?: Token, prevNonWhitespaceToken?: Token): ColumnReference | null {
+  processToken(
+    token: Token,
+    prevToken?: Token,
+    prevNonWhitespaceToken?: Token,
+  ): ColumnReference | null {
     if (this.STOP_KEYWORDS.has(token.value.toUpperCase())) {
       this.finished = true;
       const ref = this.buildReference();
@@ -46,7 +59,11 @@ export class ColumnParser {
       this.parensDepth--;
     } else if (token.type === 'keyword' && token.value.toUpperCase() === 'AS') {
       this.waitingForAlias = true;
-    } else if (this.waitingForAlias && token.type !== 'comment-inline' && token.type !== 'comment-block') {
+    } else if (
+      this.waitingForAlias &&
+      token.type !== 'comment-inline' &&
+      token.type !== 'comment-block'
+    ) {
       this.alias = token.value;
       this.waitingForAlias = false;
     } else if (token.value === ',' && this.parensDepth === 0) {
@@ -102,14 +119,14 @@ export class ColumnParser {
       const name = this.parts[0];
       col = {
         name,
-        isWildcard: name === '*'
+        isWildcard: name === '*',
       };
     } else if (this.parts.length === 2) {
       const [table, name] = this.parts;
       col = {
         name,
         table,
-        isWildcard: name === '*'
+        isWildcard: name === '*',
       };
     } else if (this.parts.length === 3) {
       const [schema, table, name] = this.parts;
@@ -117,7 +134,7 @@ export class ColumnParser {
         name,
         table,
         schema,
-        isWildcard: name === '*'
+        isWildcard: name === '*',
       };
     } else {
       const fullName = this.parts.join('.');
@@ -138,12 +155,13 @@ export class ColumnParser {
     return this.existing.has(this.getIdentString(other));
   }
 
-  addRef(col: ColumnReference) {
+  addRef(col: ColumnReference): void {
     this.existing.add(this.getIdentString(col));
   }
 
-  getIdentString(col: ColumnReference) {
-    // These can be undefined but as long as it's always the same I don't think we care?
-    return `${col.schema}.${col.table}.${col.name}:${col.alias}`;
+  getIdentString(col: ColumnReference): string {
+    return `${col.schema ?? 'none'}.${col.table ?? 'none'}.${col.name ?? 'none'}:${
+      col.alias ?? 'none'
+    }`;
   }
 }

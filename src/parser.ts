@@ -10,8 +10,6 @@ import type {
   ParseResult,
   ConcreteStatement,
   ParamTypes,
-  ColumnReference,
-  TableReference,
 } from './defines';
 import { ColumnParser } from './column-parser';
 import { TableParser } from './table-parser';
@@ -19,6 +17,7 @@ import { TableParser } from './table-parser';
 interface StatementParser {
   addToken: (token: Token, nextToken: Token) => void;
   getStatement: () => Statement;
+  flush: () => void;
 }
 
 /**
@@ -105,10 +104,6 @@ const statementsWithEnds = [
   'ANON_BLOCK',
   'UNKNOWN',
 ];
-
-// keywords that come directly before a table name.
-// v1 - keeping it very simple.
-const PRE_TABLE_KEYWORDS = /^from$|^join$|^into$/i;
 
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
@@ -283,6 +278,7 @@ export function parse(
 
       const statement = statementParser.getStatement();
       if (statement.endStatement) {
+        statementParser.flush();
         statement.end = token.end;
         topLevelStatement.body.push(statement as ConcreteStatement);
         statementParser = null;
@@ -292,6 +288,7 @@ export function parse(
 
   // last statement without ending key
   if (statementParser) {
+    statementParser.flush();
     const statement = statementParser.getStatement();
     if (!statement.endStatement) {
       statement.end = topLevelStatement.end;
@@ -832,12 +829,8 @@ function stateMachineStatementParser(
 
   let openBlocks = 0;
 
-  let columnParser = new ColumnParser();
-  let tableParser = new TableParser();
-
-  // table parsing
-  let parsingTable = false;
-  let currentTableParts: string[] = [];
+  const columnParser = new ColumnParser();
+  const tableParser = new TableParser();
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
   const isValidToken = (step: Step, token: Token) => {
@@ -865,6 +858,15 @@ function stateMachineStatementParser(
   return {
     getStatement() {
       return statement;
+    },
+
+    flush() {
+      if (identifyTables) {
+        const table = tableParser.flush();
+        if (table) {
+          statement.tables.push(table);
+        }
+      }
     },
 
     addToken(token: Token, nextToken: Token) {

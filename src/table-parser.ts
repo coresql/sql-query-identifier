@@ -1,38 +1,108 @@
-import { TableReference, Token } from "./defines";
+import { TableReference, Token } from './defines';
 
 export class TableParser {
   private parts: string[] = [];
   private alias?: string;
   private existing: Set<string> = new Set<string>();
   private parsing = false;
+  private waitingForAlias = false;
 
+  // keywords that come directly before a table name.
+  // v1 - keeping it very simple.
   private PRE_TABLE_KEYWORDS = new Set<string>(['FROM', 'JOIN', 'INTO']);
 
-  resetState() {
+  // Tokens that indicate "no alias follows" when we're in the pending state.
+  // If we see one of these after a table name, we finalize without an alias.
+  private NON_ALIAS_KEYWORDS = new Set<string>([
+    'ON',
+    'WHERE',
+    'SET',
+    'VALUES',
+    'GROUP',
+    'ORDER',
+    'HAVING',
+    'LIMIT',
+    'OFFSET',
+    'UNION',
+    'INTERSECT',
+    'EXCEPT',
+    'LEFT',
+    'RIGHT',
+    'INNER',
+    'CROSS',
+    'FULL',
+    'OUTER',
+    'NATURAL',
+    'FROM',
+    'JOIN',
+    'INTO',
+  ]);
+
+  resetState(): void {
     this.parts = [];
     this.alias = undefined;
     this.parsing = false;
+    this.waitingForAlias = false;
   }
 
   processToken(token: Token, nextToken: Token): TableReference | null {
+    const upper = token.value.toUpperCase();
+
+    // Waiting for the alias token (after AS or implicit)
+    if (this.waitingForAlias) {
+      if (upper === 'AS') {
+        return null;
+      }
+      this.alias = token.value;
+      return this.finalizeReference();
+    }
+
+    // Actively collecting table name parts
     if (this.parsing) {
       const val = token.value;
       if (val !== '.') {
         this.parts.push(val);
       }
       if (val !== '.' && nextToken.value !== '.') {
-        const ref = this.buildReference();
-        this.resetState();
-        if (ref && !this.exists(ref)) {
-          this.addRef(ref);
-          return ref;
+        const nextUpper = nextToken.value.toUpperCase();
+        if (
+          this.NON_ALIAS_KEYWORDS.has(nextUpper) ||
+          nextToken.type === 'semicolon' ||
+          nextToken.value === ',' ||
+          nextToken.value === '(' ||
+          nextToken.value === ')'
+        ) {
+          return this.finalizeReference();
         }
+        this.parsing = false;
+        this.waitingForAlias = true;
         return null;
       }
-    } else if (this.PRE_TABLE_KEYWORDS.has(token.value.toUpperCase())) {
+    } else if (this.PRE_TABLE_KEYWORDS.has(upper)) {
       this.parsing = true;
     }
 
+    return null;
+  }
+
+  /**
+   * Flush any pending table reference that hasn't been finalized yet.
+   * Called when the statement ends (semicolon or end of input).
+   */
+  flush(): TableReference | null {
+    if (this.waitingForAlias || this.parsing) {
+      return this.finalizeReference();
+    }
+    return null;
+  }
+
+  private finalizeReference(): TableReference | null {
+    const ref = this.buildReference();
+    this.resetState();
+    if (ref && !this.exists(ref)) {
+      this.addRef(ref);
+      return ref;
+    }
     return null;
   }
 
@@ -79,12 +149,13 @@ export class TableParser {
     return this.existing.has(this.getIdentString(other));
   }
 
-  addRef(table: TableReference) {
+  addRef(table: TableReference): void {
     this.existing.add(this.getIdentString(table));
   }
 
-  getIdentString(table: TableReference) {
-    // These can be undefined but as long as it's always the same I don't think we care?
-    return `${table.database}.${table.schema}.${table.name}:${table.alias}`;
+  getIdentString(table: TableReference): string {
+    return `${table.database ?? 'none'}.${table.schema ?? 'none'}.${table.name ?? 'none'}:${
+      table.alias ?? 'none'
+    }`;
   }
 }

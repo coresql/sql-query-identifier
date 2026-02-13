@@ -177,18 +177,27 @@ describe('identify', () => {
         { identifyTables: true },
       );
       expect(result[0].tables).to.eql([
-        { name: 'users' },
-        { name: 'orders', schema: 'public' },
-        { name: 'products', schema: 'schema', database: 'db' },
+        { name: 'users', alias: 'u' },
+        { name: 'orders', schema: 'public', alias: 'o' },
+        { name: 'products', schema: 'schema', database: 'db', alias: 'p' },
       ]);
     });
 
-    it('should not duplicate table references', () => {
-      const result = identify('SELECT * FROM users JOIN users u2 ON users.id = u2.manager_id', {
+    it('should not duplicate table references without aliases', () => {
+      const result = identify('SELECT * FROM users JOIN users ON users.id = users.manager_id', {
         identifyTables: true,
       });
-      // Note: Until aliases are implemented, this will only show one 'users' entry
       expect(result[0].tables).to.eql([{ name: 'users' }]);
+    });
+
+    it('should treat same table with different aliases as separate entries', () => {
+      const result = identify('SELECT * FROM users u1 JOIN users u2 ON u1.id = u2.manager_id', {
+        identifyTables: true,
+      });
+      expect(result[0].tables).to.eql([
+        { name: 'users', alias: 'u1' },
+        { name: 'users', alias: 'u2' },
+      ]);
     });
 
     it('should identify tables with LEFT JOIN', () => {
@@ -238,6 +247,83 @@ describe('identify', () => {
         { name: 'orders', schema: 'public' },
         { name: 'products', schema: 'schema', database: 'db' },
       ]);
+    });
+  });
+
+  describe('Table alias identification', () => {
+    it('should identify explicit AS alias', () => {
+      const result = identify('SELECT * FROM users AS u', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users', alias: 'u' }]);
+    });
+
+    it('should identify implicit alias', () => {
+      const result = identify('SELECT * FROM users u', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users', alias: 'u' }]);
+    });
+
+    it('should identify explicit alias on schema-qualified table', () => {
+      const result = identify('SELECT * FROM public.users AS u', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users', schema: 'public', alias: 'u' }]);
+    });
+
+    it('should identify implicit alias on schema-qualified table', () => {
+      const result = identify('SELECT * FROM public.users u', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users', schema: 'public', alias: 'u' }]);
+    });
+
+    it('should identify alias on three-part qualified table', () => {
+      const result = identify('SELECT * FROM mydb.public.users u', { identifyTables: true });
+      expect(result[0].tables).to.eql([
+        { name: 'users', schema: 'public', database: 'mydb', alias: 'u' },
+      ]);
+    });
+
+    it('should identify explicit alias on three-part qualified table', () => {
+      const result = identify('SELECT * FROM mydb.public.users AS u', { identifyTables: true });
+      expect(result[0].tables).to.eql([
+        { name: 'users', schema: 'public', database: 'mydb', alias: 'u' },
+      ]);
+    });
+
+    it('should not treat WHERE as an alias', () => {
+      const result = identify('SELECT * FROM users WHERE id = 1', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users' }]);
+    });
+
+    it('should not treat ON as an alias', () => {
+      const result = identify('SELECT * FROM users JOIN orders ON users.id = orders.user_id', {
+        identifyTables: true,
+      });
+      expect(result[0].tables).to.eql([{ name: 'users' }, { name: 'orders' }]);
+    });
+
+    it('should not treat JOIN keywords as an alias', () => {
+      const result = identify('SELECT * FROM users LEFT JOIN orders ON users.id = orders.user_id', {
+        identifyTables: true,
+      });
+      expect(result[0].tables).to.eql([{ name: 'users' }, { name: 'orders' }]);
+    });
+
+    it('should handle mixed explicit and implicit aliases', () => {
+      const result = identify('SELECT * FROM users AS u JOIN public.orders o ON u.id = o.user_id', {
+        identifyTables: true,
+      });
+      expect(result[0].tables).to.eql([
+        { name: 'users', alias: 'u' },
+        { name: 'orders', schema: 'public', alias: 'o' },
+      ]);
+    });
+
+    it('should handle alias followed by WHERE clause', () => {
+      const result = identify('SELECT * FROM users u WHERE u.id = 1', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users', alias: 'u' }]);
+    });
+
+    it('should not capture alias for INSERT INTO', () => {
+      const result = identify('INSERT INTO users (name) VALUES ("test")', {
+        identifyTables: true,
+      });
+      expect(result[0].tables).to.eql([{ name: 'users' }]);
     });
   });
 });
