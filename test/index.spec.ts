@@ -149,7 +149,7 @@ describe('Regression tests', () => {
     );
     result.forEach((res) => {
       // :: cast syntax should not produce colon-prefixed parameters
-      expect(res.parameters.every((p) => !p.startsWith(':'))).to.equal(true);
+      expect(res.parameters.every((param) => !param.startsWith(':'))).to.equal(true);
     });
   });
 

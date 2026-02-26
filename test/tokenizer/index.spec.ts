@@ -322,9 +322,7 @@ describe('scan', () => {
           expect(actual).to.eql(expected);
         });
       });
-      [
-        ['$', 'psql'],
-      ].forEach(([ch, dialect]) => {
+      [['$', 'psql']].forEach(([ch, dialect]) => {
         it(`should scan ${ch}1 for ${dialect}`, () => {
           const input = `${ch}1`;
           const actual = scanToken(
