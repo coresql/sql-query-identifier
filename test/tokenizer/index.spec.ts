@@ -271,7 +271,7 @@ describe('scan', () => {
         ['?', 'generic'],
         ['?', 'mysql'],
         ['?', 'sqlite'],
-        [':', 'mssql'],
+        ['@', 'mssql'],
       ].forEach(([ch, dialect]) => {
         it(`scans just ${ch} as parameter for ${dialect}`, () => {
           const input = `${ch}`;
@@ -324,7 +324,6 @@ describe('scan', () => {
       });
       [
         ['$', 'psql'],
-        [':', 'mssql'],
       ].forEach(([ch, dialect]) => {
         it(`should scan ${ch}1 for ${dialect}`, () => {
           const input = `${ch}1`;
@@ -370,7 +369,31 @@ describe('scan', () => {
         const paramTypes = defaultParamTypesFor('mssql');
         [
           {
-            actual: scanToken(initState(':one,'), 'mssql', paramTypes),
+            actual: scanToken(initState('@one,'), 'mssql', paramTypes),
+            expected: {
+              type: 'parameter',
+              value: '@one',
+              start: 0,
+              end: 3,
+            },
+          },
+          {
+            actual: scanToken(initState('@two)'), 'mssql', paramTypes),
+            expected: {
+              type: 'parameter',
+              value: '@two',
+              start: 0,
+              end: 3,
+            },
+          },
+        ].forEach(({ actual, expected }) => expect(actual).to.eql(expected));
+      });
+
+      it('should not include trailing non-alphanumerics for oracle', () => {
+        const paramTypes = defaultParamTypesFor('oracle');
+        [
+          {
+            actual: scanToken(initState(':one,'), 'oracle', paramTypes),
             expected: {
               type: 'parameter',
               value: ':one',
@@ -378,16 +401,19 @@ describe('scan', () => {
               end: 3,
             },
           },
-          {
-            actual: scanToken(initState(':two)'), 'mssql', paramTypes),
-            expected: {
-              type: 'parameter',
-              value: ':two',
-              start: 0,
-              end: 3,
-            },
-          },
         ].forEach(({ actual, expected }) => expect(actual).to.eql(expected));
+      });
+
+      it('should recognize $name for sqlite', () => {
+        const paramTypes = defaultParamTypesFor('sqlite');
+        const actual = scanToken(initState('$myvar'), 'sqlite', paramTypes);
+        const expected = {
+          type: 'parameter',
+          value: '$myvar',
+          start: 0,
+          end: 5,
+        };
+        expect(actual).to.eql(expected);
       });
 
       describe('custom parameters', () => {
