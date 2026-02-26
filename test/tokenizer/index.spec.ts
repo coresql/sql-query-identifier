@@ -386,6 +386,24 @@ describe('scan', () => {
               end: 3,
             },
           },
+          {
+            actual: scanToken(initState(':one,'), 'mssql', paramTypes),
+            expected: {
+              type: 'parameter',
+              value: ':one',
+              start: 0,
+              end: 3,
+            },
+          },
+          {
+            actual: scanToken(initState(':two)'), 'mssql', paramTypes),
+            expected: {
+              type: 'parameter',
+              value: ':two',
+              start: 0,
+              end: 3,
+            },
+          },
         ].forEach(({ actual, expected }) => expect(actual).to.eql(expected));
       });
 

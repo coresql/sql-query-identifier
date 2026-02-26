@@ -1113,7 +1113,7 @@ export function defaultParamTypesFor(dialect: Dialect): ParamTypes {
       };
     case 'mssql':
       return {
-        named: ['@'],
+        named: ['@', ':'],
       };
     case 'oracle':
       return {

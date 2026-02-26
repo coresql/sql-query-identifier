@@ -1484,6 +1484,26 @@ describe('identifier', () => {
       expect(actual).to.eql(expected);
     });
 
+    it('Should extract mssql colon-prefixed named parameters', () => {
+      const actual = identify('SELECT * FROM Persons where x = :one and y = :two and a = :one', {
+        dialect: 'mssql',
+        strict: true,
+      });
+      const expected = [
+        {
+          start: 0,
+          end: 61,
+          text: 'SELECT * FROM Persons where x = :one and y = :two and a = :one',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [':one', ':two'],
+          tables: [],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
     it('Should extract oracle named parameters', () => {
       const actual = identify('SELECT * FROM persons WHERE id = :one AND status = :two', {
         dialect: 'oracle',
