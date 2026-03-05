@@ -17,6 +17,7 @@ describe('identifier', () => {
           executionType: 'MODIFICATION',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
       ];
 
@@ -36,6 +37,7 @@ describe('identifier', () => {
           executionType: 'MODIFICATION',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
       ];
 
@@ -57,6 +59,7 @@ describe('identifier', () => {
           executionType: 'MODIFICATION',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
       ];
 
@@ -79,6 +82,7 @@ describe('identifier', () => {
           executionType: 'MODIFICATION',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
       ];
 

@@ -25,6 +25,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
           {
             start: 56,
@@ -33,6 +34,7 @@ describe('parser', () => {
             executionType: 'LISTING',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ],
         tokens: [
@@ -96,6 +98,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
           {
             start: 74,
@@ -104,6 +107,7 @@ describe('parser', () => {
             executionType: 'LISTING',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ],
         tokens: [

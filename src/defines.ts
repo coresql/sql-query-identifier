@@ -109,6 +109,7 @@ export interface IdentifyResult {
   executionType: ExecutionType;
   parameters: string[];
   tables: string[];
+  parameterMacros: Record<string, string>;
 }
 
 export interface Statement {
@@ -124,6 +125,7 @@ export interface Statement {
   parameters: string[];
   tables: string[];
   isCte?: boolean;
+  parameterMacros: Record<string, string>;
 }
 
 export interface ConcreteStatement extends Statement {

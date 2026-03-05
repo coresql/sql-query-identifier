@@ -19,6 +19,7 @@ describe('identify', () => {
         executionType: 'LISTING',
         parameters: ['$1', '$2'],
         tables: [],
+        parameterMacros: {},
       },
     ]);
   });
@@ -42,6 +43,7 @@ describe('identify', () => {
         executionType: 'LISTING',
         parameters: ['?', '$1', ':fizzz', ':"buzz buzz"', '{fooo}'],
         tables: [],
+        parameterMacros: {},
       },
     ]);
   });
@@ -62,6 +64,7 @@ describe('identify', () => {
         executionType: 'LISTING',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
   });
@@ -83,6 +86,7 @@ describe('identify', () => {
         executionType: 'LISTING',
         parameters: ['$1'],
         tables: [],
+        parameterMacros: {},
       },
     ]);
   });
@@ -99,6 +103,7 @@ describe('identify', () => {
         executionType: 'LISTING',
         parameters: [],
         tables: ['foo', 'bar'],
+        parameterMacros: {},
       },
     ]);
   });
@@ -177,6 +182,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
   });
@@ -191,6 +197,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
   });
@@ -205,6 +212,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
   });
@@ -219,6 +227,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
   });
@@ -233,6 +242,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
   });
@@ -247,6 +257,7 @@ describe('Transaction statements', () => {
         executionType: 'ANON_BLOCK',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
   });
@@ -267,6 +278,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
 
@@ -279,6 +291,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
   });
@@ -293,6 +306,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
 
@@ -305,6 +319,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
 
@@ -317,6 +332,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
 
@@ -329,6 +345,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
 
@@ -343,6 +360,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
   });
@@ -357,6 +375,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
 
@@ -369,6 +388,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
 
@@ -381,6 +401,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
 
@@ -395,7 +416,99 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        parameterMacros: {},
       },
     ]);
+  });
+
+  describe('parameter macros', () => {
+    it('should detect a single inline macro before a statement', () => {
+      const query = '-- %id% = 7\nSELECT * FROM table WHERE id = %id%;';
+      expect(identify(query, { strict: false })).to.eql([
+        {
+          start: 12,
+          end: 47,
+          text: 'SELECT * FROM table WHERE id = %id%;',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+          tables: [],
+          parameterMacros: { id: '7' },
+        },
+      ]);
+    });
+
+    it('should detect multiple inline macros before a statement', () => {
+      const query = '-- %id% = 7\n-- %name% = Alice\nSELECT * FROM t WHERE id = %id% AND name = %name%;';
+      expect(identify(query, { strict: false })).to.eql([
+        {
+          start: 30,
+          end: 79,
+          text: 'SELECT * FROM t WHERE id = %id% AND name = %name%;',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+          tables: [],
+          parameterMacros: { id: '7', name: 'Alice' },
+        },
+      ]);
+    });
+
+    it('should detect a block comment macro before a statement', () => {
+      const query = '/* %id% = 42 */\nSELECT 1;';
+      expect(identify(query, { strict: false })).to.eql([
+        {
+          start: 16,
+          end: 24,
+          text: 'SELECT 1;',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+          tables: [],
+          parameterMacros: { id: '42' },
+        },
+      ]);
+    });
+
+    it('macros should not bleed into the next statement', () => {
+      const query = '-- %id% = 7\nSELECT 1;\nSELECT 2;';
+      expect(identify(query, { strict: false })).to.eql([
+        {
+          start: 12,
+          end: 20,
+          text: 'SELECT 1;',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+          tables: [],
+          parameterMacros: { id: '7' },
+        },
+        {
+          start: 22,
+          end: 30,
+          text: 'SELECT 2;',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+          tables: [],
+          parameterMacros: {},
+        },
+      ]);
+    });
+
+    it('should return empty parameterMacros when no macros declared', () => {
+      expect(identify('SELECT 1;')).to.eql([
+        {
+          start: 0,
+          end: 8,
+          text: 'SELECT 1;',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+          tables: [],
+          parameterMacros: {},
+        },
+      ]);
+    });
   });
 });
