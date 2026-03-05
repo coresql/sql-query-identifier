@@ -9,7 +9,7 @@ describe('edge cases — misidentified references', () => {
       const actual = identify('SELECT a + b FROM t', { identifyColumns: true });
       // Actual: [{name:'a', alias:'+'}] — the + operator is misidentified as an alias
       const columns = actual[0].columns;
-      const hasPlus = columns.some((c: { alias?: string }) => c.alias === '+');
+      const hasPlus = columns.some((col: { alias?: string }) => col.alias === '+');
       expect(hasPlus).to.equal(false);
     });
 
@@ -20,7 +20,7 @@ describe('edge cases — misidentified references', () => {
         dialect: 'mssql',
       });
       // Actual: [{name:'TOP0', alias:'1'}, {name:'id'}] — TOP becomes a garbage column name
-      const colNames = actual[0].columns.map((c: { name: string }) => c.name);
+      const colNames = actual[0].columns.map((col: { name: string }) => col.name);
       expect(colNames).to.not.include('TOP');
       expect(colNames).to.not.include('TOP0');
     });

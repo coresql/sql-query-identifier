@@ -39,7 +39,7 @@ describe('edge cases — missed references', () => {
         dialect: 'mssql',
       });
       // Actual: [{name:'TOP0', alias:'1'}, {name:'id'}] — 'name' is lost
-      const colNames = actual[0].columns.map((c: { name: string }) => c.name);
+      const colNames = actual[0].columns.map((col: { name: string }) => col.name);
       expect(colNames).to.include('name');
       expect(colNames).to.include('id');
     });
@@ -51,7 +51,7 @@ describe('edge cases — missed references', () => {
         dialect: 'psql',
       });
       // Actual: [{name:'email'}] — 'name' is lost (ON absorbs into skipped parens expression)
-      const colNames = actual[0].columns.map((c: { name: string }) => c.name);
+      const colNames = actual[0].columns.map((col: { name: string }) => col.name);
       expect(colNames).to.include('name');
       expect(colNames).to.include('email');
     });
@@ -61,7 +61,7 @@ describe('edge cases — missed references', () => {
       const actual = identify("SELECT 'hello' AS greeting, id FROM users", {
         identifyColumns: true,
       });
-      const colNames = actual[0].columns.map((c: { name: string }) => c.name);
+      const colNames = actual[0].columns.map((col: { name: string }) => col.name);
       expect(colNames).to.include('id');
     });
   });
@@ -133,10 +133,10 @@ describe('edge cases — missed references', () => {
 
     // Valid PostgreSQL — DELETE ... USING is PostgreSQL-specific
     it('should find USING table in DELETE ... USING (PostgreSQL)', () => {
-      const actual = identify(
-        'DELETE FROM orders USING users WHERE orders.user_id = users.id',
-        { identifyTables: true, dialect: 'psql' },
-      );
+      const actual = identify('DELETE FROM orders USING users WHERE orders.user_id = users.id', {
+        identifyTables: true,
+        dialect: 'psql',
+      });
       // Actual: [] — 'orders' not found (flush issue), 'users' not found (USING not in PRE_TABLE_KEYWORDS)
       const tableNames = actual[0].tables.map((t: { name: string }) => t.name);
       expect(tableNames).to.include('orders');
