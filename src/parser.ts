@@ -128,7 +128,22 @@ function createInitialStatement(): Statement {
     end: 0,
     parameters: [],
     tables: [],
+    parameterMacros: {},
   };
+}
+
+const INLINE_MACRO_RE = /^--\s*%([^%]+)%\s*=\s*(.+)$/;
+const BLOCK_MACRO_RE = /^\/\*\s*%([^%]+)%\s*=\s*(.*?)\s*\*\/$/s;
+
+function parseMacroFromComment(token: Token): [string, string] | null {
+  if (token.type === 'comment-inline') {
+    const match = INLINE_MACRO_RE.exec(token.value.trim());
+    if (match) return [match[1].trim(), match[2].trim()];
+  } else if (token.type === 'comment-block') {
+    const match = BLOCK_MACRO_RE.exec(token.value.trim());
+    if (match) return [match[1].trim(), match[2].trim()];
+  }
+  return null;
 }
 
 function nextNonWhitespaceToken(state: State, dialect: Dialect): Token {
@@ -161,6 +176,7 @@ export function parse(
 
   let prevState: State = topLevelState;
   let statementParser: StatementParser | null = null;
+  let pendingMacros: Record<string, string> = {};
   const cteState: {
     isCte: boolean;
     asSeen: boolean;
@@ -189,6 +205,12 @@ export function parse(
       if (!cteState.isCte && ignoreOutsideBlankTokens.includes(token.type)) {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
+        if (token.type === 'comment-inline' || token.type === 'comment-block') {
+          const macro = parseMacroFromComment(token);
+          if (macro) pendingMacros[macro[0]] = macro[1];
+        } else if (token.type === 'semicolon') {
+          pendingMacros = {};
+        }
       } else if (
         !cteState.isCte &&
         token.type === 'keyword' &&
@@ -211,7 +233,9 @@ export function parse(
           executionType: 'UNKNOWN',
           parameters: [],
           tables: [],
+          parameterMacros: { ...pendingMacros },
         });
+        pendingMacros = {};
         cteState.isCte = false;
         cteState.asSeen = false;
         cteState.statementEnd = false;
@@ -253,6 +277,8 @@ export function parse(
           dialect,
           identifyTables,
         });
+        statementParser.getStatement().parameterMacros = { ...pendingMacros };
+        pendingMacros = {};
         if (cteState.isCte) {
           statementParser.getStatement().start = cteState.state.start;
           statementParser.getStatement().isCte = true;

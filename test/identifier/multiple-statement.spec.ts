@@ -17,6 +17,7 @@ describe('identifier', () => {
           executionType: 'MODIFICATION',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
         {
           end: 76,
@@ -26,6 +27,7 @@ describe('identifier', () => {
           executionType: 'LISTING',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
       ];
 
@@ -47,6 +49,7 @@ describe('identifier', () => {
           executionType: 'MODIFICATION',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
         {
           start: 74,
@@ -56,6 +59,7 @@ describe('identifier', () => {
           executionType: 'LISTING',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
       ];
 
@@ -80,6 +84,7 @@ describe('identifier', () => {
           executionType: 'LISTING',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
         {
           start: 35,
@@ -89,6 +94,7 @@ describe('identifier', () => {
           executionType: 'LISTING',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
       ];
 
@@ -112,6 +118,7 @@ describe('identifier', () => {
           executionType: 'LISTING',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
         {
           start: 20,
@@ -121,6 +128,7 @@ describe('identifier', () => {
           executionType: 'LISTING',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
         {
           start: 50,
@@ -130,6 +138,7 @@ describe('identifier', () => {
           executionType: 'LISTING',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
       ];
 
@@ -171,6 +180,7 @@ describe('identifier', () => {
             executionType: 'ANON_BLOCK',
             parameters: [],
             tables: [],
+            parameterMacros: {},
             start: 11,
             text: 'DECLARE\n            PK_NAME VARCHAR(200);\n\n          BEGIN\n            EXECUTE IMMEDIATE (\'CREATE SEQUENCE "untitled_table8_seq"\');\n\n          SELECT\n            cols.column_name INTO PK_NAME\n          FROM\n            all_constraints cons,\n            all_cons_columns cols\n          WHERE\n            cons.constraint_type = \'P\'\n            AND cons.constraint_name = cols.constraint_name\n            AND cons.owner = cols.owner\n            AND cols.table_name = \'untitled_table8\';\n\n          execute immediate (\n            \'create or replace trigger "untitled_table8_autoinc_trg"  BEFORE INSERT on "untitled_table8"  for each row  declare  checking number := 1;  begin    if (:new."\' || PK_NAME || \'" is null) then      while checking >= 1 loop        select "untitled_table8_seq".nextval into :new."\' || PK_NAME || \'" from dual;        select count("\' || PK_NAME || \'") into checking from "untitled_table8"        where "\' || PK_NAME || \'" = :new."\' || PK_NAME || \'";      end loop;    end if;  end;\'\n          );\n\n          END;',
             type: 'ANON_BLOCK',
@@ -219,6 +229,7 @@ describe('identifier', () => {
             executionType: 'MODIFICATION',
             parameters: [],
             tables: [],
+            parameterMacros: {},
             start: 11,
             text: 'create table\n            "untitled_table8" (\n              "id" integer not null primary key,\n              "created_at" varchar(255) not null\n            );',
             type: 'CREATE_TABLE',
@@ -228,6 +239,7 @@ describe('identifier', () => {
             executionType: 'ANON_BLOCK',
             parameters: [],
             tables: [],
+            parameterMacros: {},
             start: 180,
             text: 'DECLARE\n            PK_NAME VARCHAR(200);\n\n          BEGIN\n            EXECUTE IMMEDIATE (\'CREATE SEQUENCE "untitled_table8_seq"\');\n\n          SELECT\n            cols.column_name INTO PK_NAME\n          FROM\n            all_constraints cons,\n            all_cons_columns cols\n          WHERE\n            cons.constraint_type = \'P\'\n            AND cons.constraint_name = cols.constraint_name\n            AND cons.owner = cols.owner\n            AND cols.table_name = \'untitled_table8\';\n\n          execute immediate (\n            \'create or replace trigger "untitled_table8_autoinc_trg"  BEFORE INSERT on "untitled_table8"  for each row  declare  checking number := 1;  begin    if (:new."\' || PK_NAME || \'" is null) then      while checking >= 1 loop        select "untitled_table8_seq".nextval into :new."\' || PK_NAME || \'" from dual;        select count("\' || PK_NAME || \'") into checking from "untitled_table8"        where "\' || PK_NAME || \'" = :new."\' || PK_NAME || \'";      end loop;    end if;  end;\'\n          );\n\n          END;',
             type: 'ANON_BLOCK',
@@ -261,6 +273,7 @@ describe('identifier', () => {
             executionType: 'MODIFICATION',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
           {
             start: 79,
@@ -270,6 +283,7 @@ describe('identifier', () => {
             executionType: 'LISTING',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
           {
             start: 250,
@@ -279,6 +293,7 @@ describe('identifier', () => {
             executionType: 'LISTING',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ];
 
@@ -302,6 +317,7 @@ describe('identifier', () => {
             executionType: 'UNKNOWN',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
           {
             start: 54,
@@ -311,6 +327,7 @@ describe('identifier', () => {
             executionType: 'LISTING',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ];
 
@@ -335,6 +352,7 @@ describe('identifier', () => {
           executionType: 'UNKNOWN',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
         {
           start: 6,
@@ -344,6 +362,7 @@ describe('identifier', () => {
           executionType: 'LISTING',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
       ];
 
@@ -367,6 +386,7 @@ describe('identifier', () => {
           executionType: 'UNKNOWN',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
         {
           start: 24,
@@ -376,6 +396,7 @@ describe('identifier', () => {
           executionType: 'LISTING',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
       ];
 
@@ -398,6 +419,7 @@ describe('identifier', () => {
           executionType: 'TRANSACTION',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
         {
           start: 19,
@@ -407,6 +429,7 @@ describe('identifier', () => {
           executionType: 'LISTING',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
         {
           start: 29,
@@ -416,6 +439,7 @@ describe('identifier', () => {
           executionType: 'TRANSACTION',
           parameters: [],
           tables: [],
+          parameterMacros: {},
         },
       ];
       expect(actual).to.eql(expected);
@@ -436,6 +460,7 @@ describe('identifier', () => {
               executionType: 'TRANSACTION',
               parameters: [],
               tables: [],
+              parameterMacros: {},
             },
             {
               start: 19 + offset,
@@ -445,6 +470,7 @@ describe('identifier', () => {
               executionType: 'LISTING',
               parameters: [],
               tables: [],
+              parameterMacros: {},
             },
             {
               start: 29 + offset,
@@ -454,6 +480,7 @@ describe('identifier', () => {
               executionType: 'TRANSACTION',
               parameters: [],
               tables: [],
+              parameterMacros: {},
             },
           ];
           expect(actual).to.eql(expected);

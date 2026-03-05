@@ -37,6 +37,7 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
       // we want to sort the postgres params: $1 $2 $3, regardless of the order they appear
       parameters: sort ? statement.parameters.sort() : statement.parameters,
       tables: statement.tables || [],
+      parameterMacros: statement.parameterMacros || {},
     };
     return result;
   });

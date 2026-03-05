@@ -24,6 +24,7 @@ describe('parser', () => {
               end: 14,
               parameters: [],
               tables: [],
+              parameterMacros: {},
               type: 'UNKNOWN',
               executionType: 'UNKNOWN',
             },
@@ -45,6 +46,7 @@ describe('parser', () => {
               end: 19,
               parameters: [],
               tables: [],
+              parameterMacros: {},
               type: 'UNKNOWN',
               executionType: 'UNKNOWN',
             },
@@ -76,6 +78,7 @@ describe('parser', () => {
             executionType: 'LISTING',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ],
         tokens: [
@@ -114,6 +117,7 @@ describe('parser', () => {
             executionType: 'LISTING',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ],
         tokens: [
@@ -153,6 +157,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ],
         tokens: [
@@ -218,6 +223,7 @@ describe('parser', () => {
                   endStatement: ';',
                   parameters: [],
                   tables: [],
+                  parameterMacros: {},
                 },
               ],
               tokens: [
@@ -283,6 +289,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ],
         tokens: [
@@ -340,6 +347,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ],
         tokens: [
@@ -403,6 +411,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ],
         tokens: [
@@ -460,6 +469,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ],
         tokens: [
@@ -522,6 +532,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ],
         tokens: [
@@ -567,6 +578,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ],
         tokens: [
@@ -612,6 +624,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ],
         tokens: [
@@ -657,6 +670,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            parameterMacros: {},
           },
         ],
         tokens: [
