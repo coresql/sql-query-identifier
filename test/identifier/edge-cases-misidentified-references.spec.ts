@@ -19,10 +19,10 @@ describe('edge cases — misidentified references', () => {
         identifyColumns: true,
         dialect: 'mssql',
       });
-      // Actual: [{name:'TOP0', alias:'1'}, {name:'id'}] — TOP becomes a garbage column name
-      const colNames = actual[0].columns.map((col: { name: string }) => col.name);
-      expect(colNames).to.not.include('TOP');
-      expect(colNames).to.not.include('TOP0');
+      expect(actual[0].columns).to.eql([
+        { name: 'name', isWildcard: false },
+        { name: 'id', isWildcard: false },
+      ])
     });
   });
 

@@ -6,6 +6,7 @@ export class TableParser {
   private existing: Set<string> = new Set<string>();
   private parsing = false;
   private waitingForAlias = false;
+  private maybeCommaSep = false;
 
   // keywords that come directly before a table name.
   // v1 - keeping it very simple.
@@ -43,10 +44,17 @@ export class TableParser {
     this.alias = undefined;
     this.parsing = false;
     this.waitingForAlias = false;
+    this.maybeCommaSep = false;
   }
 
   processToken(token: Token, nextToken: Token): TableReference | null {
     const upper = token.value.toUpperCase();
+
+    if (this.maybeCommaSep && token.value === ',') {
+      this.parsing = true;
+      this.maybeCommaSep = false;
+      return null;
+    }
 
     // Waiting for the alias token (after AS or implicit)
     if (this.waitingForAlias) {
@@ -54,7 +62,11 @@ export class TableParser {
         return null;
       }
       this.alias = token.value;
-      return this.finalizeReference();
+      const ref = this.finalizeReference();
+      if (nextToken.value === ',') {
+        this.maybeCommaSep = true;
+      }
+      return ref;
     }
 
     // Actively collecting table name parts
@@ -72,7 +84,11 @@ export class TableParser {
           nextToken.value === '(' ||
           nextToken.value === ')'
         ) {
-          return this.finalizeReference();
+          const ref = this.finalizeReference();
+          if (nextToken.value === ',') {
+            this.maybeCommaSep = true;
+          }
+          return ref;
         }
         this.parsing = false;
         this.waitingForAlias = true;

@@ -829,7 +829,7 @@ function stateMachineStatementParser(
 
   let openBlocks = 0;
 
-  const columnParser = new ColumnParser();
+  const columnParser = new ColumnParser(dialect);
   const tableParser = new TableParser();
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */

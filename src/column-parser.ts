@@ -1,4 +1,4 @@
-import { ColumnReference, Token } from './defines';
+import { ColumnReference, Dialect, Token } from './defines';
 
 export class ColumnParser {
   private parts: string[] = [];
@@ -9,6 +9,10 @@ export class ColumnParser {
   private skipCurrent = false;
   private finished = false;
   private existing: Set<string> = new Set<string>();
+
+  constructor(private dialect: Dialect) {
+
+  }
 
   private STOP_KEYWORDS: Set<string> = new Set<string>([
     'FROM',
@@ -90,7 +94,8 @@ export class ColumnParser {
           (this.parts.length > 0 || !!this.currentPart) &&
           prevNonWhitespaceToken?.value !== '.' &&
           prevNonWhitespaceToken?.value !== ',' &&
-          prevToken?.type === 'whitespace'
+          prevToken?.type === 'whitespace' &&
+          this.maybeIdent(token)
         ) {
           if (!this.alias) {
             this.alias = token.value;
@@ -163,5 +168,13 @@ export class ColumnParser {
     return `${col.schema ?? 'none'}.${col.table ?? 'none'}.${col.name ?? 'none'}:${
       col.alias ?? 'none'
     }`;
+  }
+
+  private maybeIdent(token: Token): boolean {
+    const ch = token.value[0];
+    const startChars = this.dialect === 'mssql' ? ['"', '['] : ['"', '`'];
+    return token.type !== 'string' &&
+      (startChars.includes(ch) ||
+      /[a-zA-Z_]/.test(ch));
   }
 }
