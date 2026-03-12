@@ -22,7 +22,7 @@ describe('edge cases — misidentified references', () => {
       expect(actual[0].columns).to.eql([
         { name: 'name', isWildcard: false },
         { name: 'id', isWildcard: false },
-      ])
+      ]);
     });
   });
 
