@@ -7,6 +7,7 @@ export class TableParser {
   private parsing = false;
   private waitingForAlias = false;
   private maybeCommaSep = false;
+  private parensDepth = 0;
 
   // keywords that come directly before a table name.
   // v1 - keeping it very simple.
@@ -45,6 +46,7 @@ export class TableParser {
     this.parsing = false;
     this.waitingForAlias = false;
     this.maybeCommaSep = false;
+    this.parensDepth = 0;
   }
 
   processToken(token: Token, nextToken: Token): TableReference | null {
@@ -72,27 +74,33 @@ export class TableParser {
     // Actively collecting table name parts
     if (this.parsing) {
       const val = token.value;
-      if (val !== '.') {
-        this.parts.push(val);
-      }
-      if (val !== '.' && nextToken.value !== '.') {
-        const nextUpper = nextToken.value.toUpperCase();
-        if (
-          this.NON_ALIAS_KEYWORDS.has(nextUpper) ||
-          nextToken.type === 'semicolon' ||
-          nextToken.value === ',' ||
-          nextToken.value === '(' ||
-          nextToken.value === ')'
-        ) {
-          const ref = this.finalizeReference();
-          if (nextToken.value === ',') {
-            this.maybeCommaSep = true;
-          }
-          return ref;
+      if (val === '(') {
+        this.parensDepth++;
+      } else if (val === ')') {
+        this.parensDepth--;
+      } else if (this.parensDepth === 0) {
+        if (val !== '.') {
+          this.parts.push(val);
         }
-        this.parsing = false;
-        this.waitingForAlias = true;
-        return null;
+        if (val !== '.' && nextToken.value !== '.') {
+          const nextUpper = nextToken.value.toUpperCase();
+          if (
+            this.NON_ALIAS_KEYWORDS.has(nextUpper) ||
+            nextToken.type === 'semicolon' ||
+            nextToken.value === ',' ||
+            nextToken.value === '(' ||
+            nextToken.value === ')'
+          ) {
+            const ref = this.finalizeReference();
+            if (nextToken.value === ',') {
+              this.maybeCommaSep = true;
+            }
+            return ref;
+          }
+          this.parsing = false;
+          this.waitingForAlias = true;
+          return null;
+        }
       }
     } else if (this.PRE_TABLE_KEYWORDS.has(upper)) {
       this.parsing = true;

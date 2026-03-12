@@ -867,6 +867,12 @@ function stateMachineStatementParser(
           statement.tables.push(table);
         }
       }
+      if (identifyColumns) {
+        const column = columnParser.flush();
+        if (column) {
+          statement.columns.push(column);
+        }
+      }
     },
 
     addToken(token: Token, nextToken: Token) {

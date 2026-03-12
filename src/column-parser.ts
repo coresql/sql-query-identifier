@@ -1,5 +1,18 @@
 import { ColumnReference, Dialect, Token } from './defines';
 
+// States for skipping MSSQL's TOP clause: SELECT TOP n [PERCENT] [WITH TIES]
+// The tokenizer emits digits as individual single-character 'unknown' tokens,
+// so CONSUMING_BARE_VALUE keeps consuming until a non-digit token appears.
+const enum TopState {
+  NONE = 0, // Not in a TOP clause
+  EXPECTING_VALUE = 1, // Seen TOP, expecting a number or '('
+  CONSUMING_NUM = 2, // Inside a bare numeric value (e.g., consuming '1','0' for TOP 10)
+  INSIDE_PARENS = 3, // Inside TOP(...), waiting for closing ')'
+  AFTER_VALUE = 4, // Consumed the TOP value, may see PERCENT / WITH TIES
+  AFTER_PERCENT = 5, // Seen PERCENT, may still see WITH TIES
+  EXPECTING_TIES = 6, // Seen WITH, expecting TIES
+}
+
 export class ColumnParser {
   private parts: string[] = [];
   private currentPart = '';
@@ -10,9 +23,11 @@ export class ColumnParser {
   private finished = false;
   private existing: Set<string> = new Set<string>();
 
-  constructor(private dialect: Dialect) {
+  // State for skipping MSSQL TOP clause
+  private topState: TopState = TopState.NONE;
+  private topParensDepth = 0;
 
-  }
+  constructor(private dialect: Dialect) {}
 
   private STOP_KEYWORDS: Set<string> = new Set<string>([
     'FROM',
@@ -39,21 +54,105 @@ export class ColumnParser {
     this.skipCurrent = false;
   }
 
+  /**
+   * Handles MSSQL TOP clause skipping. Returns true if the token was consumed
+   * by the TOP state machine (i.e., should not be processed as a column token).
+   */
+  private processTopToken(token: Token): boolean {
+    const upper = token.value.toUpperCase();
+
+    switch (this.topState) {
+      case TopState.EXPECTING_VALUE:
+        if (token.value === '(') {
+          this.topParensDepth = 1;
+          this.topState = TopState.INSIDE_PARENS;
+        } else {
+          // Bare value — the tokenizer emits digits as individual characters,
+          // so we enter CONSUMING_BARE_VALUE to eat all remaining digit tokens
+          this.topState = TopState.CONSUMING_NUM;
+        }
+        return true;
+
+      case TopState.CONSUMING_NUM:
+        // Keep consuming digit characters; stop when we see a non-digit
+        if (/^\d+$/.test(token.value)) {
+          return true;
+        }
+        // Non-digit token — the bare number is fully consumed, transition to AFTER_VALUE
+        // and fall through to let AFTER_VALUE handle this token
+        this.topState = TopState.AFTER_VALUE;
+        return this.processTopToken(token);
+
+      case TopState.INSIDE_PARENS:
+        if (token.value === '(') {
+          this.topParensDepth++;
+        } else if (token.value === ')') {
+          this.topParensDepth--;
+          if (this.topParensDepth === 0) {
+            this.topState = TopState.AFTER_VALUE;
+          }
+        }
+        return true;
+
+      case TopState.AFTER_VALUE:
+        if (upper === 'PERCENT') {
+          this.topState = TopState.AFTER_PERCENT;
+          return true;
+        } else if (upper === 'WITH') {
+          this.topState = TopState.EXPECTING_TIES;
+          return true;
+        }
+        // Not a TOP modifier -- done skipping, let normal parsing handle this token
+        this.topState = TopState.NONE;
+        return false;
+
+      case TopState.AFTER_PERCENT:
+        if (upper === 'WITH') {
+          this.topState = TopState.EXPECTING_TIES;
+          return true;
+        }
+        // Done skipping
+        this.topState = TopState.NONE;
+        return false;
+
+      case TopState.EXPECTING_TIES:
+        if (upper === 'TIES') {
+          this.topState = TopState.NONE;
+          return true;
+        }
+        // 'WITH' was not followed by 'TIES' -- done skipping, process this token normally
+        this.topState = TopState.NONE;
+        return false;
+
+      default:
+        return false;
+    }
+  }
+
   processToken(
     token: Token,
     prevToken?: Token,
     prevNonWhitespaceToken?: Token,
   ): ColumnReference | null {
+    // Skip MSSQL TOP clause tokens
+    if (this.topState !== TopState.NONE) {
+      if (this.processTopToken(token)) {
+        return null;
+      }
+    }
+
     if (this.STOP_KEYWORDS.has(token.value.toUpperCase())) {
       this.finished = true;
-      const ref = this.buildReference();
-      if (ref && !this.exists(ref)) {
-        this.addRef(ref);
-        return ref;
-      }
-      return null;
+      return this.finalizeReference();
     } else if (token.value.toUpperCase() === 'DISTINCT') {
       // Skip distinct keyword
+    } else if (
+      this.dialect === 'mssql' &&
+      token.value.toUpperCase() === 'TOP' &&
+      this.topState === TopState.NONE
+    ) {
+      // Enter TOP-skipping mode for MSSQL dialect
+      this.topState = TopState.EXPECTING_VALUE;
     } else if (token.value === '(') {
       if (this.parensDepth === 0) {
         this.skipCurrent = true;
@@ -71,13 +170,7 @@ export class ColumnParser {
       this.alias = token.value;
       this.waitingForAlias = false;
     } else if (token.value === ',' && this.parensDepth === 0) {
-      const ref = this.buildReference();
-      this.resetState();
-      if (ref && !this.exists(ref)) {
-        this.addRef(ref);
-        return ref;
-      }
-      return null;
+      return this.finalizeReference();
     } else if (token.value === '.' && this.parensDepth === 0) {
       // Separator, keep building but don't add to parts
     } else if (
@@ -106,6 +199,23 @@ export class ColumnParser {
       }
     }
 
+    return null;
+  }
+
+  flush(): ColumnReference | null {
+    if (!this.finished) {
+      return this.finalizeReference();
+    }
+    return null;
+  }
+
+  private finalizeReference(): ColumnReference | null {
+    const ref = this.buildReference();
+    this.resetState();
+    if (ref && !this.exists(ref)) {
+      this.addRef(ref);
+      return ref;
+    }
     return null;
   }
 
@@ -173,8 +283,6 @@ export class ColumnParser {
   private maybeIdent(token: Token): boolean {
     const ch = token.value[0];
     const startChars = this.dialect === 'mssql' ? ['"', '['] : ['"', '`'];
-    return token.type !== 'string' &&
-      (startChars.includes(ch) ||
-      /[a-zA-Z_]/.test(ch));
+    return token.type !== 'string' && (startChars.includes(ch) || /[a-zA-Z_]/.test(ch));
   }
 }

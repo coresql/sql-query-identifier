@@ -100,6 +100,145 @@ describe('identifier', () => {
       });
     });
 
+    describe('MSSQL TOP clause', () => {
+      it('should skip TOP with integer', () => {
+        const actual = identify('SELECT TOP 10 name, id FROM users', {
+          identifyColumns: true,
+          dialect: 'mssql',
+        });
+        expect(actual[0].columns).to.eql([
+          { name: 'name', isWildcard: false },
+          { name: 'id', isWildcard: false },
+        ]);
+      });
+
+      it('should skip TOP with parenthesized integer', () => {
+        const actual = identify('SELECT TOP (10) name, id FROM users', {
+          identifyColumns: true,
+          dialect: 'mssql',
+        });
+        expect(actual[0].columns).to.eql([
+          { name: 'name', isWildcard: false },
+          { name: 'id', isWildcard: false },
+        ]);
+      });
+
+      it('should skip TOP with PERCENT', () => {
+        const actual = identify('SELECT TOP 10 PERCENT name, id FROM users', {
+          identifyColumns: true,
+          dialect: 'mssql',
+        });
+        expect(actual[0].columns).to.eql([
+          { name: 'name', isWildcard: false },
+          { name: 'id', isWildcard: false },
+        ]);
+      });
+
+      it('should skip TOP with parenthesized PERCENT', () => {
+        const actual = identify('SELECT TOP (10) PERCENT name, id FROM users', {
+          identifyColumns: true,
+          dialect: 'mssql',
+        });
+        expect(actual[0].columns).to.eql([
+          { name: 'name', isWildcard: false },
+          { name: 'id', isWildcard: false },
+        ]);
+      });
+
+      it('should skip TOP with WITH TIES', () => {
+        const actual = identify('SELECT TOP 10 WITH TIES name, id FROM users', {
+          identifyColumns: true,
+          dialect: 'mssql',
+        });
+        expect(actual[0].columns).to.eql([
+          { name: 'name', isWildcard: false },
+          { name: 'id', isWildcard: false },
+        ]);
+      });
+
+      it('should skip TOP with parenthesized WITH TIES', () => {
+        const actual = identify('SELECT TOP (10) WITH TIES name, id FROM users', {
+          identifyColumns: true,
+          dialect: 'mssql',
+        });
+        expect(actual[0].columns).to.eql([
+          { name: 'name', isWildcard: false },
+          { name: 'id', isWildcard: false },
+        ]);
+      });
+
+      it('should skip TOP with PERCENT and WITH TIES', () => {
+        const actual = identify('SELECT TOP 10 PERCENT WITH TIES name, id FROM users', {
+          identifyColumns: true,
+          dialect: 'mssql',
+        });
+        expect(actual[0].columns).to.eql([
+          { name: 'name', isWildcard: false },
+          { name: 'id', isWildcard: false },
+        ]);
+      });
+
+      it('should skip TOP with parenthesized PERCENT and WITH TIES', () => {
+        const actual = identify('SELECT TOP (10) PERCENT WITH TIES name, id FROM users', {
+          identifyColumns: true,
+          dialect: 'mssql',
+        });
+        expect(actual[0].columns).to.eql([
+          { name: 'name', isWildcard: false },
+          { name: 'id', isWildcard: false },
+        ]);
+      });
+
+      it('should skip TOP with parenthesized expression', () => {
+        const actual = identify('SELECT TOP (@n) name, id FROM users', {
+          identifyColumns: true,
+          dialect: 'mssql',
+        });
+        expect(actual[0].columns).to.eql([
+          { name: 'name', isWildcard: false },
+          { name: 'id', isWildcard: false },
+        ]);
+      });
+
+      it('should handle DISTINCT with TOP', () => {
+        const actual = identify('SELECT DISTINCT TOP 10 name FROM users', {
+          identifyColumns: true,
+          dialect: 'mssql',
+        });
+        expect(actual[0].columns).to.eql([{ name: 'name', isWildcard: false }]);
+      });
+
+      it('should handle TOP with wildcard', () => {
+        const actual = identify('SELECT TOP 10 * FROM users', {
+          identifyColumns: true,
+          dialect: 'mssql',
+        });
+        expect(actual[0].columns).to.eql([{ name: '*', isWildcard: true }]);
+      });
+
+      it('should handle TOP with qualified columns', () => {
+        const actual = identify('SELECT TOP 5 u.name, u.id FROM users u', {
+          identifyColumns: true,
+          dialect: 'mssql',
+        });
+        expect(actual[0].columns).to.eql([
+          { name: 'name', table: 'u', isWildcard: false },
+          { name: 'id', table: 'u', isWildcard: false },
+        ]);
+      });
+
+      it('should handle TOP with column alias', () => {
+        const actual = identify('SELECT TOP 10 name AS n, id FROM users', {
+          identifyColumns: true,
+          dialect: 'mssql',
+        });
+        expect(actual[0].columns).to.eql([
+          { name: 'name', alias: 'n', isWildcard: false },
+          { name: 'id', isWildcard: false },
+        ]);
+      });
+    });
+
     describe('table-qualified columns', () => {
       it('should identify table.column', () => {
         const actual = identify('SELECT users.name FROM users', { identifyColumns: true });
