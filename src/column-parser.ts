@@ -13,6 +13,15 @@ const enum TopState {
   EXPECTING_TIES = 6, // Seen WITH, expecting TIES
 }
 
+// States for skipping PostgreSQL's DISTINCT ON (...) clause:
+// SELECT DISTINCT ON (expr [, ...]) col1, col2 ...
+const enum DistinctOnState {
+  NONE = 0, // Not in a DISTINCT ON clause
+  EXPECTING_ON = 1, // Seen DISTINCT, expecting ON (or not — plain DISTINCT is valid too)
+  EXPECTING_OPEN_PAREN = 2, // Seen ON, expecting '('
+  INSIDE_PARENS = 3, // Inside ON(...), waiting for closing ')'
+}
+
 export class ColumnParser {
   private parts: string[] = [];
   private currentPart = '';
@@ -26,6 +35,10 @@ export class ColumnParser {
   // State for skipping MSSQL TOP clause
   private topState: TopState = TopState.NONE;
   private topParensDepth = 0;
+
+  // State for skipping PostgreSQL DISTINCT ON (...) clause
+  private distinctOnState: DistinctOnState = DistinctOnState.NONE;
+  private distinctOnParensDepth = 0;
 
   constructor(private dialect: Dialect) {}
 
@@ -129,6 +142,50 @@ export class ColumnParser {
     }
   }
 
+  /**
+   * Handles PostgreSQL DISTINCT ON (...) clause skipping. Returns true if the
+   * token was consumed by the state machine (i.e., should not be processed as
+   * a column token).
+   */
+  private processDistinctOnToken(token: Token): boolean {
+    const upper = token.value.toUpperCase();
+
+    switch (this.distinctOnState) {
+      case DistinctOnState.EXPECTING_ON:
+        if (upper === 'ON') {
+          this.distinctOnState = DistinctOnState.EXPECTING_OPEN_PAREN;
+          return true;
+        }
+        // Not ON — this is a plain DISTINCT (already skipped), let normal parsing handle this token
+        this.distinctOnState = DistinctOnState.NONE;
+        return false;
+
+      case DistinctOnState.EXPECTING_OPEN_PAREN:
+        if (token.value === '(') {
+          this.distinctOnParensDepth = 1;
+          this.distinctOnState = DistinctOnState.INSIDE_PARENS;
+          return true;
+        }
+        // No opening paren — unexpected, bail out
+        this.distinctOnState = DistinctOnState.NONE;
+        return false;
+
+      case DistinctOnState.INSIDE_PARENS:
+        if (token.value === '(') {
+          this.distinctOnParensDepth++;
+        } else if (token.value === ')') {
+          this.distinctOnParensDepth--;
+          if (this.distinctOnParensDepth === 0) {
+            this.distinctOnState = DistinctOnState.NONE;
+          }
+        }
+        return true;
+
+      default:
+        return false;
+    }
+  }
+
   processToken(
     token: Token,
     prevToken?: Token,
@@ -141,11 +198,21 @@ export class ColumnParser {
       }
     }
 
+    // Skip PostgreSQL DISTINCT ON (...) clause tokens
+    if (this.distinctOnState !== DistinctOnState.NONE) {
+      if (this.processDistinctOnToken(token)) {
+        return null;
+      }
+    }
+
     if (this.STOP_KEYWORDS.has(token.value.toUpperCase())) {
       this.finished = true;
       return this.finalizeReference();
     } else if (token.value.toUpperCase() === 'DISTINCT') {
-      // Skip distinct keyword
+      // Skip distinct keyword; for psql, also watch for DISTINCT ON (...)
+      if (this.dialect === 'psql') {
+        this.distinctOnState = DistinctOnState.EXPECTING_ON;
+      }
     } else if (
       this.dialect === 'mssql' &&
       token.value.toUpperCase() === 'TOP' &&
