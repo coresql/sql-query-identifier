@@ -1566,5 +1566,33 @@ describe('identifier', () => {
 
       expect(actual).to.eql(expected);
     });
+
+    it('should not detect parameters inside MySQL hash comments', () => {
+      const actual = identify(
+        'SELECT * FROM t WHERE x > 1 # is this right? maybe?',
+        { dialect: 'mysql' },
+      );
+      expect(actual).to.have.length(1);
+      expect(actual[0].type).to.eql('SELECT');
+      expect(actual[0].parameters).to.eql([]);
+    });
+
+    it('should still detect real parameters outside MySQL hash comments', () => {
+      const actual = identify(
+        'SELECT * FROM t WHERE x = ? # a comment with ?',
+        { dialect: 'mysql' },
+      );
+      expect(actual).to.have.length(1);
+      expect(actual[0].parameters).to.eql(['?']);
+    });
+
+    it('should not treat # as comment for non-MySQL dialects', () => {
+      const actual = identify(
+        'SELECT * FROM t WHERE x = ? # not a comment?',
+        { dialect: 'generic' },
+      );
+      // generic does not use hash comments, so both ? are detected as parameters
+      expect(actual[0].parameters).to.eql(['?', '?']);
+    });
   });
 });

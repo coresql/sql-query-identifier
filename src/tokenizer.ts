@@ -96,7 +96,7 @@ export function scanToken(
     return scanWhitespace(state);
   }
 
-  if (isCommentInline(ch, state)) {
+  if (isCommentInline(ch, state, dialect)) {
     return scanCommentInline(state);
   }
 
@@ -524,7 +524,12 @@ function isQuotedIdentifier(ch: Char, dialect: Dialect): boolean {
   return startQuoteChars.includes(ch);
 }
 
-function isCommentInline(ch: Char, state: State): boolean {
+function isCommentInline(ch: Char, state: State, dialect: Dialect = 'generic'): boolean {
+  // MySQL supports # as an inline comment marker
+  if (ch === '#' && dialect === 'mysql') {
+    return true;
+  }
+
   let isComment = ch === '-';
   if (!isComment) {
     return false;
