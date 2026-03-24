@@ -22,6 +22,22 @@ describe('scan', () => {
     expect(actual).to.eql(expected);
   });
 
+  it('scans MySQL hash comments as inline comments', () => {
+    const actual = scanToken(initState('# my comment'), 'mysql');
+    const expected = {
+      type: 'comment-inline',
+      value: '# my comment',
+      start: 0,
+      end: 11,
+    };
+    expect(actual).to.eql(expected);
+  });
+
+  it('does not treat # as comment for non-MySQL dialects', () => {
+    const actual = scanToken(initState('#'));
+    expect(actual.type).to.not.eql('comment-inline');
+  });
+
   it('scans block comments', () => {
     const commentBlock = '/*\n * This is my comment block\n */';
     const actual = scanToken(initState(commentBlock));
