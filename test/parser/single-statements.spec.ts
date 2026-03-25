@@ -820,7 +820,7 @@ describe('parser', () => {
 
       it('should extract mssql parameters', () => {
         const actual = parse(
-          'select x from a where x = :foo',
+          'select x from a where x = @foo',
           true,
           'mssql',
           false,
@@ -843,13 +843,13 @@ describe('parser', () => {
           },
           {
             type: 'parameter',
-            value: ':foo',
+            value: '@foo',
             start: 26,
             end: 29,
           },
         ];
         expect(actual.tokens).to.eql(expected);
-        expect(actual.body[0].parameters).to.eql([':foo']);
+        expect(actual.body[0].parameters).to.eql(['@foo']);
       });
 
       it('should not identify params in a comment', () => {
@@ -892,7 +892,7 @@ describe('parser', () => {
 
       it('should extract multiple mssql parameters', () => {
         const actual = parse(
-          'select x from a where x = :foo and y = :bar',
+          'select x from a where x = @foo and y = @bar',
           true,
           'mssql',
           false,
@@ -915,7 +915,7 @@ describe('parser', () => {
           },
           {
             type: 'parameter',
-            value: ':foo',
+            value: '@foo',
             start: 26,
             end: 29,
           },
@@ -927,13 +927,13 @@ describe('parser', () => {
           },
           {
             type: 'parameter',
-            value: ':bar',
+            value: '@bar',
             start: 39,
             end: 42,
           },
         ];
         expect(actual.tokens).to.eql(expected);
-        expect(actual.body[0].parameters).to.eql([':foo', ':bar']);
+        expect(actual.body[0].parameters).to.eql(['@foo', '@bar']);
       });
     });
   });

@@ -372,7 +372,8 @@ describe('Regression tests', () => {
       { strict: false, dialect: 'mssql' as Dialect },
     );
     result.forEach((res) => {
-      expect(res.parameters.length).to.equal(0);
+      // :: cast syntax should not produce colon-prefixed parameters
+      expect(res.parameters.every((param) => !param.startsWith(':'))).to.equal(true);
     });
   });
 

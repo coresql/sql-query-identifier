@@ -1139,7 +1139,12 @@ export function defaultParamTypesFor(dialect: Dialect): ParamTypes {
       };
     case 'mssql':
       return {
+        named: ['@', ':'],
+      };
+    case 'oracle':
+      return {
         named: [':'],
+        numbered: [':'],
       };
     case 'bigquery':
       return {
@@ -1151,7 +1156,7 @@ export function defaultParamTypesFor(dialect: Dialect): ParamTypes {
       return {
         positional: true,
         numbered: ['?'],
-        named: [':', '@'],
+        named: [':', '@', '$'],
       };
     default:
       return {
