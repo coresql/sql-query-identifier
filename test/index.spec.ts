@@ -19,6 +19,7 @@ describe('identify', () => {
         executionType: 'LISTING',
         parameters: ['$1', '$2'],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -42,6 +43,7 @@ describe('identify', () => {
         executionType: 'LISTING',
         parameters: ['?', '$1', ':fizzz', ':"buzz buzz"', '{fooo}'],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -62,6 +64,7 @@ describe('identify', () => {
         executionType: 'LISTING',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -83,6 +86,7 @@ describe('identify', () => {
         executionType: 'LISTING',
         parameters: ['$1'],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -98,9 +102,229 @@ describe('identify', () => {
         type: 'SELECT',
         executionType: 'LISTING',
         parameters: [],
-        tables: ['foo', 'bar'],
+        tables: [{ name: 'foo' }, { name: 'bar' }],
+        columns: [],
       },
     ]);
+  });
+
+  it('should identify tables and schema', () => {
+    expect(
+      identify('SELECT * FROM public.foo JOIN public.bar ON foo.id = bar.id', {
+        identifyTables: true,
+      }),
+    ).to.eql([
+      {
+        start: 0,
+        end: 58,
+        text: 'SELECT * FROM public.foo JOIN public.bar ON foo.id = bar.id',
+        type: 'SELECT',
+        executionType: 'LISTING',
+        parameters: [],
+        tables: [
+          { name: 'foo', schema: 'public' },
+          { name: 'bar', schema: 'public' },
+        ],
+        columns: [],
+      },
+    ]);
+  });
+
+  describe('Table identification with qualified names', () => {
+    it('should identify single-part table names', () => {
+      const result = identify('SELECT * FROM users', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users' }]);
+    });
+
+    it('should identify two-part qualified names (schema.table)', () => {
+      const result = identify('SELECT * FROM public.users', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users', schema: 'public' }]);
+    });
+
+    it('should identify three-part qualified names (database.schema.table)', () => {
+      const result = identify('SELECT * FROM mydb.public.users', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users', schema: 'public', database: 'mydb' }]);
+    });
+
+    it('should handle mixed qualification levels in JOINs', () => {
+      const result = identify(
+        'SELECT * FROM users JOIN public.orders ON users.id = orders.user_id',
+        { identifyTables: true },
+      );
+      expect(result[0].tables).to.eql([{ name: 'users' }, { name: 'orders', schema: 'public' }]);
+    });
+
+    it('should identify multiple three-part qualified names', () => {
+      const result = identify('SELECT * FROM db1.schema1.table1 JOIN db2.schema2.table2', {
+        identifyTables: true,
+      });
+      expect(result[0].tables).to.eql([
+        { name: 'table1', schema: 'schema1', database: 'db1' },
+        { name: 'table2', schema: 'schema2', database: 'db2' },
+      ]);
+    });
+
+    it('should identify qualified table names in INSERT statements', () => {
+      const result = identify('INSERT INTO public.users (id, name) VALUES (1, "test")', {
+        identifyTables: true,
+      });
+      expect(result[0].tables).to.eql([{ name: 'users', schema: 'public' }]);
+    });
+
+    it('should handle multiple JOINs with different qualification levels', () => {
+      const result = identify(
+        'SELECT * FROM users u JOIN public.orders o ON u.id = o.user_id JOIN db.schema.products p ON o.product_id = p.id',
+        { identifyTables: true },
+      );
+      expect(result[0].tables).to.eql([
+        { name: 'users', alias: 'u' },
+        { name: 'orders', schema: 'public', alias: 'o' },
+        { name: 'products', schema: 'schema', database: 'db', alias: 'p' },
+      ]);
+    });
+
+    it('should not duplicate table references without aliases', () => {
+      const result = identify('SELECT * FROM users JOIN users ON users.id = users.manager_id', {
+        identifyTables: true,
+      });
+      expect(result[0].tables).to.eql([{ name: 'users' }]);
+    });
+
+    it('should treat same table with different aliases as separate entries', () => {
+      const result = identify('SELECT * FROM users u1 JOIN users u2 ON u1.id = u2.manager_id', {
+        identifyTables: true,
+      });
+      expect(result[0].tables).to.eql([
+        { name: 'users', alias: 'u1' },
+        { name: 'users', alias: 'u2' },
+      ]);
+    });
+
+    it('should identify tables with LEFT JOIN', () => {
+      const result = identify(
+        'SELECT * FROM public.customers LEFT JOIN orders ON customers.id = orders.customer_id',
+        { identifyTables: true },
+      );
+      expect(result[0].tables).to.eql([
+        { name: 'customers', schema: 'public' },
+        { name: 'orders' },
+      ]);
+    });
+
+    it('should identify tables with RIGHT JOIN', () => {
+      const result = identify(
+        'SELECT * FROM orders RIGHT JOIN db.schema.products ON orders.product_id = products.id',
+        { identifyTables: true },
+      );
+      expect(result[0].tables).to.eql([
+        { name: 'orders' },
+        { name: 'products', schema: 'schema', database: 'db' },
+      ]);
+    });
+
+    it('should identify tables with INNER JOIN', () => {
+      const result = identify(
+        'SELECT * FROM users INNER JOIN public.profiles ON users.id = profiles.user_id',
+        { identifyTables: true },
+      );
+      expect(result[0].tables).to.eql([{ name: 'users' }, { name: 'profiles', schema: 'public' }]);
+    });
+
+    it('should identify INSERT INTO with three-part qualified name', () => {
+      const result = identify('INSERT INTO mydb.dbo.employees (name, age) VALUES ("John", 30)', {
+        identifyTables: true,
+      });
+      expect(result[0].tables).to.eql([{ name: 'employees', schema: 'dbo', database: 'mydb' }]);
+    });
+
+    it('should handle complex query with multiple qualification levels', () => {
+      const result = identify(
+        'SELECT * FROM users JOIN public.orders ON users.id = orders.user_id JOIN db.schema.products ON orders.product_id = products.id',
+        { identifyTables: true },
+      );
+      expect(result[0].tables).to.eql([
+        { name: 'users' },
+        { name: 'orders', schema: 'public' },
+        { name: 'products', schema: 'schema', database: 'db' },
+      ]);
+    });
+  });
+
+  describe('Table alias identification', () => {
+    it('should identify explicit AS alias', () => {
+      const result = identify('SELECT * FROM users AS u', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users', alias: 'u' }]);
+    });
+
+    it('should identify implicit alias', () => {
+      const result = identify('SELECT * FROM users u', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users', alias: 'u' }]);
+    });
+
+    it('should identify explicit alias on schema-qualified table', () => {
+      const result = identify('SELECT * FROM public.users AS u', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users', schema: 'public', alias: 'u' }]);
+    });
+
+    it('should identify implicit alias on schema-qualified table', () => {
+      const result = identify('SELECT * FROM public.users u', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users', schema: 'public', alias: 'u' }]);
+    });
+
+    it('should identify alias on three-part qualified table', () => {
+      const result = identify('SELECT * FROM mydb.public.users u', { identifyTables: true });
+      expect(result[0].tables).to.eql([
+        { name: 'users', schema: 'public', database: 'mydb', alias: 'u' },
+      ]);
+    });
+
+    it('should identify explicit alias on three-part qualified table', () => {
+      const result = identify('SELECT * FROM mydb.public.users AS u', { identifyTables: true });
+      expect(result[0].tables).to.eql([
+        { name: 'users', schema: 'public', database: 'mydb', alias: 'u' },
+      ]);
+    });
+
+    it('should not treat WHERE as an alias', () => {
+      const result = identify('SELECT * FROM users WHERE id = 1', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users' }]);
+    });
+
+    it('should not treat ON as an alias', () => {
+      const result = identify('SELECT * FROM users JOIN orders ON users.id = orders.user_id', {
+        identifyTables: true,
+      });
+      expect(result[0].tables).to.eql([{ name: 'users' }, { name: 'orders' }]);
+    });
+
+    it('should not treat JOIN keywords as an alias', () => {
+      const result = identify('SELECT * FROM users LEFT JOIN orders ON users.id = orders.user_id', {
+        identifyTables: true,
+      });
+      expect(result[0].tables).to.eql([{ name: 'users' }, { name: 'orders' }]);
+    });
+
+    it('should handle mixed explicit and implicit aliases', () => {
+      const result = identify('SELECT * FROM users AS u JOIN public.orders o ON u.id = o.user_id', {
+        identifyTables: true,
+      });
+      expect(result[0].tables).to.eql([
+        { name: 'users', alias: 'u' },
+        { name: 'orders', schema: 'public', alias: 'o' },
+      ]);
+    });
+
+    it('should handle alias followed by WHERE clause', () => {
+      const result = identify('SELECT * FROM users u WHERE u.id = 1', { identifyTables: true });
+      expect(result[0].tables).to.eql([{ name: 'users', alias: 'u' }]);
+    });
+
+    it('should not capture alias for INSERT INTO', () => {
+      const result = identify('INSERT INTO users (name) VALUES ("test")', {
+        identifyTables: true,
+      });
+      expect(result[0].tables).to.eql([{ name: 'users' }]);
+    });
   });
 });
 
@@ -177,6 +401,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -191,6 +416,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -205,6 +431,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -219,6 +446,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -233,6 +461,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -247,6 +476,7 @@ describe('Transaction statements', () => {
         executionType: 'ANON_BLOCK',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -267,6 +497,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -279,6 +510,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -293,6 +525,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -305,6 +538,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -317,6 +551,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -329,6 +564,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -343,6 +579,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });
@@ -357,6 +594,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -369,6 +607,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -381,6 +620,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
 
@@ -395,6 +635,7 @@ describe('Transaction statements', () => {
         executionType: 'TRANSACTION',
         parameters: [],
         tables: [],
+        columns: [],
       },
     ]);
   });

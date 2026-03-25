@@ -94,10 +94,26 @@ export interface ParamTypes {
   custom?: string[];
 }
 
+export interface ColumnReference {
+  name: string;
+  alias?: string;
+  table?: string;
+  schema?: string;
+  isWildcard: boolean;
+}
+
+export interface TableReference {
+  name: string;
+  schema?: string;
+  database?: string;
+  alias?: string;
+}
+
 export interface IdentifyOptions {
   strict?: boolean;
   dialect?: Dialect;
   identifyTables?: boolean;
+  identifyColumns?: boolean;
   paramTypes?: ParamTypes;
 }
 
@@ -108,7 +124,8 @@ export interface IdentifyResult {
   type: StatementType;
   executionType: ExecutionType;
   parameters: string[];
-  tables: string[];
+  tables: TableReference[];
+  columns: ColumnReference[];
 }
 
 export interface Statement {
@@ -122,7 +139,8 @@ export interface Statement {
   algorithm?: number;
   sqlSecurity?: number;
   parameters: string[];
-  tables: string[];
+  tables: TableReference[];
+  columns: ColumnReference[];
   isCte?: boolean;
 }
 

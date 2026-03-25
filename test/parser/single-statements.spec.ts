@@ -24,6 +24,7 @@ describe('parser', () => {
               end: 14,
               parameters: [],
               tables: [],
+              columns: [],
               type: 'UNKNOWN',
               executionType: 'UNKNOWN',
             },
@@ -45,6 +46,7 @@ describe('parser', () => {
               end: 19,
               parameters: [],
               tables: [],
+              columns: [],
               type: 'UNKNOWN',
               executionType: 'UNKNOWN',
             },
@@ -76,6 +78,7 @@ describe('parser', () => {
             executionType: 'LISTING',
             parameters: [],
             tables: [],
+            columns: [],
           },
         ],
         tokens: [
@@ -114,6 +117,7 @@ describe('parser', () => {
             executionType: 'LISTING',
             parameters: [],
             tables: [],
+            columns: [],
           },
         ],
         tokens: [
@@ -153,6 +157,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            columns: [],
           },
         ],
         tokens: [
@@ -218,6 +223,7 @@ describe('parser', () => {
                   endStatement: ';',
                   parameters: [],
                   tables: [],
+                  columns: [],
                 },
               ],
               tokens: [
@@ -283,6 +289,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            columns: [],
           },
         ],
         tokens: [
@@ -340,6 +347,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            columns: [],
           },
         ],
         tokens: [
@@ -403,6 +411,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            columns: [],
           },
         ],
         tokens: [
@@ -460,6 +469,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            columns: [],
           },
         ],
         tokens: [
@@ -522,6 +532,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            columns: [],
           },
         ],
         tokens: [
@@ -567,6 +578,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            columns: [],
           },
         ],
         tokens: [
@@ -612,6 +624,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            columns: [],
           },
         ],
         tokens: [
@@ -657,6 +670,7 @@ describe('parser', () => {
             endStatement: ';',
             parameters: [],
             tables: [],
+            columns: [],
           },
         ],
         tokens: [
@@ -730,6 +744,7 @@ describe('parser', () => {
           true,
           'psql',
           false,
+          false,
           defaultParamTypesFor('psql'),
         );
         actual.tokens = aggregateUnknownTokens(actual.tokens);
@@ -762,6 +777,7 @@ describe('parser', () => {
           'select x from a where x = $1 and y = $2',
           true,
           'psql',
+          false,
           false,
           defaultParamTypesFor('psql'),
         );
@@ -807,6 +823,7 @@ describe('parser', () => {
           'select x from a where x = :foo',
           true,
           'mssql',
+          false,
           false,
           defaultParamTypesFor('mssql'),
         );
@@ -878,6 +895,7 @@ describe('parser', () => {
           'select x from a where x = :foo and y = :bar',
           true,
           'mssql',
+          false,
           false,
           defaultParamTypesFor('mssql'),
         );

@@ -11,10 +11,13 @@ import type {
   ConcreteStatement,
   ParamTypes,
 } from './defines';
+import { ColumnParser } from './column-parser';
+import { TableParser } from './table-parser';
 
 interface StatementParser {
   addToken: (token: Token, nextToken: Token) => void;
   getStatement: () => Statement;
+  flush: () => void;
 }
 
 /**
@@ -102,10 +105,6 @@ const statementsWithEnds = [
   'UNKNOWN',
 ];
 
-// keywords that come directly before a table name.
-// v1 - keeping it very simple.
-const PRE_TABLE_KEYWORDS = /^from$|^join$|^into$/i;
-
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
   psql: ['BEGIN', 'CASE', 'LOOP', 'IF'],
@@ -120,6 +119,7 @@ interface ParseOptions {
   isStrict: boolean;
   dialect: Dialect;
   identifyTables: boolean;
+  identifyColumns: boolean;
 }
 
 function createInitialStatement(): Statement {
@@ -128,6 +128,7 @@ function createInitialStatement(): Statement {
     end: 0,
     parameters: [],
     tables: [],
+    columns: [],
   };
 }
 
@@ -148,6 +149,7 @@ export function parse(
   isStrict = true,
   dialect: Dialect = 'generic',
   identifyTables = false,
+  identifyColumns = false,
   paramTypes?: ParamTypes,
 ): ParseResult {
   const topLevelState = initState({ input });
@@ -211,6 +213,7 @@ export function parse(
           executionType: 'UNKNOWN',
           parameters: [],
           tables: [],
+          columns: [],
         });
         cteState.isCte = false;
         cteState.asSeen = false;
@@ -252,6 +255,7 @@ export function parse(
           isStrict,
           dialect,
           identifyTables,
+          identifyColumns,
         });
         if (cteState.isCte) {
           statementParser.getStatement().start = cteState.state.start;
@@ -274,6 +278,7 @@ export function parse(
 
       const statement = statementParser.getStatement();
       if (statement.endStatement) {
+        statementParser.flush();
         statement.end = token.end;
         topLevelStatement.body.push(statement as ConcreteStatement);
         statementParser = null;
@@ -283,6 +288,7 @@ export function parse(
 
   // last statement without ending key
   if (statementParser) {
+    statementParser.flush();
     const statement = statementParser.getStatement();
     if (!statement.endStatement) {
       statement.end = topLevelStatement.end;
@@ -812,7 +818,7 @@ function createUnknownStatementParser(options: ParseOptions) {
 function stateMachineStatementParser(
   statement: Statement,
   steps: Step[],
-  { isStrict, dialect, identifyTables }: ParseOptions,
+  { isStrict, dialect, identifyTables, identifyColumns }: ParseOptions,
 ): StatementParser {
   let currentStepIndex = 0;
   let prevToken: Token | undefined;
@@ -822,6 +828,9 @@ function stateMachineStatementParser(
   let anonBlockStarted = false;
 
   let openBlocks = 0;
+
+  const columnParser = new ColumnParser(dialect);
+  const tableParser = new TableParser();
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
   const isValidToken = (step: Step, token: Token) => {
@@ -849,6 +858,21 @@ function stateMachineStatementParser(
   return {
     getStatement() {
       return statement;
+    },
+
+    flush() {
+      if (identifyTables) {
+        const table = tableParser.flush();
+        if (table) {
+          statement.tables.push(table);
+        }
+      }
+      if (identifyColumns) {
+        const column = columnParser.flush();
+        if (column) {
+          statement.columns.push(column);
+        }
+      }
     },
 
     addToken(token: Token, nextToken: Token) {
@@ -912,15 +936,17 @@ function stateMachineStatementParser(
         }
       }
 
-      if (
-        identifyTables &&
-        PRE_TABLE_KEYWORDS.exec(token.value) &&
-        !statement.isCte &&
-        statement.type?.match(/SELECT|INSERT/)
-      ) {
-        const tableValue = nextToken.value;
-        if (!statement.tables.includes(tableValue)) {
-          statement.tables.push(tableValue);
+      if (identifyTables && !statement.isCte && statement.type?.match(/SELECT|INSERT/)) {
+        const table = tableParser.processToken(token, nextToken);
+        if (table) {
+          statement.tables.push(table);
+        }
+      }
+
+      if (identifyColumns && statement.type === 'SELECT' && !columnParser.shouldStop()) {
+        const ref = columnParser.processToken(token, prevToken, prevNonWhitespaceToken);
+        if (ref) {
+          statement.columns.push(ref);
         }
       }
 
