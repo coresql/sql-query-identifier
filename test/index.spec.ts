@@ -333,7 +333,7 @@ describe('getExecutionType', () => {
     expect(getExecutionType('SELECT')).to.equal('LISTING');
   });
 
-  ['UPDATE', 'DELETE', 'INSERT', 'TRUNCATE'].forEach((type) => {
+  ['UPDATE', 'DELETE', 'INSERT', 'TRUNCATE', 'DELIMITER'].forEach((type) => {
     it(`should return MODIFICATION for ${type}`, () => {
       expect(getExecutionType(type)).to.equal('MODIFICATION');
     });

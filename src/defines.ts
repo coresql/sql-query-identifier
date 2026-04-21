@@ -75,6 +75,7 @@ export type StatementType =
   | 'COMMIT'
   | 'ROLLBACK'
   | 'ANON_BLOCK'
+  | 'DELIMITER'
   | 'UNKNOWN';
 
 export type ExecutionType =
@@ -142,6 +143,7 @@ export interface Statement {
   tables: TableReference[];
   columns: ColumnReference[];
   isCte?: boolean;
+  newDelimiter?: string;
 }
 
 export interface ConcreteStatement extends Statement {

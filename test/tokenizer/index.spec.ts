@@ -281,6 +281,38 @@ describe('scan', () => {
     expect(actual).to.eql(expected);
   });
 
+  it('does not treat $$ as a dollar-quoted string for mysql dialect', () => {
+    const actual = scanToken(initState('$$'), 'mysql');
+    expect(actual.type).to.not.eql('string');
+  });
+
+  describe('custom delimiter', () => {
+    it('defaults to ; as semicolon token', () => {
+      const actual = scanToken(initState(';'));
+      expect(actual).to.eql({ type: 'semicolon', value: ';', start: 0, end: 0 });
+    });
+
+    it('emits semicolon token for single-char custom delimiter', () => {
+      const actual = scanToken(initState('$'), 'mysql', undefined, '$');
+      expect(actual).to.eql({ type: 'semicolon', value: '$', start: 0, end: 0 });
+    });
+
+    it('emits semicolon token for multi-char custom delimiter', () => {
+      const actual = scanToken(initState('$$rest'), 'mysql', undefined, '$$');
+      expect(actual).to.eql({ type: 'semicolon', value: '$$', start: 0, end: 1 });
+    });
+
+    it('does not treat ; as semicolon when delimiter is different', () => {
+      const actual = scanToken(initState(';'), 'mysql', undefined, '$$');
+      expect(actual.type).to.not.eql('semicolon');
+    });
+
+    it('handles // as delimiter', () => {
+      const actual = scanToken(initState('//rest'), 'mysql', undefined, '//');
+      expect(actual).to.eql({ type: 'semicolon', value: '//', start: 0, end: 1 });
+    });
+  });
+
   describe('tokenizing parameters', () => {
     describe('tokenizing just parameter starting character', () => {
       [

@@ -95,6 +95,7 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   ROLLBACK: 'TRANSACTION',
   UNKNOWN: 'UNKNOWN',
   ANON_BLOCK: 'ANON_BLOCK',
+  DELIMITER: 'MODIFICATION',
 };
 
 const statementsWithEnds = [
@@ -132,11 +133,11 @@ function createInitialStatement(): Statement {
   };
 }
 
-function nextNonWhitespaceToken(state: State, dialect: Dialect): Token {
+function nextNonWhitespaceToken(state: State, dialect: Dialect, delimiter: string): Token {
   let token: Token;
   do {
     state = initState({ prevState: state });
-    token = scanToken(state, dialect);
+    token = scanToken(state, dialect, undefined, delimiter);
   } while (token.type === 'whitespace');
   return token;
 }
@@ -163,6 +164,7 @@ export function parse(
 
   let prevState: State = topLevelState;
   let statementParser: StatementParser | null = null;
+  let currentDelimiter = ';';
   const cteState: {
     isCte: boolean;
     asSeen: boolean;
@@ -183,8 +185,8 @@ export function parse(
 
   while (prevState.position < topLevelState.end) {
     const tokenState = initState({ prevState });
-    const token = scanToken(tokenState, dialect, paramTypes);
-    const nextToken = nextNonWhitespaceToken(tokenState, dialect);
+    const token = scanToken(tokenState, dialect, paramTypes, currentDelimiter);
+    const nextToken = nextNonWhitespaceToken(tokenState, dialect, currentDelimiter);
 
     if (!statementParser) {
       // ignore blank tokens before the start of a CTE / not part of a statement
@@ -279,8 +281,15 @@ export function parse(
       const statement = statementParser.getStatement();
       if (statement.endStatement) {
         statementParser.flush();
-        statement.end = token.end;
+        if (statement.type !== 'DELIMITER') {
+          // DELIMITER sets its own `end` to the last delimiter-value char
+          // (end-of-line is not included in the statement text).
+          statement.end = token.end;
+        }
         topLevelStatement.body.push(statement as ConcreteStatement);
+        if (statement.type === 'DELIMITER' && statement.newDelimiter) {
+          currentDelimiter = statement.newDelimiter;
+        }
         statementParser = null;
       }
     }
@@ -293,6 +302,9 @@ export function parse(
     if (!statement.endStatement) {
       statement.end = topLevelStatement.end;
       topLevelStatement.body.push(statement as ConcreteStatement);
+      if (statement.type === 'DELIMITER' && statement.newDelimiter) {
+        currentDelimiter = statement.newDelimiter;
+      }
     }
   }
 
@@ -364,6 +376,11 @@ function createStatementParserByToken(
       case 'DECLARE':
         if (options.dialect === 'oracle') {
           return createBlockStatementParser(options);
+        }
+        break;
+      case 'DELIMITER':
+        if (options.dialect === 'mysql') {
+          return createDelimiterStatementParser();
         }
         break;
       default:
@@ -796,6 +813,103 @@ function createRollbackStatementParser(options: ParseOptions) {
   return stateMachineStatementParser(statement, steps, options);
 }
 
+function createDelimiterStatementParser(): StatementParser {
+  const statement: Statement = {
+    start: -1,
+    end: 0,
+    type: 'DELIMITER',
+    executionType: 'MODIFICATION',
+    parameters: [],
+    tables: [],
+    columns: [],
+  };
+
+  let delimiterStart: number | undefined;
+  let lastMeaningfulEnd: number | undefined;
+  let lastMeaningfulValue: string | undefined;
+  let finalized = false;
+
+  const captureDelimiter = () => {
+    if (finalized || delimiterStart === undefined || lastMeaningfulEnd === undefined) {
+      return;
+    }
+    let raw = lastMeaningfulValue ?? '';
+    // Strip matching surrounding quotes (e.g. DELIMITER "//", DELIMITER '//').
+    if (raw.length >= 2 && (raw[0] === '"' || raw[0] === "'") && raw[raw.length - 1] === raw[0]) {
+      raw = raw.slice(1, -1);
+    }
+    if (raw.length > 0) {
+      statement.newDelimiter = raw;
+    }
+    statement.end = lastMeaningfulEnd;
+    finalized = true;
+  };
+
+  return {
+    getStatement() {
+      return statement;
+    },
+
+    flush() {
+      // Reached EOF without seeing a newline — capture whatever we have.
+      // We intentionally do not set `endStatement` here so that the parse()
+      // trailing-statement branch still pushes this statement to the body.
+      captureDelimiter();
+    },
+
+    addToken(token: Token) {
+      if (statement.endStatement) {
+        return;
+      }
+
+      if (statement.start < 0) {
+        // first token is the DELIMITER keyword
+        if (token.type === 'keyword' && token.value.toUpperCase() === 'DELIMITER') {
+          statement.start = token.start;
+        }
+        return;
+      }
+
+      const endStatement = () => {
+        captureDelimiter();
+        // Truthy sentinel that tells parse() to flush this statement.
+        statement.endStatement = '\n';
+        if (lastMeaningfulEnd === undefined) {
+          // DELIMITER keyword with no value; end the statement just before
+          // the terminating whitespace/comment token.
+          statement.end = token.start - 1;
+        }
+      };
+
+      if (token.type === 'whitespace') {
+        if (/[\r\n]/.test(token.value)) {
+          endStatement();
+        }
+        return;
+      }
+
+      if (token.type === 'comment-inline') {
+        // Inline comments consume through end-of-line; treat as line end.
+        endStatement();
+        return;
+      }
+
+      if (token.type === 'comment-block') {
+        // Block comments are allowed between DELIMITER and the value; skip.
+        return;
+      }
+
+      if (delimiterStart === undefined) {
+        delimiterStart = token.start;
+        lastMeaningfulValue = token.value;
+      } else {
+        lastMeaningfulValue = (lastMeaningfulValue ?? '') + token.value;
+      }
+      lastMeaningfulEnd = token.end;
+    },
+  };
+}
+
 function createUnknownStatementParser(options: ParseOptions) {
   const statement = createInitialStatement();
 
@@ -887,7 +1001,7 @@ function stateMachineStatementParser(
         (!statementsWithEnds.includes(statement.type) ||
           (openBlocks === 0 && (statement.type === 'UNKNOWN' || statement.canEnd)))
       ) {
-        statement.endStatement = ';';
+        statement.endStatement = token.value;
         return;
       }
 

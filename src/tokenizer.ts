@@ -72,11 +72,12 @@ const KEYWORDS = [
   'TRIGGERS',
   'VARIABLES',
   'WARNINGS',
+  'DELIMITER',
 ];
 
-const INDIVIDUALS: Record<string, Token['type']> = {
-  ';': 'semicolon',
-};
+// The semicolon token is now emitted by the delimiter-match path in
+// scanToken, so it can handle arbitrary terminators like '$$' or '//'.
+const INDIVIDUALS: Record<string, Token['type']> = {};
 
 const ENDTOKENS: Record<string, Char> = {
   '"': '"',
@@ -89,6 +90,7 @@ export function scanToken(
   state: State,
   dialect: Dialect = 'generic',
   paramTypes: ParamTypes = { positional: true },
+  delimiter = ';',
 ): Token {
   const ch = read(state);
 
@@ -112,12 +114,23 @@ export function scanToken(
     return scanParameter(state, dialect, paramTypes);
   }
 
-  if (isDollarQuotedString(state)) {
+  // MySQL/MariaDB does not support dollar-quoted strings, and treating `$$`
+  // as one would conflict with its use as a custom DELIMITER terminator.
+  if (dialect !== 'mysql' && isDollarQuotedString(state)) {
     return scanDollarQuotedString(state);
   }
 
   if (isQuotedIdentifier(ch, dialect) && ch !== null) {
     return scanQuotedIdentifier(state, ENDTOKENS[ch]);
+  }
+
+  // Match the current statement terminator. Handles ';', '$', '$$', '//', etc.
+  // Runs before scanIndividualCharacter so it's the single source of
+  // terminator tokens. Word-like delimiters would be consumed by scanWord
+  // above, so only symbol delimiters are fully supported.
+  const delimiterToken = scanDelimiter(state, delimiter);
+  if (delimiterToken) {
+    return delimiterToken;
   }
 
   if (isLetter(ch)) {
@@ -130,6 +143,24 @@ export function scanToken(
   }
 
   return skipChar(state);
+}
+
+function scanDelimiter(state: State, delimiter: string): Token | null {
+  if (!delimiter) {
+    return null;
+  }
+  if (state.input.slice(state.start, state.start + delimiter.length) !== delimiter) {
+    return null;
+  }
+  for (let i = 0; i < delimiter.length - 1; i++) {
+    read(state);
+  }
+  return {
+    type: 'semicolon',
+    value: delimiter,
+    start: state.start,
+    end: state.start + delimiter.length - 1,
+  };
 }
 
 function read(state: State, skip = 0): Char {

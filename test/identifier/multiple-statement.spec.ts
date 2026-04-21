@@ -3,6 +3,76 @@ import { expect } from 'chai';
 import { identify } from '../../src';
 
 describe('identifier', () => {
+  describe('MySQL DELIMITER directive', () => {
+    it('should identify the canonical example from issue #66', () => {
+      const actual = identify('\nSELECT 1;\n\nDELIMITER $\n\nSELECT 2$\n\nSELECT 3$\n', {
+        dialect: 'mysql',
+      });
+      expect(actual).to.eql([
+        {
+          start: 1,
+          end: 9,
+          text: 'SELECT 1;',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+          tables: [],
+          columns: [],
+        },
+        {
+          start: 12,
+          end: 22,
+          text: 'DELIMITER $',
+          type: 'DELIMITER',
+          executionType: 'MODIFICATION',
+          parameters: [],
+          tables: [],
+          columns: [],
+        },
+        {
+          start: 25,
+          end: 33,
+          text: 'SELECT 2$',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+          tables: [],
+          columns: [],
+        },
+        {
+          start: 36,
+          end: 44,
+          text: 'SELECT 3$',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+          tables: [],
+          columns: [],
+        },
+      ]);
+    });
+
+    it('should split a CREATE PROCEDURE body with $$ delimiter', () => {
+      const input =
+        'DELIMITER $$\nCREATE PROCEDURE foo()\nBEGIN\n  SELECT 1;\n  SELECT 2;\nEND$$\nDELIMITER ;';
+      const actual = identify(input, { dialect: 'mysql' });
+
+      expect(actual).to.have.lengthOf(3);
+      expect(actual[0]).to.include({ type: 'DELIMITER', text: 'DELIMITER $$' });
+      expect(actual[1]).to.include({
+        type: 'CREATE_PROCEDURE',
+        text: 'CREATE PROCEDURE foo()\nBEGIN\n  SELECT 1;\n  SELECT 2;\nEND$$',
+      });
+      expect(actual[2]).to.include({ type: 'DELIMITER', text: 'DELIMITER ;' });
+    });
+
+    it('should strip matching surrounding quotes from the delimiter value', () => {
+      const actual = identify('DELIMITER "//"\nSELECT 1//', { dialect: 'mysql' });
+      expect(actual.map((stmt) => stmt.type)).to.eql(['DELIMITER', 'SELECT']);
+      expect(actual[1].text).to.eql('SELECT 1//');
+    });
+  });
+
   describe('given queries with multiple statements', () => {
     it('should identify a query with different statements in a single line', () => {
       const actual = identify(

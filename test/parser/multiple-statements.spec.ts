@@ -76,6 +76,130 @@ describe('parser', () => {
       expect(actual).to.eql(expected);
     });
 
+    describe('MySQL DELIMITER directive', () => {
+      it('should split statements using a single-char delimiter', () => {
+        const input = 'DELIMITER $\nSELECT 1$\nSELECT 2$';
+        const actual = parse(input, true, 'mysql');
+
+        expect(actual.body).to.have.lengthOf(3);
+        expect(actual.body[0]).to.include({
+          type: 'DELIMITER',
+          executionType: 'MODIFICATION',
+          start: 0,
+          end: 10,
+          endStatement: '\n',
+          newDelimiter: '$',
+        });
+        expect(actual.body[1]).to.include({
+          type: 'SELECT',
+          start: 12,
+          end: 20,
+          endStatement: '$',
+        });
+        expect(actual.body[2]).to.include({
+          type: 'SELECT',
+          start: 22,
+          end: 30,
+          endStatement: '$',
+        });
+      });
+
+      it('should split statements using a multi-char delimiter', () => {
+        const input = 'DELIMITER $$\nSELECT 1$$\nSELECT 2$$';
+        const actual = parse(input, true, 'mysql');
+
+        expect(actual.body).to.have.lengthOf(3);
+        expect(actual.body[0]).to.include({ type: 'DELIMITER', newDelimiter: '$$' });
+        expect(actual.body[1]).to.include({ type: 'SELECT', endStatement: '$$' });
+        expect(actual.body[2]).to.include({ type: 'SELECT', endStatement: '$$' });
+      });
+
+      it('should not treat literal ; as a terminator while delimiter is $$', () => {
+        const input = 'DELIMITER $$\nCREATE PROCEDURE foo() BEGIN SELECT 1; SELECT 2; END$$';
+        const actual = parse(input, true, 'mysql');
+
+        expect(actual.body).to.have.lengthOf(2);
+        expect(actual.body[0]).to.include({ type: 'DELIMITER', newDelimiter: '$$' });
+        expect(actual.body[1]).to.include({
+          type: 'CREATE_PROCEDURE',
+          endStatement: '$$',
+        });
+      });
+
+      it('should reset delimiter back to ; with DELIMITER ;', () => {
+        const input = 'DELIMITER $$\nSELECT 1$$\nDELIMITER ;\nSELECT 2;';
+        const actual = parse(input, true, 'mysql');
+
+        expect(actual.body).to.have.lengthOf(4);
+        expect(actual.body[0]).to.include({ type: 'DELIMITER', newDelimiter: '$$' });
+        expect(actual.body[1]).to.include({ type: 'SELECT', endStatement: '$$' });
+        expect(actual.body[2]).to.include({ type: 'DELIMITER', newDelimiter: ';' });
+        expect(actual.body[3]).to.include({ type: 'SELECT', endStatement: ';' });
+      });
+
+      it('should finalize DELIMITER statement at EOF without a trailing newline', () => {
+        const input = 'SELECT 1;\nDELIMITER $$';
+        const actual = parse(input, true, 'mysql');
+
+        expect(actual.body).to.have.lengthOf(2);
+        expect(actual.body[1]).to.include({
+          type: 'DELIMITER',
+          newDelimiter: '$$',
+          start: 10,
+          end: 21,
+        });
+      });
+
+      it('should strip matching surrounding quotes from the delimiter value', () => {
+        const input = 'DELIMITER "//"\nSELECT 1//';
+        const actual = parse(input, true, 'mysql');
+
+        expect(actual.body).to.have.lengthOf(2);
+        expect(actual.body[0]).to.include({ type: 'DELIMITER', newDelimiter: '//' });
+        expect(actual.body[1]).to.include({ type: 'SELECT', endStatement: '//' });
+      });
+
+      it('should accept lowercase delimiter keyword', () => {
+        const input = 'delimiter $$\nSELECT 1$$';
+        const actual = parse(input, true, 'mysql');
+
+        expect(actual.body).to.have.lengthOf(2);
+        expect(actual.body[0]).to.include({ type: 'DELIMITER', newDelimiter: '$$' });
+      });
+
+      it('should handle \\r\\n line endings on the DELIMITER line', () => {
+        const input = 'DELIMITER $$\r\nSELECT 1$$';
+        const actual = parse(input, true, 'mysql');
+
+        expect(actual.body).to.have.lengthOf(2);
+        expect(actual.body[0]).to.include({
+          type: 'DELIMITER',
+          newDelimiter: '$$',
+          end: 11,
+        });
+        expect(actual.body[1]).to.include({ type: 'SELECT' });
+      });
+
+      it('should ignore trailing inline comments on the DELIMITER line', () => {
+        const input = 'DELIMITER $$ -- switch terminator\nSELECT 1$$';
+        const actual = parse(input, true, 'mysql');
+
+        expect(actual.body).to.have.lengthOf(2);
+        expect(actual.body[0]).to.include({ type: 'DELIMITER', newDelimiter: '$$' });
+      });
+
+      it('should throw in strict mode for non-mysql dialects', () => {
+        expect(() => parse('DELIMITER $$', true, 'generic')).to.throw(
+          'Invalid statement parser "DELIMITER"',
+        );
+      });
+
+      it('should fall back to UNKNOWN in non-strict mode for non-mysql dialects', () => {
+        const actual = parse('DELIMITER $$\nSELECT 1$$', false, 'generic');
+        expect(actual.body[0].type).to.eql('UNKNOWN');
+      });
+    });
+
     it('should identify a query with different statements in multiple lines', () => {
       const actual = parse(`
         INSERT INTO Persons (PersonID, Name) VALUES (1, 'Jack');

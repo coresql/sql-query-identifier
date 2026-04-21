@@ -61,6 +61,8 @@ For the show statements, please refer to the [MySQL Docs about SHOW Statements](
 * ALTER_INDEX
 * ALTER_PROCEDURE
 * ANON_BLOCK (BigQuery and Oracle dialects only)
+* DELIMITER (MySQL dialect only — sets the statement terminator used by the
+  client for subsequent statements, e.g. `DELIMITER $$` / `DELIMITER ;`)
 * SHOW_BINARY (MySQL and generic dialects only)
 * SHOW_BINLOG (MySQL and generic dialects only)
 * SHOW_CHARACTER (MySQL and generic dialects only)
