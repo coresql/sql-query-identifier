@@ -105,6 +105,8 @@ Execution types allow to know what is the query behavior
 * `MODIFICATION:` is when the query modificate the database somehow (structure or data)
 * `INFORMATION:` is show some data information such as a profile data
 * `ANON_BLOCK: ` is for an anonymous block query which may contain multiple statements of unknown type (BigQuery and Oracle dialects only)
+* `NO_OP:` the statement has no effect on the database server; currently used for `DELIMITER`, which is a client-side directive that changes how subsequent statements are split
+* `TRANSACTION:` transaction-control statements like `BEGIN`, `COMMIT`, `ROLLBACK`
 * `UNKNOWN`: (only available if strict mode is disabled)
 
 ## Installation
@@ -154,6 +156,57 @@ console.log(statements);
 1. `options (object)`: allow to set different configurations
     1. `strict (bool)`: allow disable strict mode which will ignore unknown types *(default=true)*
     2. `dialect (string)`: Specify your database dialect, values: `generic`, `mysql`, `oracle`, `psql`, `sqlite` and `mssql`. *(default=generic)*
+
+Each returned statement has:
+
+* `start`, `end`, `text`: position and raw text (including the terminator).
+* `type`, `executionType`.
+* `parameters`, `tables`, `columns`.
+* `endStatement` (optional): the terminator string that ended this statement (e.g. `;`, `$`, `$$`). Absent if the statement ran to EOF without a terminator, or for `DELIMITER` statements (terminated by end-of-line).
+* `newDelimiter` (optional, only on `DELIMITER` statements): the new terminator string that should be used for the statements that follow.
+
+## Working with MySQL `DELIMITER`
+
+The `mysql` dialect understands the client-side `DELIMITER` directive used by the `mysql` CLI, MySQL Workbench, etc. to author stored programs whose bodies contain inner `;` terminators. Pass `{ dialect: 'mysql' }` to enable it.
+
+```js
+import { identify } from 'sql-query-identifier';
+
+const statements = identify(
+  `DELIMITER $$
+CREATE PROCEDURE foo()
+BEGIN
+  SELECT 1;
+  SELECT 2;
+END$$
+DELIMITER ;
+SELECT 3;`,
+  { dialect: 'mysql' },
+);
+```
+
+`statements` is:
+
+```js
+[
+  { type: 'DELIMITER', executionType: 'NO_OP', text: 'DELIMITER $$', newDelimiter: '$$', /* ... */ },
+  { type: 'CREATE_PROCEDURE', executionType: 'MODIFICATION', text: 'CREATE PROCEDURE foo()\nBEGIN\n  SELECT 1;\n  SELECT 2;\nEND$$', endStatement: '$$', /* ... */ },
+  { type: 'DELIMITER', executionType: 'NO_OP', text: 'DELIMITER ;', newDelimiter: ';', /* ... */ },
+  { type: 'SELECT', executionType: 'LISTING', text: 'SELECT 3;', endStatement: ';', /* ... */ },
+]
+```
+
+Because `DELIMITER` is a client-side directive (the server never sees it), its `executionType` is `NO_OP`. To execute the identified statements against a MySQL server, skip any with `type === 'DELIMITER'` and strip the `endStatement` from each remaining statement's `text` before sending it:
+
+```js
+for (const stmt of statements) {
+  if (stmt.type === 'DELIMITER') continue; // client-side only
+  const sql = stmt.endStatement
+    ? stmt.text.slice(0, -stmt.endStatement.length)
+    : stmt.text;
+  await connection.query(sql);
+}
+```
 
 ## Contributing
 

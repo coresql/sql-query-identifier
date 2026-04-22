@@ -84,6 +84,7 @@ export type ExecutionType =
   | 'INFORMATION'
   | 'ANON_BLOCK'
   | 'TRANSACTION'
+  | 'NO_OP'
   | 'UNKNOWN';
 
 export interface ParamTypes {
@@ -127,6 +128,18 @@ export interface IdentifyResult {
   parameters: string[];
   tables: TableReference[];
   columns: ColumnReference[];
+  /**
+   * The terminator string (e.g. `;`, `$`, `$$`) that ended this statement.
+   * `undefined` when the statement ran to EOF without a terminator, or for
+   * `DELIMITER` statements (which are terminated by end-of-line, not a
+   * delimiter).
+   */
+  endStatement?: string;
+  /**
+   * Only set for statements of type `DELIMITER`. The new terminator string
+   * that should be used for statements that follow.
+   */
+  newDelimiter?: string;
 }
 
 export interface Statement {

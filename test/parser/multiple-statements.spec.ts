@@ -84,7 +84,7 @@ describe('parser', () => {
         expect(actual.body).to.have.lengthOf(3);
         expect(actual.body[0]).to.include({
           type: 'DELIMITER',
-          executionType: 'MODIFICATION',
+          executionType: 'NO_OP',
           start: 0,
           end: 10,
           endStatement: '\n',

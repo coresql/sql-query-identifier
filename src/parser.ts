@@ -95,7 +95,7 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   ROLLBACK: 'TRANSACTION',
   UNKNOWN: 'UNKNOWN',
   ANON_BLOCK: 'ANON_BLOCK',
-  DELIMITER: 'MODIFICATION',
+  DELIMITER: 'NO_OP',
 };
 
 const statementsWithEnds = [
@@ -213,6 +213,7 @@ export function parse(
           end: token.end,
           type: 'UNKNOWN',
           executionType: 'UNKNOWN',
+          endStatement: token.value,
           parameters: [],
           tables: [],
           columns: [],
@@ -300,7 +301,11 @@ export function parse(
     statementParser.flush();
     const statement = statementParser.getStatement();
     if (!statement.endStatement) {
-      statement.end = topLevelStatement.end;
+      if (statement.type !== 'DELIMITER' || !statement.end) {
+        // DELIMITER parsers set `end` themselves to the last char of the
+        // delimiter value; don't overwrite with trailing-whitespace EOF.
+        statement.end = topLevelStatement.end;
+      }
       topLevelStatement.body.push(statement as ConcreteStatement);
       if (statement.type === 'DELIMITER' && statement.newDelimiter) {
         currentDelimiter = statement.newDelimiter;
@@ -818,7 +823,7 @@ function createDelimiterStatementParser(): StatementParser {
     start: -1,
     end: 0,
     type: 'DELIMITER',
-    executionType: 'MODIFICATION',
+    executionType: 'NO_OP',
     parameters: [],
     tables: [],
     columns: [],

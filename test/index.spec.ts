@@ -333,10 +333,14 @@ describe('getExecutionType', () => {
     expect(getExecutionType('SELECT')).to.equal('LISTING');
   });
 
-  ['UPDATE', 'DELETE', 'INSERT', 'TRUNCATE', 'DELIMITER'].forEach((type) => {
+  ['UPDATE', 'DELETE', 'INSERT', 'TRUNCATE'].forEach((type) => {
     it(`should return MODIFICATION for ${type}`, () => {
       expect(getExecutionType(type)).to.equal('MODIFICATION');
     });
+  });
+
+  it('should return NO_OP for DELIMITER', () => {
+    expect(getExecutionType('DELIMITER')).to.equal('NO_OP');
   });
 
   ['BEGIN_TRANSACTION', 'COMMIT', 'ROLLBACK'].forEach((type) => {
@@ -417,6 +421,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
+        endStatement: ';',
       },
     ]);
   });
@@ -477,6 +482,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
+        endStatement: ';',
       },
     ]);
   });
@@ -498,6 +504,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
+        endStatement: ';',
       },
     ]);
 
@@ -511,6 +518,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
+        endStatement: ';',
       },
     ]);
   });
@@ -526,6 +534,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
+        endStatement: ';',
       },
     ]);
 
@@ -539,6 +548,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
+        endStatement: ';',
       },
     ]);
 
@@ -552,6 +562,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
+        endStatement: ';',
       },
     ]);
 
@@ -565,6 +576,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
+        endStatement: ';',
       },
     ]);
 
@@ -580,6 +592,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
+        endStatement: ';',
       },
     ]);
   });
@@ -595,6 +608,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
+        endStatement: ';',
       },
     ]);
 
@@ -608,6 +622,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
+        endStatement: ';',
       },
     ]);
 
@@ -621,6 +636,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
+        endStatement: ';',
       },
     ]);
 
@@ -636,6 +652,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
+        endStatement: ';',
       },
     ]);
   });
