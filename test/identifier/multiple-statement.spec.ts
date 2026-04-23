@@ -70,10 +70,10 @@ describe('identifier', () => {
       expect(actual[2]).to.include({ type: 'DELIMITER', text: 'DELIMITER ;' });
     });
 
-    it('should strip matching surrounding quotes from the delimiter value', () => {
-      const actual = identify('DELIMITER "//"\nSELECT 1//', { dialect: 'mysql' });
-      expect(actual.map((stmt) => stmt.type)).to.eql(['DELIMITER', 'SELECT']);
-      expect(actual[1].text).to.eql('SELECT 1//');
+    it('should reject a delimiter containing quote characters', () => {
+      expect(() => identify('DELIMITER "//"\nSELECT 1//', { dialect: 'mysql' })).to.throw(
+        'DELIMITER cannot contain quote characters',
+      );
     });
   });
 

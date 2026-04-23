@@ -52,7 +52,7 @@ describe('parser', () => {
           },
 
           {
-            type: 'semicolon',
+            type: 'delimiter',
             value: ';',
             start: 55,
             end: 55,
@@ -150,13 +150,21 @@ describe('parser', () => {
         });
       });
 
-      it('should strip matching surrounding quotes from the delimiter value', () => {
-        const input = 'DELIMITER "//"\nSELECT 1//';
-        const actual = parse(input, true, 'mysql');
+      it('should reject a delimiter containing quote characters in strict mode', () => {
+        expect(() => parse('DELIMITER "//"\nSELECT 1//', true, 'mysql')).to.throw(
+          'DELIMITER cannot contain quote characters',
+        );
+      });
 
-        expect(actual.body).to.have.lengthOf(2);
-        expect(actual.body[0]).to.include({ type: 'DELIMITER', newDelimiter: '//' });
-        expect(actual.body[1]).to.include({ type: 'SELECT', endStatement: '//' });
+      it('should keep the previous delimiter when a DELIMITER is rejected in non-strict mode', () => {
+        // "//"  is rejected because of the quote characters; currentDelimiter
+        // stays as `;` so the following `SELECT 1;` still terminates correctly.
+        const actual = parse('DELIMITER "//"\nSELECT 1;\nSELECT 2;', false, 'mysql');
+        expect(actual.body).to.have.lengthOf(3);
+        expect(actual.body[0]).to.include({ type: 'DELIMITER' });
+        expect(actual.body[0]).to.not.have.property('newDelimiter');
+        expect(actual.body[1]).to.include({ type: 'SELECT', endStatement: ';' });
+        expect(actual.body[2]).to.include({ type: 'SELECT', endStatement: ';' });
       });
 
       it('should accept lowercase delimiter keyword', () => {
@@ -197,6 +205,61 @@ describe('parser', () => {
       it('should fall back to UNKNOWN in non-strict mode for non-mysql dialects', () => {
         const actual = parse('DELIMITER $$\nSELECT 1$$', false, 'generic');
         expect(actual.body[0].type).to.eql('UNKNOWN');
+      });
+
+      describe('validation (strict mode rejections)', () => {
+        // These mirror the characters that would wreck subsequent tokenization
+        // if accepted as a delimiter. mysql-shell only explicitly rejects
+        // empty and backslash; we're stricter because the other values
+        // silently break our tokenizer.
+        const invalidDelimiterCases: Array<[string, string, string]> = [
+          ['empty argument (nothing after DELIMITER keyword)', 'DELIMITER\n', 'must be followed'],
+          ['only whitespace after DELIMITER', 'DELIMITER   \n', 'must be followed'],
+          ['backslash', 'DELIMITER \\end\n', 'backslash'],
+          ['single quote', "DELIMITER '\nSELECT 1", 'quote characters'],
+          ['double quote', 'DELIMITER "\nSELECT 1', 'quote characters'],
+          ['quoted //', 'DELIMITER "//"\nSELECT 1', 'quote characters'],
+          ['backtick', 'DELIMITER `x\nSELECT 1', 'quote characters'],
+          ['inline comment --', 'DELIMITER --\n', 'comment markers'],
+          ['hash comment #', 'DELIMITER #\n', 'comment markers'],
+          ['block comment start /*', 'DELIMITER /*\n', 'block-comment characters'],
+          ['block comment end */', 'DELIMITER */\n', 'block-comment characters'],
+          ['bare slash', 'DELIMITER /\n', 'block-comment characters'],
+          ['bare asterisk', 'DELIMITER *\n', 'block-comment characters'],
+        ];
+
+        invalidDelimiterCases.forEach(([name, sql, expected]) => {
+          it(`rejects ${name} in strict mode`, () => {
+            expect(() => parse(sql, true, 'mysql')).to.throw(expected);
+          });
+        });
+
+        it('rejects empty DELIMITER at EOF (no trailing newline)', () => {
+          expect(() => parse('DELIMITER', true, 'mysql')).to.throw('must be followed');
+        });
+      });
+
+      describe('non-strict rejection behaviour', () => {
+        it('keeps the previous delimiter and emits a DELIMITER statement without newDelimiter', () => {
+          const actual = parse("DELIMITER '\nSELECT 1;", false, 'mysql');
+          expect(actual.body[0]).to.include({ type: 'DELIMITER' });
+          expect(actual.body[0]).to.not.have.property('newDelimiter');
+          // currentDelimiter stayed as `;`, so the following statement
+          // terminates normally on `;`.
+          const selectStmt = actual.body.find((stmt) => stmt.type === 'SELECT');
+          expect(selectStmt).to.not.be.undefined;
+          expect(selectStmt).to.include({ endStatement: ';' });
+        });
+
+        it('does not swallow the rest of the script when the argument starts with a quote', () => {
+          // Regression: without validation, `DELIMITER '` made scanString eat
+          // the rest of the input as one big string token, hiding all other
+          // statements.
+          const actual = parse("DELIMITER '\nSELECT 1;\nSELECT 2;", false, 'mysql');
+          const types = actual.body.map((stmt) => stmt.type);
+          expect(types).to.include('SELECT');
+          expect(actual.body.filter((stmt) => stmt.type === 'SELECT')).to.have.lengthOf(2);
+        });
       });
     });
 
@@ -254,7 +317,7 @@ describe('parser', () => {
             end: 63,
           },
           {
-            type: 'semicolon',
+            type: 'delimiter',
             value: ';',
             start: 64,
             end: 64,

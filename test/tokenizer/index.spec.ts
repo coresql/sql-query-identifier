@@ -240,7 +240,7 @@ describe('scan', () => {
   it('scans ; individual identifier', () => {
     const actual = scanToken(initState(';'));
     const expected = {
-      type: 'semicolon',
+      type: 'delimiter',
       value: ';',
       start: 0,
       end: 0,
@@ -287,29 +287,29 @@ describe('scan', () => {
   });
 
   describe('custom delimiter', () => {
-    it('defaults to ; as semicolon token', () => {
+    it('defaults to ; as a delimiter token', () => {
       const actual = scanToken(initState(';'));
-      expect(actual).to.eql({ type: 'semicolon', value: ';', start: 0, end: 0 });
+      expect(actual).to.eql({ type: 'delimiter', value: ';', start: 0, end: 0 });
     });
 
-    it('emits semicolon token for single-char custom delimiter', () => {
+    it('emits a delimiter token for a single-char custom delimiter', () => {
       const actual = scanToken(initState('$'), 'mysql', undefined, '$');
-      expect(actual).to.eql({ type: 'semicolon', value: '$', start: 0, end: 0 });
+      expect(actual).to.eql({ type: 'delimiter', value: '$', start: 0, end: 0 });
     });
 
-    it('emits semicolon token for multi-char custom delimiter', () => {
+    it('emits a delimiter token for a multi-char custom delimiter', () => {
       const actual = scanToken(initState('$$rest'), 'mysql', undefined, '$$');
-      expect(actual).to.eql({ type: 'semicolon', value: '$$', start: 0, end: 1 });
+      expect(actual).to.eql({ type: 'delimiter', value: '$$', start: 0, end: 1 });
     });
 
-    it('does not treat ; as semicolon when delimiter is different', () => {
+    it('does not treat ; as a delimiter when the custom delimiter is different', () => {
       const actual = scanToken(initState(';'), 'mysql', undefined, '$$');
-      expect(actual.type).to.not.eql('semicolon');
+      expect(actual.type).to.not.eql('delimiter');
     });
 
     it('handles // as delimiter', () => {
       const actual = scanToken(initState('//rest'), 'mysql', undefined, '//');
-      expect(actual).to.eql({ type: 'semicolon', value: '//', start: 0, end: 1 });
+      expect(actual).to.eql({ type: 'delimiter', value: '//', start: 0, end: 1 });
     });
   });
 

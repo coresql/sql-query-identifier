@@ -186,7 +186,7 @@ describe('parser', () => {
             end: 53,
           },
           {
-            type: 'semicolon',
+            type: 'delimiter',
             value: ';',
             start: 54,
             end: 54,
@@ -252,7 +252,7 @@ describe('parser', () => {
                   end: 6 + type.length + 1 + 5 + 42,
                 },
                 {
-                  type: 'semicolon',
+                  type: 'delimiter',
                   value: ';',
                   start: 6 + type.length + 1 + 5 + 42 + 1,
                   end: 6 + type.length + 1 + 5 + 42 + 1,
@@ -318,7 +318,7 @@ describe('parser', () => {
             end: 61,
           },
           {
-            type: 'semicolon',
+            type: 'delimiter',
             value: ';',
             start: 62,
             end: 62,
@@ -382,7 +382,7 @@ describe('parser', () => {
             end: 22,
           },
           {
-            type: 'semicolon',
+            type: 'delimiter',
             value: ';',
             start: 23,
             end: 23,
@@ -440,7 +440,7 @@ describe('parser', () => {
             end: 17,
           },
           {
-            type: 'semicolon',
+            type: 'delimiter',
             value: ';',
             start: 18,
             end: 18,
@@ -504,7 +504,7 @@ describe('parser', () => {
             end: 20,
           },
           {
-            type: 'semicolon',
+            type: 'delimiter',
             value: ';',
             start: 21,
             end: 21,
@@ -549,7 +549,7 @@ describe('parser', () => {
             end: 54,
           },
           {
-            type: 'semicolon',
+            type: 'delimiter',
             value: ';',
             start: 55,
             end: 55,
@@ -595,7 +595,7 @@ describe('parser', () => {
             end: 50,
           },
           {
-            type: 'semicolon',
+            type: 'delimiter',
             value: ';',
             start: 51,
             end: 51,
@@ -641,7 +641,7 @@ describe('parser', () => {
             end: 37,
           },
           {
-            type: 'semicolon',
+            type: 'delimiter',
             value: ';',
             start: 38,
             end: 38,
@@ -699,7 +699,7 @@ describe('parser', () => {
             end: 21,
           },
           {
-            type: 'semicolon',
+            type: 'delimiter',
             value: ';',
             start: 22,
             end: 22,

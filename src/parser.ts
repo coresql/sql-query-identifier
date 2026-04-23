@@ -181,7 +181,7 @@ export function parse(
     params: [],
   };
 
-  const ignoreOutsideBlankTokens = ['whitespace', 'comment-inline', 'comment-block', 'semicolon'];
+  const ignoreOutsideBlankTokens = ['whitespace', 'comment-inline', 'comment-block', 'delimiter'];
 
   while (prevState.position < topLevelState.end) {
     const tokenState = initState({ prevState });
@@ -205,7 +205,7 @@ export function parse(
 
         // If we're scanning in a CTE, handle someone putting a semicolon anywhere (after 'with',
         // after semicolon, etc.) along it to "early terminate".
-      } else if (cteState.isCte && token.type === 'semicolon') {
+      } else if (cteState.isCte && token.type === 'delimiter') {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
         topLevelStatement.body.push({
@@ -253,6 +253,33 @@ export function parse(
       ) {
         topLevelStatement.tokens.push(token);
         prevState = tokenState;
+      } else if (
+        !cteState.isCte &&
+        dialect === 'mysql' &&
+        token.type === 'keyword' &&
+        token.value.toUpperCase() === 'DELIMITER'
+      ) {
+        // Handle DELIMITER entirely by raw-scanning the input from the
+        // keyword onwards. If we let this go through the token-based
+        // statement parser, a malformed argument like `DELIMITER '` would
+        // be tokenised as a string spanning the rest of the file, which
+        // would hide every subsequent statement. Raw scanning is also what
+        // mysql-shell does: arguments are whitespace-delimited; the rest
+        // of the line is consumed as part of the directive.
+        topLevelStatement.tokens.push(token);
+        const lineResult = parseDelimiterLine(input, token, currentDelimiter, isStrict);
+        topLevelStatement.body.push(lineResult.statement as ConcreteStatement);
+        if (lineResult.statement.newDelimiter) {
+          currentDelimiter = lineResult.statement.newDelimiter;
+        }
+        // Advance prevState to the character before the next scan position
+        // (first char after the consumed DELIMITER line).
+        prevState = {
+          input,
+          position: lineResult.consumedTo,
+          start: lineResult.consumedTo,
+          end: input.length - 1,
+        };
       } else {
         statementParser = createStatementParserByToken(token, nextToken, {
           isStrict,
@@ -383,11 +410,8 @@ function createStatementParserByToken(
           return createBlockStatementParser(options);
         }
         break;
-      case 'DELIMITER':
-        if (options.dialect === 'mysql') {
-          return createDelimiterStatementParser();
-        }
-        break;
+      // DELIMITER is intercepted inline in parse() for the mysql dialect,
+      // so we never reach a `case 'DELIMITER'` here for that dialect.
       default:
         break;
     }
@@ -818,10 +842,71 @@ function createRollbackStatementParser(options: ParseOptions) {
   return stateMachineStatementParser(statement, steps, options);
 }
 
-function createDelimiterStatementParser(): StatementParser {
+/**
+ * Validate a candidate DELIMITER value. Matches mysql-shell's explicit
+ * rejections (empty, backslash) and additionally rejects characters that
+ * would break our tokenizer if used as a delimiter:
+ *
+ * - `'` `"` `` ` ``  — collide with string / quoted-identifier scanning
+ * - `--` `#`         — collide with inline comment scanning
+ * - `/` `*`          — collide with block-comment scanning (`/*`, `*\/`)
+ *
+ * mysql-shell itself accepts these characters but they wreck subsequent
+ * parsing, so we're stricter on purpose. Returns `null` on success or an
+ * error message string on rejection.
+ */
+function validateDelimiterValue(raw: string): string | null {
+  if (raw.length === 0) {
+    return "DELIMITER must be followed by a 'delimiter' character or string";
+  }
+  if (raw.includes('\\')) {
+    return 'DELIMITER cannot contain a backslash character';
+  }
+  if (/['"`]/.test(raw)) {
+    return 'DELIMITER cannot contain quote characters (\', ", `)';
+  }
+  if (/#/.test(raw) || raw.includes('--')) {
+    return 'DELIMITER cannot contain SQL comment markers (--, #)';
+  }
+  if (raw.includes('/') || raw.includes('*')) {
+    return 'DELIMITER cannot contain block-comment characters (/, *)';
+  }
+  return null;
+}
+
+/**
+ * Raw-scan the DELIMITER line starting from the keyword token. Consumes
+ * characters up to the first newline (or EOF). Returns the built statement
+ * along with the input position the main parse loop should resume from.
+ *
+ * Bypassing the tokenizer here is deliberate: a bad argument like
+ * `DELIMITER '` would otherwise tokenise as an unterminated string spanning
+ * the rest of the file, hiding every subsequent statement. mysql-shell's
+ * parser likewise lexes the delimiter argument as a single
+ * whitespace-delimited word at the character level.
+ */
+function parseDelimiterLine(
+  input: string,
+  keywordToken: Token,
+  currentDelimiter: string,
+  isStrict: boolean,
+): { statement: Statement; consumedTo: number } {
+  // Skip spaces/tabs (but not newlines) after the keyword.
+  let i = keywordToken.end + 1;
+  while (i < input.length && (input[i] === ' ' || input[i] === '\t')) i++;
+  const argStart = i;
+  // Capture up to the first whitespace or EOF.
+  while (i < input.length && !/\s/.test(input[i])) i++;
+  const argEnd = i; // exclusive
+  const raw = input.slice(argStart, argEnd);
+
+  // `currentDelimiter` isn't used in the raw scan but is worth asserting on
+  // so future callers don't pass it in erroneously; silence unused-var lint.
+  void currentDelimiter;
+
   const statement: Statement = {
-    start: -1,
-    end: 0,
+    start: keywordToken.start,
+    end: argEnd > argStart ? argEnd - 1 : keywordToken.end,
     type: 'DELIMITER',
     executionType: 'NO_OP',
     parameters: [],
@@ -829,90 +914,28 @@ function createDelimiterStatementParser(): StatementParser {
     columns: [],
   };
 
-  let delimiterStart: number | undefined;
-  let lastMeaningfulEnd: number | undefined;
-  let lastMeaningfulValue: string | undefined;
-  let finalized = false;
-
-  const captureDelimiter = () => {
-    if (finalized || delimiterStart === undefined || lastMeaningfulEnd === undefined) {
-      return;
+  const error = validateDelimiterValue(raw);
+  if (error) {
+    if (isStrict) {
+      throw new Error(error);
     }
-    let raw = lastMeaningfulValue ?? '';
-    // Strip matching surrounding quotes (e.g. DELIMITER "//", DELIMITER '//').
-    if (raw.length >= 2 && (raw[0] === '"' || raw[0] === "'") && raw[raw.length - 1] === raw[0]) {
-      raw = raw.slice(1, -1);
-    }
-    if (raw.length > 0) {
-      statement.newDelimiter = raw;
-    }
-    statement.end = lastMeaningfulEnd;
-    finalized = true;
-  };
+    // Non-strict: emit the statement without `newDelimiter`. The main loop
+    // will then NOT update currentDelimiter, matching mysql-shell's
+    // behaviour of keeping the previous delimiter on a rejected argument.
+  } else {
+    statement.newDelimiter = raw;
+  }
 
-  return {
-    getStatement() {
-      return statement;
-    },
-
-    flush() {
-      // Reached EOF without seeing a newline — capture whatever we have.
-      // We intentionally do not set `endStatement` here so that the parse()
-      // trailing-statement branch still pushes this statement to the body.
-      captureDelimiter();
-    },
-
-    addToken(token: Token) {
-      if (statement.endStatement) {
-        return;
-      }
-
-      if (statement.start < 0) {
-        // first token is the DELIMITER keyword
-        if (token.type === 'keyword' && token.value.toUpperCase() === 'DELIMITER') {
-          statement.start = token.start;
-        }
-        return;
-      }
-
-      const endStatement = () => {
-        captureDelimiter();
-        // Truthy sentinel that tells parse() to flush this statement.
-        statement.endStatement = '\n';
-        if (lastMeaningfulEnd === undefined) {
-          // DELIMITER keyword with no value; end the statement just before
-          // the terminating whitespace/comment token.
-          statement.end = token.start - 1;
-        }
-      };
-
-      if (token.type === 'whitespace') {
-        if (/[\r\n]/.test(token.value)) {
-          endStatement();
-        }
-        return;
-      }
-
-      if (token.type === 'comment-inline') {
-        // Inline comments consume through end-of-line; treat as line end.
-        endStatement();
-        return;
-      }
-
-      if (token.type === 'comment-block') {
-        // Block comments are allowed between DELIMITER and the value; skip.
-        return;
-      }
-
-      if (delimiterStart === undefined) {
-        delimiterStart = token.start;
-        lastMeaningfulValue = token.value;
-      } else {
-        lastMeaningfulValue = (lastMeaningfulValue ?? '') + token.value;
-      }
-      lastMeaningfulEnd = token.end;
-    },
-  };
+  // Consume through end-of-line so we resume from the next line.
+  let consumedTo = argEnd;
+  while (consumedTo < input.length && input[consumedTo] !== '\n') consumedTo++;
+  // position should point at the last consumed char so that the main loop's
+  // `prevState.position + 1` start picks up the next character.
+  if (consumedTo < input.length) {
+    // include the newline itself
+    statement.endStatement = '\n';
+  }
+  return { statement, consumedTo };
 }
 
 function createUnknownStatementParser(options: ParseOptions) {
@@ -1002,7 +1025,7 @@ function stateMachineStatementParser(
 
       if (
         statement.type &&
-        token.type === 'semicolon' &&
+        token.type === 'delimiter' &&
         (!statementsWithEnds.includes(statement.type) ||
           (openBlocks === 0 && (statement.type === 'UNKNOWN' || statement.canEnd)))
       ) {

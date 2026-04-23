@@ -86,7 +86,7 @@ export class TableParser {
           const nextUpper = nextToken.value.toUpperCase();
           if (
             this.NON_ALIAS_KEYWORDS.has(nextUpper) ||
-            nextToken.type === 'semicolon' ||
+            nextToken.type === 'delimiter' ||
             nextToken.value === ',' ||
             nextToken.value === '(' ||
             nextToken.value === ')'

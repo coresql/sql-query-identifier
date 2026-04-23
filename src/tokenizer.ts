@@ -75,8 +75,8 @@ const KEYWORDS = [
   'DELIMITER',
 ];
 
-// The semicolon token is now emitted by the delimiter-match path in
-// scanToken, so it can handle arbitrary terminators like '$$' or '//'.
+// Delimiter-typed tokens (including `;`) are emitted by the delimiter-match
+// path in scanToken, so it can handle arbitrary terminators like '$$' or '//'.
 const INDIVIDUALS: Record<string, Token['type']> = {};
 
 const ENDTOKENS: Record<string, Char> = {
@@ -156,7 +156,7 @@ function scanDelimiter(state: State, delimiter: string): Token | null {
     read(state);
   }
   return {
-    type: 'semicolon',
+    type: 'delimiter',
     value: delimiter,
     start: state.start,
     end: state.start + delimiter.length - 1,

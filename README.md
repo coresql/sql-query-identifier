@@ -208,6 +208,18 @@ for (const stmt of statements) {
 }
 ```
 
+### DELIMITER validation
+
+The parser rejects delimiter values that would break subsequent tokenization:
+
+* Empty argument (`DELIMITER` with no value)
+* Backslash (`\`) — matches mysql-shell's explicit rejection
+* String/identifier quote characters (`'`, `"`, `` ` ``)
+* Inline comment markers (`--`, `#`)
+* Block-comment characters (`/`, `*`)
+
+In strict mode (the default), an invalid `DELIMITER` throws. In non-strict mode, the `DELIMITER` statement is still returned but without a `newDelimiter` field, and the previous delimiter is kept — matching mysql-shell's behaviour of leaving the old delimiter in effect when an argument is rejected.
+
 ## Contributing
 
 It is required to use [editorconfig](https://editorconfig.org/) and please write and run specs before pushing any changes:

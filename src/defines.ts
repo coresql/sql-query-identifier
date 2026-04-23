@@ -177,7 +177,7 @@ export interface Token {
     | 'comment-inline'
     | 'comment-block'
     | 'string'
-    | 'semicolon'
+    | 'delimiter'
     | 'keyword'
     | 'parameter'
     | 'table'
