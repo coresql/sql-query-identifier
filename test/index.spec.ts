@@ -421,7 +421,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
-        endStatement: ';',
+        delimiter: ';',
       },
     ]);
   });
@@ -482,7 +482,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
-        endStatement: ';',
+        delimiter: ';',
       },
     ]);
   });
@@ -504,7 +504,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
-        endStatement: ';',
+        delimiter: ';',
       },
     ]);
 
@@ -518,7 +518,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
-        endStatement: ';',
+        delimiter: ';',
       },
     ]);
   });
@@ -534,7 +534,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
-        endStatement: ';',
+        delimiter: ';',
       },
     ]);
 
@@ -548,7 +548,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
-        endStatement: ';',
+        delimiter: ';',
       },
     ]);
 
@@ -562,7 +562,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
-        endStatement: ';',
+        delimiter: ';',
       },
     ]);
 
@@ -576,7 +576,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
-        endStatement: ';',
+        delimiter: ';',
       },
     ]);
 
@@ -592,7 +592,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
-        endStatement: ';',
+        delimiter: ';',
       },
     ]);
   });
@@ -608,7 +608,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
-        endStatement: ';',
+        delimiter: ';',
       },
     ]);
 
@@ -622,7 +622,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
-        endStatement: ';',
+        delimiter: ';',
       },
     ]);
 
@@ -636,7 +636,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
-        endStatement: ';',
+        delimiter: ';',
       },
     ]);
 
@@ -652,7 +652,7 @@ describe('Transaction statements', () => {
         parameters: [],
         tables: [],
         columns: [],
-        endStatement: ';',
+        delimiter: ';',
       },
     ]);
   });

@@ -213,7 +213,7 @@ export function parse(
           end: token.end,
           type: 'UNKNOWN',
           executionType: 'UNKNOWN',
-          endStatement: token.value,
+          delimiter: token.value,
           parameters: [],
           tables: [],
           columns: [],
@@ -307,7 +307,7 @@ export function parse(
       prevState = tokenState;
 
       const statement = statementParser.getStatement();
-      if (statement.endStatement) {
+      if (statement.delimiter) {
         statementParser.flush();
         if (statement.type !== 'DELIMITER') {
           // DELIMITER sets its own `end` to the last delimiter-value char
@@ -327,7 +327,7 @@ export function parse(
   if (statementParser) {
     statementParser.flush();
     const statement = statementParser.getStatement();
-    if (!statement.endStatement) {
+    if (!statement.delimiter) {
       if (statement.type !== 'DELIMITER' || !statement.end) {
         // DELIMITER parsers set `end` themselves to the last char of the
         // delimiter value; don't overwrite with trailing-whitespace EOF.
@@ -933,7 +933,7 @@ function parseDelimiterLine(
   // `prevState.position + 1` start picks up the next character.
   if (consumedTo < input.length) {
     // include the newline itself
-    statement.endStatement = '\n';
+    statement.delimiter = '\n';
   }
   return { statement, consumedTo };
 }
@@ -1019,7 +1019,7 @@ function stateMachineStatementParser(
 
     addToken(token: Token, nextToken: Token) {
       /* eslint no-param-reassign: 0 */
-      if (statement.endStatement) {
+      if (statement.delimiter) {
         throw new Error('This statement has already got to the end.');
       }
 
@@ -1029,7 +1029,7 @@ function stateMachineStatementParser(
         (!statementsWithEnds.includes(statement.type) ||
           (openBlocks === 0 && (statement.type === 'UNKNOWN' || statement.canEnd)))
       ) {
-        statement.endStatement = token.value;
+        statement.delimiter = token.value;
         return;
       }
 

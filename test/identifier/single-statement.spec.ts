@@ -91,7 +91,7 @@ describe('identifier', () => {
               parameters: [],
               tables: [],
               columns: [],
-              endStatement: ';',
+              delimiter: ';',
             },
           ];
 
@@ -118,7 +118,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
 
@@ -138,7 +138,7 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
-            endStatement: ';',
+            delimiter: ';',
           },
         ];
 
@@ -160,7 +160,7 @@ describe('identifier', () => {
                 parameters: [],
                 tables: [],
                 columns: [],
-                endStatement: ';',
+                delimiter: ';',
               },
             ];
 
@@ -192,7 +192,7 @@ describe('identifier', () => {
                 parameters: [],
                 tables: [],
                 columns: [],
-                endStatement: ';',
+                delimiter: ';',
               },
             ];
 
@@ -231,7 +231,7 @@ describe('identifier', () => {
                   parameters: [],
                   tables: [],
                   columns: [],
-                  endStatement: ';',
+                  delimiter: ';',
                 },
               ];
 
@@ -265,7 +265,7 @@ describe('identifier', () => {
                 parameters: [],
                 tables: [],
                 columns: [],
-                endStatement: ';',
+                delimiter: ';',
               },
             ];
 
@@ -289,7 +289,7 @@ describe('identifier', () => {
                 parameters: [],
                 tables: [],
                 columns: [],
-                endStatement: ';',
+                delimiter: ';',
               },
             ];
 
@@ -315,7 +315,7 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
-            endStatement: ';',
+            delimiter: ';',
           },
         ];
         expect(actual).to.eql(expected);
@@ -343,7 +343,7 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
-            endStatement: ';',
+            delimiter: ';',
           },
         ];
         expect(actual).to.eql(expected);
@@ -380,7 +380,7 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
-            endStatement: ';',
+            delimiter: ';',
           },
         ];
         expect(actual).to.eql(expected);
@@ -630,7 +630,7 @@ describe('identifier', () => {
                 parameters: [],
                 tables: [],
                 columns: [],
-                endStatement: ';',
+                delimiter: ';',
               },
             ];
 
@@ -833,7 +833,7 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
-            endStatement: ';',
+            delimiter: ';',
           },
         ];
         expect(actual).to.eql(expected);
@@ -937,7 +937,7 @@ describe('identifier', () => {
               parameters: [],
               tables: [],
               columns: [],
-              endStatement: ';',
+              delimiter: ';',
             },
           ];
 
@@ -964,7 +964,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
 
@@ -983,7 +983,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
 
@@ -1002,7 +1002,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
 
@@ -1021,7 +1021,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
       expect(actual).to.eql(expected);
@@ -1040,7 +1040,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
       expect(actual).to.eql(expected);
@@ -1059,7 +1059,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
       expect(actual).to.eql(expected);
@@ -1077,7 +1077,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
 
@@ -1096,7 +1096,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
 
@@ -1115,7 +1115,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
 
@@ -1136,7 +1136,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
       expect(actual).to.eql(expected);
@@ -1154,7 +1154,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
 
@@ -1361,7 +1361,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
 
@@ -1386,7 +1386,7 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
-            endStatement: ';',
+            delimiter: ';',
           },
         ];
 
@@ -1410,7 +1410,7 @@ describe('identifier', () => {
             parameters: [],
             tables: [], // FIXME: should return 'table'?
             columns: [],
-            endStatement: ';',
+            delimiter: ';',
           },
         ];
 
@@ -1481,7 +1481,7 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
-            endStatement: ';',
+            delimiter: ';',
           },
         ];
 
@@ -1609,7 +1609,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
 
@@ -1636,7 +1636,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
 
@@ -1656,7 +1656,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
-          endStatement: ';',
+          delimiter: ';',
         },
       ];
 

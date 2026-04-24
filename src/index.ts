@@ -46,10 +46,10 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
       tables: statement.tables || [],
       columns: statement.columns || [],
     };
-    // DELIMITER's internal `endStatement` is a `\n` sentinel, not a real
+    // DELIMITER's internal `delimiter` is a `\n` sentinel, not a real
     // terminator; don't expose it to consumers.
-    if (statement.type !== 'DELIMITER' && statement.endStatement) {
-      result.endStatement = statement.endStatement;
+    if (statement.type !== 'DELIMITER' && statement.delimiter) {
+      result.delimiter = statement.delimiter;
     }
     if (statement.newDelimiter) {
       result.newDelimiter = statement.newDelimiter;

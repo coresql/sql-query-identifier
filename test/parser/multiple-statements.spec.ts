@@ -22,7 +22,7 @@ describe('parser', () => {
             end: 55,
             type: 'INSERT',
             executionType: 'MODIFICATION',
-            endStatement: ';',
+            delimiter: ';',
             parameters: [],
             tables: [],
             columns: [],
@@ -87,20 +87,20 @@ describe('parser', () => {
           executionType: 'NO_OP',
           start: 0,
           end: 10,
-          endStatement: '\n',
+          delimiter: '\n',
           newDelimiter: '$',
         });
         expect(actual.body[1]).to.include({
           type: 'SELECT',
           start: 12,
           end: 20,
-          endStatement: '$',
+          delimiter: '$',
         });
         expect(actual.body[2]).to.include({
           type: 'SELECT',
           start: 22,
           end: 30,
-          endStatement: '$',
+          delimiter: '$',
         });
       });
 
@@ -110,8 +110,8 @@ describe('parser', () => {
 
         expect(actual.body).to.have.lengthOf(3);
         expect(actual.body[0]).to.include({ type: 'DELIMITER', newDelimiter: '$$' });
-        expect(actual.body[1]).to.include({ type: 'SELECT', endStatement: '$$' });
-        expect(actual.body[2]).to.include({ type: 'SELECT', endStatement: '$$' });
+        expect(actual.body[1]).to.include({ type: 'SELECT', delimiter: '$$' });
+        expect(actual.body[2]).to.include({ type: 'SELECT', delimiter: '$$' });
       });
 
       it('should not treat literal ; as a terminator while delimiter is $$', () => {
@@ -122,7 +122,7 @@ describe('parser', () => {
         expect(actual.body[0]).to.include({ type: 'DELIMITER', newDelimiter: '$$' });
         expect(actual.body[1]).to.include({
           type: 'CREATE_PROCEDURE',
-          endStatement: '$$',
+          delimiter: '$$',
         });
       });
 
@@ -132,9 +132,9 @@ describe('parser', () => {
 
         expect(actual.body).to.have.lengthOf(4);
         expect(actual.body[0]).to.include({ type: 'DELIMITER', newDelimiter: '$$' });
-        expect(actual.body[1]).to.include({ type: 'SELECT', endStatement: '$$' });
+        expect(actual.body[1]).to.include({ type: 'SELECT', delimiter: '$$' });
         expect(actual.body[2]).to.include({ type: 'DELIMITER', newDelimiter: ';' });
-        expect(actual.body[3]).to.include({ type: 'SELECT', endStatement: ';' });
+        expect(actual.body[3]).to.include({ type: 'SELECT', delimiter: ';' });
       });
 
       it('should finalize DELIMITER statement at EOF without a trailing newline', () => {
@@ -163,8 +163,8 @@ describe('parser', () => {
         expect(actual.body).to.have.lengthOf(3);
         expect(actual.body[0]).to.include({ type: 'DELIMITER' });
         expect(actual.body[0]).to.not.have.property('newDelimiter');
-        expect(actual.body[1]).to.include({ type: 'SELECT', endStatement: ';' });
-        expect(actual.body[2]).to.include({ type: 'SELECT', endStatement: ';' });
+        expect(actual.body[1]).to.include({ type: 'SELECT', delimiter: ';' });
+        expect(actual.body[2]).to.include({ type: 'SELECT', delimiter: ';' });
       });
 
       it('should accept lowercase delimiter keyword', () => {
@@ -248,7 +248,7 @@ describe('parser', () => {
           // terminates normally on `;`.
           const selectStmt = actual.body.find((stmt) => stmt.type === 'SELECT');
           expect(selectStmt).to.not.be.undefined;
-          expect(selectStmt).to.include({ endStatement: ';' });
+          expect(selectStmt).to.include({ delimiter: ';' });
         });
 
         it('does not swallow the rest of the script when the argument starts with a quote', () => {
@@ -282,7 +282,7 @@ describe('parser', () => {
             end: 64,
             type: 'INSERT',
             executionType: 'MODIFICATION',
-            endStatement: ';',
+            delimiter: ';',
             parameters: [],
             tables: [],
             columns: [],

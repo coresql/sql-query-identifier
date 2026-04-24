@@ -75,10 +75,6 @@ const KEYWORDS = [
   'DELIMITER',
 ];
 
-// Delimiter-typed tokens (including `;`) are emitted by the delimiter-match
-// path in scanToken, so it can handle arbitrary terminators like '$$' or '//'.
-const INDIVIDUALS: Record<string, Token['type']> = {};
-
 const ENDTOKENS: Record<string, Char> = {
   '"': '"',
   "'": "'",
@@ -125,9 +121,9 @@ export function scanToken(
   }
 
   // Match the current statement terminator. Handles ';', '$', '$$', '//', etc.
-  // Runs before scanIndividualCharacter so it's the single source of
-  // terminator tokens. Word-like delimiters would be consumed by scanWord
-  // above, so only symbol delimiters are fully supported.
+  // The delimiter match is the single source of terminator tokens.
+  // Word-like delimiters are consumed by scanWord below, so only symbol
+  // delimiters are fully supported.
   const delimiterToken = scanDelimiter(state, delimiter);
   if (delimiterToken) {
     return delimiterToken;
@@ -135,11 +131,6 @@ export function scanToken(
 
   if (isLetter(ch)) {
     return scanWord(state);
-  }
-
-  const individual = scanIndividualCharacter(state);
-  if (individual) {
-    return individual;
   }
 
   return skipChar(state);
@@ -197,10 +188,6 @@ function peek(state: State): Char {
 
 function isKeyword(word: string): boolean {
   return KEYWORDS.includes(word.toUpperCase());
-}
-
-function resolveIndividualTokenType(ch: string): Token['type'] | undefined {
-  return INDIVIDUALS[ch];
 }
 
 function scanWhitespace(state: State): Token {
@@ -453,21 +440,6 @@ function scanWord(state: State): Token {
 
   return {
     type: 'keyword',
-    value,
-    start: state.start,
-    end: state.start + value.length - 1,
-  };
-}
-
-function scanIndividualCharacter(state: State): Token | null {
-  const value = state.input.slice(state.start, state.position + 1);
-  const type = resolveIndividualTokenType(value);
-  if (!type) {
-    return null;
-  }
-
-  return {
-    type,
     value,
     start: state.start,
     end: state.start + value.length - 1,

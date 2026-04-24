@@ -134,7 +134,7 @@ export interface IdentifyResult {
    * `DELIMITER` statements (which are terminated by end-of-line, not a
    * delimiter).
    */
-  endStatement?: string;
+  delimiter?: string;
   /**
    * Only set for statements of type `DELIMITER`. The new terminator string
    * that should be used for statements that follow.
@@ -147,7 +147,7 @@ export interface Statement {
   end: number;
   type?: StatementType;
   executionType?: ExecutionType;
-  endStatement?: string;
+  delimiter?: string;
   canEnd?: boolean;
   definer?: number;
   algorithm?: number;
