@@ -61,6 +61,8 @@ For the show statements, please refer to the [MySQL Docs about SHOW Statements](
 * ALTER_INDEX
 * ALTER_PROCEDURE
 * ANON_BLOCK (BigQuery and Oracle dialects only)
+* DELIMITER (MySQL dialect only — sets the statement terminator used by the
+  client for subsequent statements, e.g. `DELIMITER $$` / `DELIMITER ;`)
 * SHOW_BINARY (MySQL and generic dialects only)
 * SHOW_BINLOG (MySQL and generic dialects only)
 * SHOW_CHARACTER (MySQL and generic dialects only)
@@ -103,6 +105,8 @@ Execution types allow to know what is the query behavior
 * `MODIFICATION:` is when the query modificate the database somehow (structure or data)
 * `INFORMATION:` is show some data information such as a profile data
 * `ANON_BLOCK: ` is for an anonymous block query which may contain multiple statements of unknown type (BigQuery and Oracle dialects only)
+* `NO_OP:` the statement has no effect on the database server; currently used for `DELIMITER`, which is a client-side directive that changes how subsequent statements are split
+* `TRANSACTION:` transaction-control statements like `BEGIN`, `COMMIT`, `ROLLBACK`
 * `UNKNOWN`: (only available if strict mode is disabled)
 
 ## Installation
@@ -169,6 +173,69 @@ import { identify } from 'sql-query-identifier';
 identify(`SELECT * FROM "Orders" WHERE OrderID = ?`, { dialect: 'dynamodb' });
 // [{ type: 'SELECT', executionType: 'LISTING', parameters: ['?'], ... }]
 ```
+
+Each returned statement has:
+
+* `start`, `end`, `text`: position and raw text (including the terminator).
+* `type`, `executionType`.
+* `parameters`, `tables`, `columns`.
+* `delimiter` (optional): the terminator string that ended this statement (e.g. `;`, `$`, `$$`). Absent if the statement ran to EOF without a terminator, or for `DELIMITER` statements (terminated by end-of-line).
+* `newDelimiter` (optional, only on `DELIMITER` statements): the new terminator string that should be used for the statements that follow.
+
+## Working with MySQL `DELIMITER`
+
+The `mysql` dialect understands the client-side `DELIMITER` directive used by the `mysql` CLI, MySQL Workbench, etc. to author stored programs whose bodies contain inner `;` terminators. Pass `{ dialect: 'mysql' }` to enable it.
+
+```js
+import { identify } from 'sql-query-identifier';
+
+const statements = identify(
+  `DELIMITER $$
+CREATE PROCEDURE foo()
+BEGIN
+  SELECT 1;
+  SELECT 2;
+END$$
+DELIMITER ;
+SELECT 3;`,
+  { dialect: 'mysql' },
+);
+```
+
+`statements` is:
+
+```js
+[
+  { type: 'DELIMITER', executionType: 'NO_OP', text: 'DELIMITER $$', newDelimiter: '$$', /* ... */ },
+  { type: 'CREATE_PROCEDURE', executionType: 'MODIFICATION', text: 'CREATE PROCEDURE foo()\nBEGIN\n  SELECT 1;\n  SELECT 2;\nEND$$', delimiter: '$$', /* ... */ },
+  { type: 'DELIMITER', executionType: 'NO_OP', text: 'DELIMITER ;', newDelimiter: ';', /* ... */ },
+  { type: 'SELECT', executionType: 'LISTING', text: 'SELECT 3;', delimiter: ';', /* ... */ },
+]
+```
+
+Because `DELIMITER` is a client-side directive (the server never sees it), its `executionType` is `NO_OP`. To execute the identified statements against a MySQL server, skip any with `type === 'DELIMITER'` and strip the `delimiter` from each remaining statement's `text` before sending it:
+
+```js
+for (const stmt of statements) {
+  if (stmt.type === 'DELIMITER') continue; // client-side only
+  const sql = stmt.delimiter
+    ? stmt.text.slice(0, -stmt.delimiter.length)
+    : stmt.text;
+  await connection.query(sql);
+}
+```
+
+### DELIMITER validation
+
+The parser rejects delimiter values that would break subsequent tokenization:
+
+* Empty argument (`DELIMITER` with no value)
+* Backslash (`\`) — matches mysql-shell's explicit rejection
+* String/identifier quote characters (`'`, `"`, `` ` ``)
+* Inline comment markers (`--`, `#`)
+* Block-comment characters (`/`, `*`)
+
+In strict mode (the default), an invalid `DELIMITER` throws. In non-strict mode, the `DELIMITER` statement is still returned but without a `newDelimiter` field, and the previous delimiter is kept — matching mysql-shell's behaviour of leaving the old delimiter in effect when an argument is rejected.
 
 ## Contributing
 

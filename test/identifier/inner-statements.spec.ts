@@ -60,6 +60,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
         },
       ];
 
@@ -83,6 +84,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
         },
       ];
 

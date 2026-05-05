@@ -72,11 +72,8 @@ const KEYWORDS = [
   'TRIGGERS',
   'VARIABLES',
   'WARNINGS',
+  'DELIMITER',
 ];
-
-const INDIVIDUALS: Record<string, Token['type']> = {
-  ';': 'semicolon',
-};
 
 const ENDTOKENS: Record<string, Char> = {
   '"': '"',
@@ -89,6 +86,7 @@ export function scanToken(
   state: State,
   dialect: Dialect = 'generic',
   paramTypes: ParamTypes = { positional: true },
+  delimiter = ';',
 ): Token {
   const ch = read(state);
 
@@ -112,7 +110,9 @@ export function scanToken(
     return scanParameter(state, dialect, paramTypes);
   }
 
-  if (isDollarQuotedString(state)) {
+  // MySQL/MariaDB does not support dollar-quoted strings, and treating `$$`
+  // as one would conflict with its use as a custom DELIMITER terminator.
+  if (dialect !== 'mysql' && isDollarQuotedString(state)) {
     return scanDollarQuotedString(state);
   }
 
@@ -120,16 +120,38 @@ export function scanToken(
     return scanQuotedIdentifier(state, ENDTOKENS[ch]);
   }
 
+  // Match the current statement terminator. Handles ';', '$', '$$', '//', etc.
+  // The delimiter match is the single source of terminator tokens.
+  // Word-like delimiters are consumed by scanWord below, so only symbol
+  // delimiters are fully supported.
+  const delimiterToken = scanDelimiter(state, delimiter);
+  if (delimiterToken) {
+    return delimiterToken;
+  }
+
   if (isLetter(ch)) {
     return scanWord(state);
   }
 
-  const individual = scanIndividualCharacter(state);
-  if (individual) {
-    return individual;
-  }
-
   return skipChar(state);
+}
+
+function scanDelimiter(state: State, delimiter: string): Token | null {
+  if (!delimiter) {
+    return null;
+  }
+  if (state.input.slice(state.start, state.start + delimiter.length) !== delimiter) {
+    return null;
+  }
+  for (let i = 0; i < delimiter.length - 1; i++) {
+    read(state);
+  }
+  return {
+    type: 'delimiter',
+    value: delimiter,
+    start: state.start,
+    end: state.start + delimiter.length - 1,
+  };
 }
 
 function read(state: State, skip = 0): Char {
@@ -166,10 +188,6 @@ function peek(state: State): Char {
 
 function isKeyword(word: string): boolean {
   return KEYWORDS.includes(word.toUpperCase());
-}
-
-function resolveIndividualTokenType(ch: string): Token['type'] | undefined {
-  return INDIVIDUALS[ch];
 }
 
 function scanWhitespace(state: State): Token {
@@ -422,21 +440,6 @@ function scanWord(state: State): Token {
 
   return {
     type: 'keyword',
-    value,
-    start: state.start,
-    end: state.start + value.length - 1,
-  };
-}
-
-function scanIndividualCharacter(state: State): Token | null {
-  const value = state.input.slice(state.start, state.position + 1);
-  const type = resolveIndividualTokenType(value);
-  if (!type) {
-    return null;
-  }
-
-  return {
-    type,
     value,
     start: state.start,
     end: state.start + value.length - 1,
