@@ -113,6 +113,7 @@ const blockOpeners: Record<Dialect, string[]> = {
   sqlite: ['BEGIN', 'CASE'],
   oracle: ['DECLARE', 'BEGIN', 'CASE'],
   bigquery: ['BEGIN', 'CASE', 'IF', 'LOOP', 'REPEAT', 'WHILE', 'FOR'],
+  dynamodb: [],
 };
 
 interface ParseOptions {
@@ -325,6 +326,21 @@ function createStatementParserByToken(
   options: ParseOptions,
 ): StatementParser {
   if (token.type === 'keyword') {
+    // DynamoDB PartiQL only supports DML: SELECT, INSERT, UPDATE, DELETE.
+    // No DDL (CREATE/DROP/ALTER/TRUNCATE), SHOW, or transaction control statements
+    // are part of the DynamoDB PartiQL grammar.
+    if (
+      options.dialect === 'dynamodb' &&
+      !['SELECT', 'INSERT', 'UPDATE', 'DELETE'].includes(token.value.toUpperCase())
+    ) {
+      if (!options.isStrict) {
+        return createUnknownStatementParser(options);
+      }
+      throw new Error(
+        `Statement "${token.value}" is not supported by the DynamoDB PartiQL dialect.`,
+      );
+    }
+
     switch (token.value.toUpperCase()) {
       case 'SELECT':
         return createSelectStatementParser(options);
@@ -1152,6 +1168,11 @@ export function defaultParamTypesFor(dialect: Dialect): ParamTypes {
         positional: true,
         numbered: ['?'],
         named: [':', '@'],
+      };
+    case 'dynamodb':
+      // DynamoDB PartiQL supports positional `?` placeholders only.
+      return {
+        positional: true,
       };
     default:
       return {
