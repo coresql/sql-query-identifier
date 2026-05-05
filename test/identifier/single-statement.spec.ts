@@ -791,7 +791,7 @@ describe('identifier', () => {
             text: query,
             type: 'CREATE_FUNCTION',
             executionType: 'MODIFICATION',
-            parameters: ['@DATE', '@ISOweek'],
+            parameters: ['@DATE'],
             tables: [],
           },
         ];
