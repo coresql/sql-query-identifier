@@ -1165,7 +1165,12 @@ export function defaultParamTypesFor(dialect: Dialect): ParamTypes {
       };
     case 'mssql':
       return {
+        named: ['@', ':'],
+      };
+    case 'oracle':
+      return {
         named: [':'],
+        numbered: [':'],
       };
     case 'bigquery':
       return {
@@ -1177,7 +1182,7 @@ export function defaultParamTypesFor(dialect: Dialect): ParamTypes {
       return {
         positional: true,
         numbered: ['?'],
-        named: [':', '@'],
+        named: [':', '@', '$'],
       };
     case 'dynamodb':
       // DynamoDB PartiQL supports positional `?` placeholders only; values are

@@ -818,7 +818,7 @@ describe('identifier', () => {
             text: query,
             type: 'CREATE_FUNCTION',
             executionType: 'MODIFICATION',
-            parameters: [],
+            parameters: ['@DATE', '@ISOweek'],
             tables: [],
             columns: [],
           },
@@ -1503,6 +1503,46 @@ describe('identifier', () => {
     });
 
     it('Should extract named Parameters', () => {
+      const actual = identify('SELECT * FROM Persons where x = @one and y = @two and a = @one', {
+        dialect: 'mssql',
+        strict: true,
+      });
+      const expected = [
+        {
+          start: 0,
+          end: 61,
+          text: 'SELECT * FROM Persons where x = @one and y = @two and a = @one',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: ['@one', '@two'],
+          tables: [],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('Should extract named Parameters with trailing commas', () => {
+      const actual = identify('SELECT * FROM Persons where x in (@one, @two, @three)', {
+        dialect: 'mssql',
+        strict: true,
+      });
+      const expected = [
+        {
+          start: 0,
+          end: 52,
+          text: 'SELECT * FROM Persons where x in (@one, @two, @three)',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: ['@one', '@two', '@three'],
+          tables: [],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('Should extract mssql colon-prefixed named parameters', () => {
       const actual = identify('SELECT * FROM Persons where x = :one and y = :two and a = :one', {
         dialect: 'mssql',
         strict: true,
@@ -1523,19 +1563,59 @@ describe('identifier', () => {
       expect(actual).to.eql(expected);
     });
 
-    it('Should extract named Parameters with trailing commas', () => {
-      const actual = identify('SELECT * FROM Persons where x in (:one, :two, :three)', {
-        dialect: 'mssql',
+    it('Should extract oracle named parameters', () => {
+      const actual = identify('SELECT * FROM persons WHERE id = :one AND status = :two', {
+        dialect: 'oracle',
         strict: true,
       });
       const expected = [
         {
           start: 0,
-          end: 52,
-          text: 'SELECT * FROM Persons where x in (:one, :two, :three)',
+          end: 54,
+          text: 'SELECT * FROM persons WHERE id = :one AND status = :two',
           type: 'SELECT',
           executionType: 'LISTING',
-          parameters: [':one', ':two', ':three'],
+          parameters: [':one', ':two'],
+          tables: [],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('Should extract oracle numbered parameters', () => {
+      const actual = identify('SELECT * FROM persons WHERE id = :1 AND status = :2', {
+        dialect: 'oracle',
+        strict: true,
+      });
+      const expected = [
+        {
+          start: 0,
+          end: 50,
+          text: 'SELECT * FROM persons WHERE id = :1 AND status = :2',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [':1', ':2'],
+          tables: [],
+        },
+      ];
+
+      expect(actual).to.eql(expected);
+    });
+
+    it('Should extract sqlite $name parameters', () => {
+      const actual = identify('SELECT * FROM persons WHERE id = $myid', {
+        dialect: 'sqlite',
+        strict: true,
+      });
+      const expected = [
+        {
+          start: 0,
+          end: 37,
+          text: 'SELECT * FROM persons WHERE id = $myid',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: ['$myid'],
           tables: [],
           columns: [],
         },
