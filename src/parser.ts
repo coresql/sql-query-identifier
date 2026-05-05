@@ -329,6 +329,16 @@ function createStatementParserByToken(
     // DynamoDB PartiQL only supports DML: SELECT, INSERT, UPDATE, DELETE.
     // No DDL (CREATE/DROP/ALTER/TRUNCATE), SHOW, or transaction control statements
     // are part of the DynamoDB PartiQL grammar.
+    //
+    // Spec: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.statements.html
+    //   SELECT  https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.select.html
+    //   INSERT  https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.insert.html
+    //   UPDATE  https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.update.html
+    //   DELETE  https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.delete.html
+    // Transactions and batches are exposed as DynamoDB API operations
+    // (ExecuteTransaction / BatchExecuteStatement), not as SQL keywords:
+    //   https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.multiplestatements.transactions.html
+    //   https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.multiplestatements.batching.html
     if (
       options.dialect === 'dynamodb' &&
       !['SELECT', 'INSERT', 'UPDATE', 'DELETE'].includes(token.value.toUpperCase())
@@ -1170,7 +1180,11 @@ export function defaultParamTypesFor(dialect: Dialect): ParamTypes {
         named: [':', '@'],
       };
     case 'dynamodb':
-      // DynamoDB PartiQL supports positional `?` placeholders only.
+      // DynamoDB PartiQL supports positional `?` placeholders only; values are
+      // bound out-of-band via the `Parameters` field on the ExecuteStatement /
+      // ExecuteTransaction / BatchExecuteStatement API calls.
+      // See: https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ExecuteStatement.html
+      //      https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.multiplestatements.batching.html
       return {
         positional: true,
       };
