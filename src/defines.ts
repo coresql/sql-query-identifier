@@ -5,6 +5,7 @@ export const DIALECTS = [
   'oracle',
   'psql',
   'bigquery',
+  'dynamodb',
   'generic',
 ] as const;
 export type Dialect = (typeof DIALECTS)[number];
