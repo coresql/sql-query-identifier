@@ -349,7 +349,14 @@ export class ColumnParser {
 
   private maybeIdent(token: Token): boolean {
     const ch = token.value[0];
-    const startChars = this.dialect === 'mssql' ? ['"', '['] : ['"', '`'];
+    let startChars: string[];
+    if (this.dialect === 'mssql') {
+      startChars = ['"', '['];
+    } else if (this.dialect === 'snowflake') {
+      startChars = ['"'];
+    } else {
+      startChars = ['"', '`'];
+    }
     return token.type !== 'string' && (startChars.includes(ch) || /[a-zA-Z_]/.test(ch));
   }
 }

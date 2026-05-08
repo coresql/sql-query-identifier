@@ -5,6 +5,7 @@ export const DIALECTS = [
   'oracle',
   'psql',
   'bigquery',
+  'snowflake',
   'generic',
 ] as const;
 export type Dialect = (typeof DIALECTS)[number];

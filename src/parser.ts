@@ -113,6 +113,7 @@ const blockOpeners: Record<Dialect, string[]> = {
   sqlite: ['BEGIN', 'CASE'],
   oracle: ['DECLARE', 'BEGIN', 'CASE'],
   bigquery: ['BEGIN', 'CASE', 'IF', 'LOOP', 'REPEAT', 'WHILE', 'FOR'],
+  snowflake: ['DECLARE', 'BEGIN', 'CASE', 'LOOP', 'IF', 'WHILE', 'FOR'],
 };
 
 interface ParseOptions {
@@ -348,7 +349,12 @@ function createStatementParserByToken(
       case 'TRUNCATE':
         return createTruncateStatementParser(options);
       case 'BEGIN':
-        if (['bigquery', 'oracle'].includes(options.dialect) && nextToken.value !== 'TRANSACTION') {
+        if (
+          (['bigquery', 'oracle'].includes(options.dialect) && nextToken.value !== 'TRANSACTION') ||
+          (options.dialect === 'snowflake' &&
+            nextToken.value !== 'WORK' &&
+            nextToken.value !== 'TRANSACTION')
+        ) {
           return createBlockStatementParser(options);
         }
         return createBeginTransactionStatementParser(options);
@@ -362,7 +368,7 @@ function createStatementParserByToken(
       case 'ROLLBACK':
         return createRollbackStatementParser(options);
       case 'DECLARE':
-        if (options.dialect === 'oracle') {
+        if (['oracle', 'snowflake'].includes(options.dialect)) {
           return createBlockStatementParser(options);
         }
         break;
@@ -912,12 +918,13 @@ function stateMachineStatementParser(
         (token.value.toUpperCase() !== 'BEGIN' ||
           (token.value.toUpperCase() === 'BEGIN' &&
             nextToken.value.toUpperCase() !== 'TRANSACTION' &&
+            (dialect !== 'snowflake' || nextToken.value.toUpperCase() !== 'WORK') &&
             (dialect !== 'sqlite' ||
               (dialect === 'sqlite' &&
                 !['DEFERRED', 'IMMEDIATE', 'EXCLUSIVE'].includes(nextToken.value.toUpperCase())))))
       ) {
         if (
-          dialect === 'oracle' &&
+          ['oracle', 'snowflake'].includes(dialect) &&
           lastBlockOpener?.value === 'DECLARE' &&
           token.value.toUpperCase() === 'BEGIN'
         ) {
@@ -975,11 +982,20 @@ function stateMachineStatementParser(
       }
 
       if (
-        ['psql', 'mssql', 'bigquery'].includes(dialect) &&
+        ['psql', 'mssql', 'bigquery', 'snowflake'].includes(dialect) &&
         token.value.toUpperCase() === 'MATERIALIZED'
       ) {
         setPrevToken(token);
         return;
+      }
+
+      let afterOrTokens: string[];
+      if (dialect === 'mssql') {
+        afterOrTokens = ['ALTER'];
+      } else if (dialect === 'snowflake') {
+        afterOrTokens = ['ALTER', 'REPLACE'];
+      } else {
+        afterOrTokens = ['REPLACE'];
       }
 
       // technically these dialects don't allow "OR REPLACE" or "OR ALTER" between all statement
@@ -990,7 +1006,7 @@ function stateMachineStatementParser(
         dialect !== 'sqlite' &&
         (token.value.toUpperCase() === 'OR' ||
           (prevNonWhitespaceToken?.value.toUpperCase() === 'OR' &&
-            token.value.toUpperCase() === (dialect === 'mssql' ? 'ALTER' : 'REPLACE')))
+            afterOrTokens.includes(token.value.toUpperCase())))
       ) {
         setPrevToken(token);
         return;
@@ -1000,7 +1016,9 @@ function stateMachineStatementParser(
       if (
         (dialect === 'psql' && ['TEMP', 'TEMPORARY'].includes(token.value.toUpperCase())) ||
         (dialect === 'sqlite' &&
-          ['TEMP', 'TEMPORARY', 'VIRTUAL'].includes(token.value.toUpperCase()))
+          ['TEMP', 'TEMPORARY', 'VIRTUAL'].includes(token.value.toUpperCase())) ||
+        (dialect === 'snowflake' &&
+          ['TEMP', 'TEMPORARY', 'TRANSIENT', 'VOLATILE'].includes(token.value.toUpperCase()))
       ) {
         setPrevToken(token);
         return;
@@ -1152,6 +1170,11 @@ export function defaultParamTypesFor(dialect: Dialect): ParamTypes {
         positional: true,
         numbered: ['?'],
         named: [':', '@'],
+      };
+    case 'snowflake':
+      return {
+        positional: true,
+        named: [':'],
       };
     default:
       return {
