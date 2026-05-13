@@ -113,7 +113,7 @@ const blockOpeners: Record<Dialect, string[]> = {
   sqlite: ['BEGIN', 'CASE'],
   oracle: ['DECLARE', 'BEGIN', 'CASE'],
   bigquery: ['BEGIN', 'CASE', 'IF', 'LOOP', 'REPEAT', 'WHILE', 'FOR'],
-  snowflake: ['DECLARE', 'BEGIN', 'CASE', 'LOOP', 'IF', 'WHILE', 'FOR'],
+  snowflake: ['DECLARE', 'BEGIN', 'CASE', 'LOOP', 'IF', 'WHILE', 'FOR', 'REPEAT'],
 };
 
 interface ParseOptions {
@@ -350,10 +350,10 @@ function createStatementParserByToken(
         return createTruncateStatementParser(options);
       case 'BEGIN':
         if (
-          (['bigquery', 'oracle'].includes(options.dialect) && nextToken.value !== 'TRANSACTION') ||
+          (['bigquery', 'oracle'].includes(options.dialect) && nextToken.value.toUpperCase() !== 'TRANSACTION') ||
           (options.dialect === 'snowflake' &&
-            nextToken.value !== 'WORK' &&
-            nextToken.value !== 'TRANSACTION')
+            nextToken.value.toUpperCase() !== 'WORK' &&
+            nextToken.value.toUpperCase() !== 'TRANSACTION')
         ) {
           return createBlockStatementParser(options);
         }
@@ -417,7 +417,7 @@ function createBlockStatementParser(options: ParseOptions) {
       preCanGoToNext: () => false,
       validation: {
         acceptTokens: [
-          ...(options.dialect === 'oracle' ? [{ type: 'keyword', value: 'DECLARE' }] : []),
+          ...(['oracle', 'snowflake'].includes(options.dialect) ? [{ type: 'keyword', value: 'DECLARE' }] : []),
           { type: 'keyword', value: 'BEGIN' },
         ],
       },

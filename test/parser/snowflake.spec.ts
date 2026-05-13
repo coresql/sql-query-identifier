@@ -120,6 +120,29 @@ describe('Parser for snowflake', () => {
       expect(result.body.length).to.eql(1);
       expect(result.body[0].type).to.eql('ANON_BLOCK');
     });
+
+    it('should handle REPEAT inside a block', () => {
+      const sql = `BEGIN
+        REPEAT
+          SELECT 1;
+        UNTIL (x > 10) END REPEAT;
+      END;`;
+      const result = parse(sql, false, 'snowflake');
+      expect(result.body.length).to.eql(1);
+      expect(result.body[0].type).to.eql('ANON_BLOCK');
+    });
+
+    it('should parse DECLARE...BEGIN...END as ANON_BLOCK in strict mode', () => {
+      const sql = `DECLARE
+        x INTEGER;
+      BEGIN
+        x := 1;
+        SELECT x;
+      END;`;
+      const result = parse(sql, true, 'snowflake');
+      expect(result.body.length).to.eql(1);
+      expect(result.body[0].type).to.eql('ANON_BLOCK');
+    });
   });
 
   // Transactions
@@ -168,6 +191,22 @@ describe('Parser for snowflake', () => {
       const result2 = parse('ROLLBACK;', false, 'snowflake');
       expect(result2.body.length).to.eql(1);
       expect(result2.body[0].type).to.eql('ROLLBACK');
+    });
+
+    it('should parse lowercase "BEGIN transaction" as BEGIN_TRANSACTION', () => {
+      const result = parse('BEGIN transaction; SELECT 1; COMMIT;', false, 'snowflake');
+      expect(result.body.length).to.eql(3);
+      expect(result.body[0].type).to.eql('BEGIN_TRANSACTION');
+      expect(result.body[1].type).to.eql('SELECT');
+      expect(result.body[2].type).to.eql('COMMIT');
+    });
+
+    it('should parse lowercase "BEGIN work" as BEGIN_TRANSACTION', () => {
+      const result = parse('BEGIN work; SELECT 1; COMMIT;', false, 'snowflake');
+      expect(result.body.length).to.eql(3);
+      expect(result.body[0].type).to.eql('BEGIN_TRANSACTION');
+      expect(result.body[1].type).to.eql('SELECT');
+      expect(result.body[2].type).to.eql('COMMIT');
     });
 
     it('should not treat BEGIN WORK inside a block as a block opener', () => {
