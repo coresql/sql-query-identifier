@@ -5,6 +5,7 @@ export const DIALECTS = [
   'oracle',
   'psql',
   'bigquery',
+  'dynamodb',
   'snowflake',
   'generic',
 ] as const;

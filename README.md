@@ -151,7 +151,24 @@ console.log(statements);
 1. `input (string)`: the whole SQL script text to be processed
 1. `options (object)`: allow to set different configurations
     1. `strict (bool)`: allow disable strict mode which will ignore unknown types *(default=true)*
-    2. `dialect (string)`: Specify your database dialect, values: `generic`, `mysql`, `oracle`, `psql`, `sqlite` and `mssql`. *(default=generic)*
+    2. `dialect (string)`: Specify your database dialect, values: `generic`, `mysql`, `oracle`, `psql`, `sqlite`, `mssql`, `bigquery` and `dynamodb`. *(default=generic)*
+
+### DynamoDB (PartiQL)
+
+DynamoDB exposes a [PartiQL](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.html)-compatible
+query language that is a strict subset of SQL. When `dialect: 'dynamodb'` is used, only DML statements
+are accepted (`SELECT`, `INSERT`, `UPDATE`, `DELETE`); DDL (`CREATE` / `DROP` / `ALTER` / `TRUNCATE`),
+`SHOW`, and transaction-control statements (`BEGIN` / `COMMIT` / `ROLLBACK`) are not part of the
+DynamoDB PartiQL grammar and will throw in strict mode (or fall back to `UNKNOWN` in non-strict mode).
+Positional `?` placeholders are the supported parameter style. Table and index identifiers are
+double-quoted; string and attribute literals are single-quoted, per the DynamoDB PartiQL spec.
+
+```js
+import { identify } from 'sql-query-identifier';
+
+identify(`SELECT * FROM "Orders" WHERE OrderID = ?`, { dialect: 'dynamodb' });
+// [{ type: 'SELECT', executionType: 'LISTING', parameters: ['?'], ... }]
+```
 
 ## Contributing
 
