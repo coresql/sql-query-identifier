@@ -93,6 +93,28 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   BEGIN_TRANSACTION: 'TRANSACTION',
   COMMIT: 'TRANSACTION',
   ROLLBACK: 'TRANSACTION',
+  MERGE: 'MODIFICATION',
+  CALL: 'MODIFICATION',
+  GRANT: 'MODIFICATION',
+  REVOKE: 'MODIFICATION',
+  EXPLAIN: 'INFORMATION',
+  DESCRIBE: 'INFORMATION',
+  USE: 'INFORMATION',
+  COPY: 'MODIFICATION',
+  PUT: 'MODIFICATION',
+  GET: 'LISTING',
+  LIST: 'LISTING',
+  REMOVE: 'MODIFICATION',
+  SHOW_WAREHOUSES: 'LISTING',
+  SHOW_USERS: 'LISTING',
+  SHOW_ROLES: 'LISTING',
+  SHOW_SCHEMAS: 'LISTING',
+  SHOW_STAGES: 'LISTING',
+  SHOW_INTEGRATIONS: 'LISTING',
+  SHOW_STREAMS: 'LISTING',
+  SHOW_TASKS: 'LISTING',
+  SHOW_PIPES: 'LISTING',
+  SHOW_SEQUENCES: 'LISTING',
   UNKNOWN: 'UNKNOWN',
   ANON_BLOCK: 'ANON_BLOCK',
 };
@@ -332,7 +354,7 @@ function createStatementParserByToken(
       case 'CREATE':
         return createCreateStatementParser(options);
       case 'SHOW':
-        if (['mysql', 'generic'].includes(options.dialect)) {
+        if (['mysql', 'generic', 'snowflake'].includes(options.dialect)) {
           return createShowStatementParser(options);
         }
         break;
@@ -350,7 +372,8 @@ function createStatementParserByToken(
         return createTruncateStatementParser(options);
       case 'BEGIN':
         if (
-          (['bigquery', 'oracle'].includes(options.dialect) && nextToken.value.toUpperCase() !== 'TRANSACTION') ||
+          (['bigquery', 'oracle'].includes(options.dialect) &&
+            nextToken.value.toUpperCase() !== 'TRANSACTION') ||
           (options.dialect === 'snowflake' &&
             nextToken.value.toUpperCase() !== 'WORK' &&
             nextToken.value.toUpperCase() !== 'TRANSACTION')
@@ -371,6 +394,40 @@ function createStatementParserByToken(
         if (['oracle', 'snowflake'].includes(options.dialect)) {
           return createBlockStatementParser(options);
         }
+        break;
+      case 'MERGE':
+        return createMergeStatementParser(options);
+      case 'CALL':
+        return createCallStatementParser(options);
+      case 'GRANT':
+        return createGrantStatementParser(options);
+      case 'REVOKE':
+        return createRevokeStatementParser(options);
+      case 'EXPLAIN':
+        return createExplainStatementParser(options);
+      case 'DESCRIBE':
+      case 'DESC':
+        return createDescribeStatementParser(options);
+      case 'USE':
+        if (['mssql', 'mysql', 'snowflake'].includes(options.dialect)) {
+          return createUseStatementParser(options);
+        }
+        break;
+      case 'COPY':
+        return createCopyStatementParser(options);
+      case 'PUT':
+        if (options.dialect === 'snowflake') return createPutStatementParser(options);
+        break;
+      case 'GET':
+        if (options.dialect === 'snowflake') return createGetStatementParser(options);
+        break;
+      case 'LIST':
+      case 'LS':
+        if (options.dialect === 'snowflake') return createListStatementParser(options);
+        break;
+      case 'REMOVE':
+      case 'RM':
+        if (options.dialect === 'snowflake') return createRemoveStatementParser(options);
         break;
       default:
         break;
@@ -417,7 +474,9 @@ function createBlockStatementParser(options: ParseOptions) {
       preCanGoToNext: () => false,
       validation: {
         acceptTokens: [
-          ...(['oracle', 'snowflake'].includes(options.dialect) ? [{ type: 'keyword', value: 'DECLARE' }] : []),
+          ...(['oracle', 'snowflake'].includes(options.dialect)
+            ? [{ type: 'keyword', value: 'DECLARE' }]
+            : []),
           { type: 'keyword', value: 'BEGIN' },
         ],
       },
@@ -665,6 +724,80 @@ function createTruncateStatementParser(options: ParseOptions) {
   return stateMachineStatementParser(statement, steps, options);
 }
 
+function createSingleKeywordStatementParser(
+  options: ParseOptions,
+  type: StatementType,
+  keywords: string[],
+) {
+  const statement = createInitialStatement();
+
+  const steps: Step[] = [
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        acceptTokens: keywords.map((value) => ({ type: 'keyword', value })),
+      },
+      add: (token) => {
+        statement.type = type;
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
+      },
+      postCanGoToNext: () => true,
+    },
+  ];
+
+  return stateMachineStatementParser(statement, steps, options);
+}
+
+function createMergeStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'MERGE', ['MERGE']);
+}
+
+function createCallStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'CALL', ['CALL']);
+}
+
+function createGrantStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'GRANT', ['GRANT']);
+}
+
+function createRevokeStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'REVOKE', ['REVOKE']);
+}
+
+function createExplainStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'EXPLAIN', ['EXPLAIN']);
+}
+
+function createDescribeStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'DESCRIBE', ['DESCRIBE', 'DESC']);
+}
+
+function createUseStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'USE', ['USE']);
+}
+
+function createCopyStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'COPY', ['COPY']);
+}
+
+function createPutStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'PUT', ['PUT']);
+}
+
+function createGetStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'GET', ['GET']);
+}
+
+function createListStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'LIST', ['LIST', 'LS']);
+}
+
+function createRemoveStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'REMOVE', ['REMOVE', 'RM']);
+}
+
 function createShowStatementParser(options: ParseOptions) {
   const statement = createInitialStatement();
 
@@ -721,6 +854,16 @@ function createShowStatementParser(options: ParseOptions) {
           { type: 'keyword', value: 'TRIGGERS' },
           { type: 'keyword', value: 'VARIABLES' },
           { type: 'keyword', value: 'WARNINGS' },
+          { type: 'keyword', value: 'WAREHOUSES' },
+          { type: 'keyword', value: 'USERS' },
+          { type: 'keyword', value: 'ROLES' },
+          { type: 'keyword', value: 'SCHEMAS' },
+          { type: 'keyword', value: 'STAGES' },
+          { type: 'keyword', value: 'INTEGRATIONS' },
+          { type: 'keyword', value: 'STREAMS' },
+          { type: 'keyword', value: 'TASKS' },
+          { type: 'keyword', value: 'PIPES' },
+          { type: 'keyword', value: 'SEQUENCES' },
         ],
       },
       add: (token) => {

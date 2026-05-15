@@ -454,6 +454,121 @@ describe('Parser for snowflake', () => {
       expect(result.body[0].type).to.eql('CREATE_TABLE');
       expect(result.body[1].type).to.eql('ANON_BLOCK');
     });
+
+    it('should not split on MERGE inside a BEGIN...END block', () => {
+      const sql = `BEGIN
+        MERGE INTO t USING s ON t.id = s.id WHEN MATCHED THEN UPDATE SET t.v = s.v;
+        SELECT 1;
+      END;`;
+      const result = parse(sql, false, 'snowflake');
+      expect(result.body.length).to.eql(1);
+      expect(result.body[0].type).to.eql('ANON_BLOCK');
+    });
+  });
+
+  describe('DESCRIBE / DESC', () => {
+    it('should identify DESCRIBE TABLE', () => {
+      const result = parse('DESCRIBE TABLE foo;', true, 'snowflake');
+      expect(result.body.length).to.eql(1);
+      expect(result.body[0].type).to.eql('DESCRIBE');
+      expect(result.body[0].executionType).to.eql('INFORMATION');
+    });
+
+    it('should identify DESC TABLE as DESCRIBE', () => {
+      const result = parse('DESC TABLE foo;', true, 'snowflake');
+      expect(result.body.length).to.eql(1);
+      expect(result.body[0].type).to.eql('DESCRIBE');
+      expect(result.body[0].executionType).to.eql('INFORMATION');
+    });
+  });
+
+  describe('USE', () => {
+    ['WAREHOUSE', 'DATABASE', 'ROLE'].forEach((target) => {
+      it(`should identify USE ${target}`, () => {
+        const result = parse(`USE ${target} foo;`, true, 'snowflake');
+        expect(result.body.length).to.eql(1);
+        expect(result.body[0].type).to.eql('USE');
+        expect(result.body[0].executionType).to.eql('INFORMATION');
+      });
+    });
+  });
+
+  describe('stage commands', () => {
+    it('should identify PUT', () => {
+      const result = parse('PUT file:///tmp/x.csv @stage;', true, 'snowflake');
+      expect(result.body.length).to.eql(1);
+      expect(result.body[0].type).to.eql('PUT');
+      expect(result.body[0].executionType).to.eql('MODIFICATION');
+    });
+
+    it('should identify GET', () => {
+      const result = parse('GET @stage file:///tmp/x.csv;', true, 'snowflake');
+      expect(result.body.length).to.eql(1);
+      expect(result.body[0].type).to.eql('GET');
+      expect(result.body[0].executionType).to.eql('LISTING');
+    });
+
+    it('should identify LIST', () => {
+      const result = parse('LIST @stage;', true, 'snowflake');
+      expect(result.body.length).to.eql(1);
+      expect(result.body[0].type).to.eql('LIST');
+      expect(result.body[0].executionType).to.eql('LISTING');
+    });
+
+    it('should identify LS as LIST', () => {
+      const result = parse('LS @stage;', true, 'snowflake');
+      expect(result.body.length).to.eql(1);
+      expect(result.body[0].type).to.eql('LIST');
+    });
+
+    it('should identify REMOVE', () => {
+      const result = parse('REMOVE @stage/f.csv;', true, 'snowflake');
+      expect(result.body.length).to.eql(1);
+      expect(result.body[0].type).to.eql('REMOVE');
+      expect(result.body[0].executionType).to.eql('MODIFICATION');
+    });
+
+    it('should identify RM as REMOVE', () => {
+      const result = parse('RM @stage/f.csv;', true, 'snowflake');
+      expect(result.body.length).to.eql(1);
+      expect(result.body[0].type).to.eql('REMOVE');
+    });
+  });
+
+  describe('COPY', () => {
+    it('should identify COPY INTO table FROM stage (load)', () => {
+      const result = parse('COPY INTO foo FROM @stage;', true, 'snowflake');
+      expect(result.body.length).to.eql(1);
+      expect(result.body[0].type).to.eql('COPY');
+      expect(result.body[0].executionType).to.eql('MODIFICATION');
+    });
+
+    it('should identify COPY INTO stage FROM table (unload)', () => {
+      const result = parse('COPY INTO @stage FROM foo;', true, 'snowflake');
+      expect(result.body.length).to.eql(1);
+      expect(result.body[0].type).to.eql('COPY');
+      expect(result.body[0].executionType).to.eql('MODIFICATION');
+    });
+  });
+
+  describe('EXPLAIN', () => {
+    it('should identify EXPLAIN SELECT', () => {
+      const result = parse('EXPLAIN SELECT * FROM foo;', true, 'snowflake');
+      expect(result.body.length).to.eql(1);
+      expect(result.body[0].type).to.eql('EXPLAIN');
+      expect(result.body[0].executionType).to.eql('INFORMATION');
+    });
+  });
+
+  describe('SHOW', () => {
+    ['WAREHOUSES', 'USERS', 'ROLES', 'SCHEMAS', 'STAGES'].forEach((target) => {
+      it(`should identify SHOW ${target}`, () => {
+        const result = parse(`SHOW ${target};`, true, 'snowflake');
+        expect(result.body.length).to.eql(1);
+        expect(result.body[0].type).to.eql(`SHOW_${target}`);
+        expect(result.body[0].executionType).to.eql('LISTING');
+      });
+    });
   });
 
   // Parameters
