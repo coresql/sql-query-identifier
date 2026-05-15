@@ -12,16 +12,16 @@ describe('parser', () => {
 
     describe('with strict disabled', () => {
       it('should parse if first token is unknown', () => {
-        const actual = parse('LIST * FROM foo', false);
+        const actual = parse('FOOBAR * FROM foo', false);
         actual.tokens = aggregateUnknownTokens(actual.tokens);
         expect(actual).to.eql({
           type: 'QUERY',
           start: 0,
-          end: 14,
+          end: 16,
           body: [
             {
               start: 0,
-              end: 14,
+              end: 16,
               parameters: [],
               tables: [],
               columns: [],
@@ -29,7 +29,7 @@ describe('parser', () => {
               executionType: 'UNKNOWN',
             },
           ],
-          tokens: [{ type: 'unknown', value: 'LIST * FROM foo', start: 0, end: 14 }],
+          tokens: [{ type: 'unknown', value: 'FOOBAR * FROM foo', start: 0, end: 16 }],
         });
       });
 
@@ -708,6 +708,56 @@ describe('parser', () => {
       };
 
       expect(actual).to.eql(expected);
+    });
+
+    it('should parse "MERGE" statement', () => {
+      const actual = parse(
+        'MERGE INTO target t USING source s ON t.id = s.id WHEN MATCHED THEN UPDATE SET t.v = s.v;',
+      );
+      expect(actual.body.length).to.eql(1);
+      expect(actual.body[0].type).to.eql('MERGE');
+      expect(actual.body[0].executionType).to.eql('MODIFICATION');
+    });
+
+    it('should parse "CALL" statement', () => {
+      const actual = parse('CALL my_proc(1);');
+      expect(actual.body.length).to.eql(1);
+      expect(actual.body[0].type).to.eql('CALL');
+      expect(actual.body[0].executionType).to.eql('MODIFICATION');
+    });
+
+    it('should parse "GRANT" statement', () => {
+      const actual = parse('GRANT SELECT ON t TO bob;');
+      expect(actual.body.length).to.eql(1);
+      expect(actual.body[0].type).to.eql('GRANT');
+      expect(actual.body[0].executionType).to.eql('MODIFICATION');
+    });
+
+    it('should parse "REVOKE" statement', () => {
+      const actual = parse('REVOKE SELECT ON t FROM bob;');
+      expect(actual.body.length).to.eql(1);
+      expect(actual.body[0].type).to.eql('REVOKE');
+      expect(actual.body[0].executionType).to.eql('MODIFICATION');
+    });
+
+    it('should parse "EXPLAIN" statement as EXPLAIN, not SELECT', () => {
+      const actual = parse('EXPLAIN SELECT * FROM t;');
+      expect(actual.body.length).to.eql(1);
+      expect(actual.body[0].type).to.eql('EXPLAIN');
+      expect(actual.body[0].executionType).to.eql('INFORMATION');
+    });
+
+    it('should parse psql "COPY" statement', () => {
+      const actual = parse("COPY t FROM '/tmp/x.csv';", true, 'psql');
+      expect(actual.body.length).to.eql(1);
+      expect(actual.body[0].type).to.eql('COPY');
+      expect(actual.body[0].executionType).to.eql('MODIFICATION');
+    });
+
+    it('should still parse SELECT with ORDER BY DESC as SELECT (not DESCRIBE)', () => {
+      const actual = parse('SELECT * FROM t ORDER BY a DESC;');
+      expect(actual.body.length).to.eql(1);
+      expect(actual.body[0].type).to.eql('SELECT');
     });
 
     describe('with parameters', () => {

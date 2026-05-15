@@ -72,6 +72,31 @@ const KEYWORDS = [
   'TRIGGERS',
   'VARIABLES',
   'WARNINGS',
+  'MERGE',
+  'CALL',
+  'GRANT',
+  'REVOKE',
+  'EXPLAIN',
+  'DESCRIBE',
+  'DESC',
+  'USE',
+  'COPY',
+  'PUT',
+  'GET',
+  'LIST',
+  'LS',
+  'REMOVE',
+  'RM',
+  'WAREHOUSES',
+  'USERS',
+  'ROLES',
+  'SCHEMAS',
+  'STAGES',
+  'INTEGRATIONS',
+  'STREAMS',
+  'TASKS',
+  'PIPES',
+  'SEQUENCES',
 ];
 
 const INDIVIDUALS: Record<string, Token['type']> = {
@@ -520,7 +545,14 @@ function isDollarQuotedString(state: State): boolean {
 }
 
 function isQuotedIdentifier(ch: Char, dialect: Dialect): boolean {
-  const startQuoteChars: Char[] = dialect === 'mssql' ? ['"', '['] : ['"', '`'];
+  let startQuoteChars: Char[];
+  if (dialect === 'mssql') {
+    startQuoteChars = ['"', '['];
+  } else if (dialect === 'snowflake') {
+    startQuoteChars = ['"'];
+  } else {
+    startQuoteChars = ['"', '`'];
+  }
   return startQuoteChars.includes(ch);
 }
 
