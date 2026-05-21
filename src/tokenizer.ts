@@ -387,8 +387,8 @@ function scanCommentBlock(state: State): Token {
 }
 
 function scanQuotedIdentifier(state: State, endToken: Char, dialect: Dialect): Token {
-  let nextChar: Char;
-  while (true) {
+  let nextChar: Char = peek(state);
+  while (nextChar !== null) {
     nextChar = read(state);
     if (nextChar === null) break;
 
