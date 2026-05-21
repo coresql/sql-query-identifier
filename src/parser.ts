@@ -856,7 +856,7 @@ function stateMachineStatementParser(
   let openBlocks = 0;
 
   const columnParser = new ColumnParser(dialect);
-  const tableParser = new TableParser();
+  const tableParser = new TableParser(dialect);
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
   const isValidToken = (step: Step, token: Token) => {

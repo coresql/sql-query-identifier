@@ -117,7 +117,7 @@ export function scanToken(
   }
 
   if (isQuotedIdentifier(ch, dialect) && ch !== null) {
-    return scanQuotedIdentifier(state, ENDTOKENS[ch]);
+    return scanQuotedIdentifier(state, ENDTOKENS[ch], dialect);
   }
 
   if (isLetter(ch)) {
@@ -385,11 +385,19 @@ function scanCommentBlock(state: State): Token {
   };
 }
 
-function scanQuotedIdentifier(state: State, endToken: Char): Token {
+function scanQuotedIdentifier(state: State, endToken: Char, dialect: Dialect): Token {
   let nextChar: Char;
+  let isEscaping: boolean = false;
   do {
     nextChar = read(state);
-  } while (endToken !== nextChar && nextChar !== null);
+    const nextNextChar = peek(state);
+    if ((nextChar === nextNextChar && nextChar === endToken) ||
+      (dialect === 'bigquery' && nextChar === '\\' && nextNextChar === endToken)) {
+      isEscaping = true;
+    } else if (isEscaping && nextChar !== endToken) {
+      isEscaping = false;
+    }
+  } while (isEscaping || (endToken !== nextChar && nextChar !== null));
 
   if (nextChar !== null && endToken !== nextChar) {
     unread(state);
