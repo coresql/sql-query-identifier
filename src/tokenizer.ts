@@ -3,6 +3,7 @@
  */
 
 import type { Token, State, Dialect, ParamTypes } from './defines';
+import { getStartQuotes } from './utils';
 
 type Char = string | null;
 
@@ -117,7 +118,7 @@ export function scanToken(
   }
 
   if (isQuotedIdentifier(ch, dialect) && ch !== null) {
-    return scanQuotedIdentifier(state, ENDTOKENS[ch]);
+    return scanQuotedIdentifier(state, ENDTOKENS[ch], dialect);
   }
 
   if (isLetter(ch)) {
@@ -385,11 +386,24 @@ function scanCommentBlock(state: State): Token {
   };
 }
 
-function scanQuotedIdentifier(state: State, endToken: Char): Token {
-  let nextChar: Char;
-  do {
+function scanQuotedIdentifier(state: State, endToken: Char, dialect: Dialect): Token {
+  let nextChar: Char = peek(state);
+  while (nextChar !== null) {
     nextChar = read(state);
-  } while (endToken !== nextChar && nextChar !== null);
+    if (nextChar === null) break;
+
+    if (nextChar === endToken && peek(state) === endToken) {
+      read(state);
+      continue;
+    }
+
+    if (dialect === 'bigquery' && nextChar === '\\' && peek(state) === endToken) {
+      read(state);
+      continue;
+    }
+
+    if (nextChar === endToken) break;
+  }
 
   if (nextChar !== null && endToken !== nextChar) {
     unread(state);
@@ -520,7 +534,7 @@ function isDollarQuotedString(state: State): boolean {
 }
 
 function isQuotedIdentifier(ch: Char, dialect: Dialect): boolean {
-  const startQuoteChars: Char[] = dialect === 'mssql' ? ['"', '['] : ['"', '`'];
+  const startQuoteChars: Char[] = getStartQuotes(dialect);
   return startQuoteChars.includes(ch);
 }
 
