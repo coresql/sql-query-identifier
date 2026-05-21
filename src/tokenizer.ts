@@ -3,6 +3,7 @@
  */
 
 import type { Token, State, Dialect, ParamTypes } from './defines';
+import { getStartQuotes } from './utils';
 
 type Char = string | null;
 
@@ -533,7 +534,7 @@ function isDollarQuotedString(state: State): boolean {
 }
 
 function isQuotedIdentifier(ch: Char, dialect: Dialect): boolean {
-  const startQuoteChars: Char[] = dialect === 'mssql' ? ['"', '['] : ['"', '`'];
+  const startQuoteChars: Char[] = getStartQuotes(dialect);
   return startQuoteChars.includes(ch);
 }
 

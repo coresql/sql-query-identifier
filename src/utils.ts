@@ -1,11 +1,18 @@
 import { Dialect, Token } from './defines';
 
-function getStartQuotes(dialect: Dialect): string[] {
+export function getStartQuotes(dialect: Dialect): string[] {
   if (dialect === 'mssql') {
     return ['"', '['];
   } else {
     return ['"', '`'];
   }
+}
+
+function endQuoteFor(char: string): string {
+  if (char === '[') {
+    return ']';
+  }
+  return char;
 }
 
 export function maybeIdentifier(token: Token, dialect: Dialect): boolean {
@@ -26,7 +33,7 @@ export function maybeStripQuotes(value: string, dialect: Dialect): string {
     return value;
   }
 
-  const expectedEnd = start === '[' ? ']' : start;
+  const expectedEnd = endQuoteFor(start);
   if (end !== expectedEnd) {
     return value;
   }
@@ -34,7 +41,7 @@ export function maybeStripQuotes(value: string, dialect: Dialect): string {
   const inner = value.slice(1, -1);
 
   if (dialect === 'bigquery' && start === '`') {
-    return inner.replace(/\\(.)/g, '$1');
+    return inner.replace(/\\`/g, '`');
   }
 
   return inner.split(expectedEnd + expectedEnd).join(expectedEnd);
