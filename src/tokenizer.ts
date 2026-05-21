@@ -387,19 +387,22 @@ function scanCommentBlock(state: State): Token {
 
 function scanQuotedIdentifier(state: State, endToken: Char, dialect: Dialect): Token {
   let nextChar: Char;
-  let isEscaping = false;
-  do {
+  while (true) {
     nextChar = read(state);
-    const nextNextChar = peek(state);
-    if (
-      (nextChar === nextNextChar && nextChar === endToken) ||
-      (dialect === 'bigquery' && nextChar === '\\' && nextNextChar === endToken)
-    ) {
-      isEscaping = true;
-    } else if (isEscaping && nextChar !== endToken) {
-      isEscaping = false;
+    if (nextChar === null) break;
+
+    if (nextChar === endToken && peek(state) === endToken) {
+      read(state);
+      continue;
     }
-  } while (isEscaping || (endToken !== nextChar && nextChar !== null));
+
+    if (dialect === 'bigquery' && nextChar === '\\' && peek(state) === endToken) {
+      read(state);
+      continue;
+    }
+
+    if (nextChar === endToken) break;
+  }
 
   if (nextChar !== null && endToken !== nextChar) {
     unread(state);

@@ -739,6 +739,15 @@ describe('identifier', () => {
           expect(actual[0].tables).to.eql([{ name: 't' }]);
         });
 
+        it('should handle escape immediately before the closing quote', () => {
+          const actual = identify('SELECT "a""" FROM t', {
+            identifyColumns: true,
+            identifyTables: true,
+          });
+          expect(actual[0].columns).to.eql([{ name: 'a"', isWildcard: false }]);
+          expect(actual[0].tables).to.eql([{ name: 't' }]);
+        });
+
         it('should unescape backslash-escaped backtick in BigQuery identifier', () => {
           const actual = identify('SELECT `a\\`b` FROM `t\\`u`', {
             identifyColumns: true,
