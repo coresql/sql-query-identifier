@@ -983,6 +983,18 @@ function stateMachineStatementParser(
         statement.parameters.push(token.value);
       }
 
+      // `SELECT ... INTO target` creates and populates a new table, so the
+      // statement modifies the database even though its type is SELECT. Only
+      // dialects where `SELECT INTO` builds a table are flagged here; Oracle
+      // and MySQL use `SELECT INTO` to assign variables, so they are excluded.
+      if (
+        statement.type === 'SELECT' &&
+        token.value.toUpperCase() === 'INTO' &&
+        ['generic', 'mssql', 'psql'].includes(dialect)
+      ) {
+        statement.executionType = 'MODIFICATION';
+      }
+
       if (statement.type && statement.start >= 0) {
         // statement has already been identified
         // just wait until end of the statement

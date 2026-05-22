@@ -76,6 +76,59 @@ describe('identifier', () => {
       expect(actual).to.eql(expected);
     });
 
+    describe('identify "SELECT ... INTO" statements', () => {
+      // `SELECT ... INTO` creates and populates a new table, so it modifies the
+      // database. See https://github.com/coresql/sql-query-identifier/issues/81
+      it('should identify "SELECT ... INTO" as a modification', () => {
+        const sql = 'SELECT * INTO public."MyTable1" FROM public."MyTable2"';
+        const actual = identify(sql);
+        const expected = [
+          {
+            start: 0,
+            end: sql.length - 1,
+            text: sql,
+            type: 'SELECT',
+            executionType: 'MODIFICATION',
+            parameters: [],
+            tables: [],
+            columns: [],
+          },
+        ];
+
+        expect(actual).to.eql(expected);
+      });
+
+      it('should identify "SELECT ... INTO" as a modification in mssql', () => {
+        const sql = 'SELECT id, name INTO [dbo].[copy] FROM [dbo].[users]';
+        const actual = identify(sql, { dialect: 'mssql' });
+
+        expect(actual[0].type).to.eql('SELECT');
+        expect(actual[0].executionType).to.eql('MODIFICATION');
+      });
+
+      it('should identify "SELECT ... INTO" as a modification in psql', () => {
+        const sql = 'SELECT * INTO new_table FROM old_table';
+        const actual = identify(sql, { dialect: 'psql' });
+
+        expect(actual[0].type).to.eql('SELECT');
+        expect(actual[0].executionType).to.eql('MODIFICATION');
+      });
+
+      it('should still identify a plain "SELECT" as a listing', () => {
+        const actual = identify('SELECT * FROM Persons');
+
+        expect(actual[0].executionType).to.eql('LISTING');
+      });
+
+      it('should not flag oracle "SELECT INTO", which assigns variables', () => {
+        const sql = 'SELECT name INTO v_name FROM employees WHERE id = 1';
+        const actual = identify(sql, { dialect: 'oracle' });
+
+        expect(actual[0].type).to.eql('SELECT');
+        expect(actual[0].executionType).to.eql('LISTING');
+      });
+    });
+
     ['DATABASE', 'SCHEMA'].forEach((type) => {
       describe(`identify "CREATE ${type}" statements`, () => {
         const sql = `CREATE ${type} Profile;`;
