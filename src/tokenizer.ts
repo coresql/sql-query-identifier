@@ -84,7 +84,7 @@ const KEYWORDS = [
   'USERS',
   'ROLES',
   'SCHEMAS',
-  'SEQUENCES'
+  'SEQUENCES',
 ];
 
 const SNOWFLAKE_KEYWORDS = [
@@ -100,7 +100,7 @@ const SNOWFLAKE_KEYWORDS = [
   'STREAMS',
   'TASKS',
   'PIPES',
-]
+];
 
 const INDIVIDUALS: Record<string, Token['type']> = {
   ';': 'semicolon',
