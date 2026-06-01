@@ -12,16 +12,16 @@ describe('parser', () => {
 
     describe('with strict disabled', () => {
       it('should parse if first token is unknown', () => {
-        const actual = parse('FOOBAR * FROM foo', false);
+        const actual = parse('LIST * FROM foo', false);
         actual.tokens = aggregateUnknownTokens(actual.tokens);
         expect(actual).to.eql({
           type: 'QUERY',
           start: 0,
-          end: 16,
+          end: 14,
           body: [
             {
               start: 0,
-              end: 16,
+              end: 14,
               parameters: [],
               tables: [],
               columns: [],
@@ -29,7 +29,7 @@ describe('parser', () => {
               executionType: 'UNKNOWN',
             },
           ],
-          tokens: [{ type: 'unknown', value: 'FOOBAR * FROM foo', start: 0, end: 16 }],
+          tokens: [{ type: 'unknown', value: 'LIST * FROM foo', start: 0, end: 14 }],
         });
       });
 

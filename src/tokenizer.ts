@@ -81,6 +81,13 @@ const KEYWORDS = [
   'DESC',
   'USE',
   'COPY',
+  'USERS',
+  'ROLES',
+  'SCHEMAS',
+  'SEQUENCES'
+];
+
+const SNOWFLAKE_KEYWORDS = [
   'PUT',
   'GET',
   'LIST',
@@ -88,16 +95,12 @@ const KEYWORDS = [
   'REMOVE',
   'RM',
   'WAREHOUSES',
-  'USERS',
-  'ROLES',
-  'SCHEMAS',
   'STAGES',
   'INTEGRATIONS',
   'STREAMS',
   'TASKS',
   'PIPES',
-  'SEQUENCES',
-];
+]
 
 const INDIVIDUALS: Record<string, Token['type']> = {
   ';': 'semicolon',
@@ -146,7 +149,7 @@ export function scanToken(
   }
 
   if (isLetter(ch)) {
-    return scanWord(state);
+    return scanWord(state, dialect);
   }
 
   const individual = scanIndividualCharacter(state);
@@ -189,8 +192,18 @@ function peek(state: State): Char {
   return state.input[state.position + 1];
 }
 
-function isKeyword(word: string): boolean {
-  return KEYWORDS.includes(word.toUpperCase());
+function getDialectSpecificKeywords(dialect: Dialect): string[] {
+  switch (dialect) {
+    case 'snowflake':
+      return SNOWFLAKE_KEYWORDS;
+    default:
+      return [];
+  }
+}
+
+function isKeyword(word: string, dialect: Dialect): boolean {
+  const dialectSpecific = getDialectSpecificKeywords(dialect);
+  return KEYWORDS.includes(word.toUpperCase()) || dialectSpecific.includes(word.toUpperCase());
 }
 
 function resolveIndividualTokenType(ch: string): Token['type'] | undefined {
@@ -429,7 +442,7 @@ function scanQuotedIdentifier(state: State, endToken: Char): Token {
   };
 }
 
-function scanWord(state: State): Token {
+function scanWord(state: State, dialect: Dialect): Token {
   let nextChar: Char;
 
   do {
@@ -441,7 +454,7 @@ function scanWord(state: State): Token {
   }
 
   const value = state.input.slice(state.start, state.position + 1);
-  if (!isKeyword(value)) {
+  if (!isKeyword(value, dialect)) {
     return skipWord(state, value);
   }
 
