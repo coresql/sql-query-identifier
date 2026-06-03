@@ -1047,7 +1047,9 @@ function stateMachineStatementParser(
       }
 
       if (statement.definer !== undefined && statement.definer > 0) {
-        if (statement.definer === 1 && prevToken?.type === 'whitespace') {
+        // Enter consume mode once the user@host begins, with or without a
+        // whitespace separating it from "=".
+        if (statement.definer === 1) {
           statement.definer++;
           setPrevToken(token);
           return;
