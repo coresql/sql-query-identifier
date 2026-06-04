@@ -3,6 +3,8 @@ import { Dialect, Token } from './defines';
 export function getStartQuotes(dialect: Dialect): string[] {
   if (dialect === 'mssql') {
     return ['"', '['];
+  } else if (dialect === 'snowflake') {
+    return ['"'];
   } else {
     return ['"', '`'];
   }

@@ -5,7 +5,7 @@ import { ParamTypes } from '../src/defines';
 describe('identify', () => {
   it('should throw error for invalid dialect', () => {
     expect(() => identify('SELECT * FROM foo', { dialect: 'invalid' as Dialect })).to.throw(
-      'Unknown dialect. Allowed values: mssql, sqlite, mysql, oracle, psql, bigquery, dynamodb, generic',
+      'Unknown dialect. Allowed values: mssql, sqlite, mysql, oracle, psql, bigquery, dynamodb, snowflake, generic',
     );
   });
 
