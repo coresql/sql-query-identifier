@@ -1005,7 +1005,7 @@ function stateMachineStatementParser(
   let openBlocks = 0;
 
   const columnParser = new ColumnParser(dialect);
-  const tableParser = new TableParser();
+  const tableParser = new TableParser(dialect);
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
   const isValidToken = (step: Step, token: Token) => {
@@ -1208,7 +1208,9 @@ function stateMachineStatementParser(
       }
 
       if (statement.definer !== undefined && statement.definer > 0) {
-        if (statement.definer === 1 && prevToken?.type === 'whitespace') {
+        // Enter consume mode once the user@host begins, with or without a
+        // whitespace separating it from "=".
+        if (statement.definer === 1) {
           statement.definer++;
           setPrevToken(token);
           return;

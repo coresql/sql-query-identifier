@@ -1,4 +1,5 @@
 import { ColumnReference, Dialect, Token } from './defines';
+import { maybeIdentifier, maybeStripQuotes } from './utils';
 
 // States for skipping MSSQL's TOP clause: SELECT TOP n [PERCENT] [WITH TIES]
 // The tokenizer emits digits as individual single-character 'unknown' tokens,
@@ -255,7 +256,7 @@ export class ColumnParser {
           prevNonWhitespaceToken?.value !== '.' &&
           prevNonWhitespaceToken?.value !== ',' &&
           prevToken?.type === 'whitespace' &&
-          this.maybeIdent(token)
+          maybeIdentifier(token, this.dialect)
         ) {
           if (!this.alias) {
             this.alias = token.value;
@@ -300,22 +301,22 @@ export class ColumnParser {
     if (this.parts.length === 1) {
       const name = this.parts[0];
       col = {
-        name,
+        name: maybeStripQuotes(name, this.dialect),
         isWildcard: name === '*',
       };
     } else if (this.parts.length === 2) {
       const [table, name] = this.parts;
       col = {
-        name,
-        table,
+        name: maybeStripQuotes(name, this.dialect),
+        table: maybeStripQuotes(table, this.dialect),
         isWildcard: name === '*',
       };
     } else if (this.parts.length === 3) {
       const [schema, table, name] = this.parts;
       col = {
-        name,
-        table,
-        schema,
+        name: maybeStripQuotes(name, this.dialect),
+        table: maybeStripQuotes(table, this.dialect),
+        schema: maybeStripQuotes(schema, this.dialect),
         isWildcard: name === '*',
       };
     } else {
@@ -327,7 +328,7 @@ export class ColumnParser {
     }
 
     if (!!this.alias && !!col) {
-      col.alias = this.alias;
+      col.alias = maybeStripQuotes(this.alias, this.dialect);
     }
 
     return col;
@@ -345,18 +346,5 @@ export class ColumnParser {
     return `${col.schema ?? 'none'}.${col.table ?? 'none'}.${col.name ?? 'none'}:${
       col.alias ?? 'none'
     }`;
-  }
-
-  private maybeIdent(token: Token): boolean {
-    const ch = token.value[0];
-    let startChars: string[];
-    if (this.dialect === 'mssql') {
-      startChars = ['"', '['];
-    } else if (this.dialect === 'snowflake') {
-      startChars = ['"'];
-    } else {
-      startChars = ['"', '`'];
-    }
-    return token.type !== 'string' && (startChars.includes(ch) || /[a-zA-Z_]/.test(ch));
   }
 }
