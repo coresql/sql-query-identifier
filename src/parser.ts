@@ -119,13 +119,29 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   ANON_BLOCK: 'ANON_BLOCK',
 };
 
-const statementsWithEnds = [
-  'CREATE_TRIGGER',
-  'CREATE_FUNCTION',
-  'CREATE_PROCEDURE',
-  'ANON_BLOCK',
-  'UNKNOWN',
-];
+// Statement types whose bodies may legitimately contain token-level semicolons
+// (e.g. a BEGIN...END block), so a semicolon does not necessarily terminate them.
+// They only terminate once their body has completed (statement.canEnd) or, for
+// string/dollar-quoted bodies, once that body has been consumed (see the
+// string-body handling in stateMachineStatementParser).
+function getStatementsWithEnds(dialect: Dialect): StatementType[] {
+  const statementsWithEnds: StatementType[] = [
+    'CREATE_FUNCTION',
+    'CREATE_PROCEDURE',
+    'ANON_BLOCK',
+    'UNKNOWN',
+  ];
+
+  // In PostgreSQL and Snowflake a trigger only references a function and never
+  // carries an inline body, so its first semicolon always terminates it. Other
+  // dialects (mssql, mysql, sqlite, ...) support inline BEGIN...END trigger
+  // bodies whose token-level semicolons must not terminate the statement early.
+  if (!['psql', 'snowflake'].includes(dialect)) {
+    statementsWithEnds.push('CREATE_TRIGGER');
+  }
+
+  return statementsWithEnds;
+}
 
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
@@ -1007,6 +1023,8 @@ function stateMachineStatementParser(
   const columnParser = new ColumnParser(dialect);
   const tableParser = new TableParser(dialect);
 
+  const statementsWithEnds = getStatementsWithEnds(dialect);
+
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
   const isValidToken = (step: Step, token: Token) => {
     if (!step.validation) {
@@ -1078,6 +1096,23 @@ function stateMachineStatementParser(
       if (token.type === 'whitespace') {
         setPrevToken(token);
         return;
+      }
+
+      // A CREATE FUNCTION / PROCEDURE body can be supplied as a quoted or
+      // dollar-quoted string following the AS keyword (e.g. PostgreSQL
+      // `AS 'select 1'` / `AS $$ ... $$`, Snowflake `AS $$ ... $$`). Such a body
+      // is a single token, so it never opens a BEGIN...END block and canEnd would
+      // otherwise never be set, causing the statement to swallow whatever follows.
+      // Once the string body has been consumed at the top level, allow the next
+      // semicolon to terminate the statement.
+      if (
+        token.type === 'string' &&
+        openBlocks === 0 &&
+        prevNonWhitespaceToken?.type === 'keyword' &&
+        prevNonWhitespaceToken.value.toUpperCase() === 'AS' &&
+        (statement.type === 'CREATE_FUNCTION' || statement.type === 'CREATE_PROCEDURE')
+      ) {
+        statement.canEnd = true;
       }
 
       if (
