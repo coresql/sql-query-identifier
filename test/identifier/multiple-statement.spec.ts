@@ -249,6 +249,42 @@ describe('identifier', () => {
       });
     });
 
+    describe('identifying functions with non-block bodies followed by another statement', () => {
+      it('should identify a psql function with a string-literal body then a SELECT', () => {
+        const sql = `create function foo() returns void as 'select 1' language sql;\nSELECT 1;`;
+        const actual = identify(sql, { dialect: 'psql' });
+        expect(actual.map((statement) => statement.type)).to.eql(['CREATE_FUNCTION', 'SELECT']);
+        expect(actual.map((statement) => statement.text)).to.eql([
+          "create function foo() returns void as 'select 1' language sql;",
+          'SELECT 1;',
+        ]);
+      });
+
+      it('should identify a psql function with a dollar-quoted body then a SELECT', () => {
+        const sql = `CREATE FUNCTION myfunc() RETURNS INTEGER AS $$ SELECT 1 $$ LANGUAGE sql;\nSELECT 1;`;
+        const actual = identify(sql, { dialect: 'psql' });
+        expect(actual.map((statement) => statement.type)).to.eql(['CREATE_FUNCTION', 'SELECT']);
+      });
+
+      it('should identify a psql function with a dollar-quoted plpgsql body then a SELECT', () => {
+        const sql = `CREATE FUNCTION f() RETURNS int AS $$ BEGIN RETURN 1; END; $$ LANGUAGE plpgsql;\nSELECT 1;`;
+        const actual = identify(sql, { dialect: 'psql' });
+        expect(actual.map((statement) => statement.type)).to.eql(['CREATE_FUNCTION', 'SELECT']);
+      });
+
+      it('should identify a psql trigger without a block body then a SELECT', () => {
+        const sql = `CREATE TRIGGER t AFTER INSERT ON tbl EXECUTE FUNCTION f();\nSELECT 1;`;
+        const actual = identify(sql, { dialect: 'psql' });
+        expect(actual.map((statement) => statement.type)).to.eql(['CREATE_TRIGGER', 'SELECT']);
+      });
+
+      it('should still keep an mssql BEGIN...END function body intact then a SELECT', () => {
+        const sql = `CREATE FUNCTION dbo.f (@x int) RETURNS int AS BEGIN RETURN @x; END;\nSELECT 1;`;
+        const actual = identify(sql, { dialect: 'mssql' });
+        expect(actual.map((statement) => statement.type)).to.eql(['CREATE_FUNCTION', 'SELECT']);
+      });
+    });
+
     describe('identifying multiple statements with CTEs', () => {
       it('should able to detect queries with a CTE in middle query', () => {
         const actual = identify(
