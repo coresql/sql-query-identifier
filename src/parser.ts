@@ -29,6 +29,7 @@ interface StatementParser {
  */
 export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   SELECT: 'LISTING',
+  SELECT_INTO: 'MODIFICATION',
   INSERT: 'MODIFICATION',
   DELETE: 'MODIFICATION',
   UPDATE: 'MODIFICATION',
@@ -495,6 +496,8 @@ function createSelectStatementParser(options: ParseOptions) {
       },
       add: (token) => {
         statement.type = 'SELECT';
+        statement.limit = false;
+        statement.offset = false;
         if (statement.start < 0) {
           statement.start = token.start;
         }
@@ -1014,6 +1017,7 @@ function stateMachineStatementParser(
   let currentStepIndex = 0;
   let prevToken: Token | undefined;
   let prevNonWhitespaceToken: Token | undefined;
+  let sawFrom = false;
 
   let lastBlockOpener: Token | undefined;
   let anonBlockStarted = false;
@@ -1166,6 +1170,39 @@ function stateMachineStatementParser(
         (token.value === '?' || !statement.parameters.includes(token.value))
       ) {
         statement.parameters.push(token.value);
+      }
+
+      if (
+        statement.type === 'SELECT' &&
+        ((token.type === 'keyword' && token.value.toUpperCase() === 'LIMIT') ||
+          (token.type === 'keyword' && token.value.toUpperCase() === 'FETCH'))
+      ) {
+        statement.limit = true;
+      }
+
+      if (
+        statement.type === 'SELECT' &&
+        token.type === 'keyword' &&
+        token.value.toUpperCase() === 'OFFSET'
+      ) {
+        statement.offset = true;
+      }
+
+      if (
+        statement.type === 'SELECT' &&
+        !sawFrom &&
+        token.type === 'keyword' &&
+        token.value.toUpperCase() === 'INTO' &&
+        ['mssql', 'psql'].includes(dialect)
+      ) {
+        statement.type = 'SELECT_INTO';
+        statement.executionType = 'MODIFICATION';
+        delete statement.limit;
+        delete statement.offset;
+      }
+
+      if (token.type === 'keyword' && token.value.toUpperCase() === 'FROM') {
+        sawFrom = true;
       }
 
       if (statement.type && statement.start >= 0) {

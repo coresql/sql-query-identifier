@@ -15,6 +15,7 @@ export type StatementType =
   | 'UPDATE'
   | 'DELETE'
   | 'SELECT'
+  | 'SELECT_INTO'
   | 'TRUNCATE'
   | 'CREATE_DATABASE'
   | 'CREATE_SCHEMA'
@@ -150,6 +151,8 @@ export interface IdentifyResult {
   parameters: string[];
   tables: TableReference[];
   columns: ColumnReference[];
+  limit?: boolean;
+  offset?: boolean;
 }
 
 export interface Statement {
@@ -165,6 +168,8 @@ export interface Statement {
   parameters: string[];
   tables: TableReference[];
   columns: ColumnReference[];
+  limit?: boolean;
+  offset?: boolean;
   isCte?: boolean;
 }
 

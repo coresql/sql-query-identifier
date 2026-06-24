@@ -86,6 +86,11 @@ const KEYWORDS = [
   'ROLES',
   'SCHEMAS',
   'SEQUENCES',
+  'INTO',
+  'FROM',
+  'LIMIT',
+  'OFFSET',
+  'FETCH',
 ];
 
 const SNOWFLAKE_KEYWORDS = [
