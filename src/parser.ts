@@ -1171,9 +1171,10 @@ function stateMachineStatementParser(
       }
 
       if (
-        statement.type === 'SELECT' && token.type === 'keyword' &&
+        statement.type === 'SELECT' &&
+        token.type === 'keyword' &&
         (['LIMIT', 'FETCH'].includes(token.value.toUpperCase()) ||
-        dialect === 'mssql' && token.value.toUpperCase() === 'TOP')
+          (dialect === 'mssql' && token.value.toUpperCase() === 'TOP'))
       ) {
         statement.limit = true;
       }
