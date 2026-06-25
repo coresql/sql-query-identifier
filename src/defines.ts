@@ -15,7 +15,6 @@ export type StatementType =
   | 'UPDATE'
   | 'DELETE'
   | 'SELECT'
-  | 'SELECT_INTO'
   | 'TRUNCATE'
   | 'CREATE_DATABASE'
   | 'CREATE_SCHEMA'

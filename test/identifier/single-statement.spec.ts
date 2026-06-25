@@ -1721,9 +1721,7 @@ describe('identifier', () => {
     });
 
     it('should set limit=true for SELECT with FETCH (ANSI syntax)', () => {
-      const [result] = identify('SELECT * FROM users FETCH FIRST 10 ROWS ONLY', {
-        dialect: 'psql',
-      });
+      const [result] = identify('SELECT * FROM users FETCH FIRST 10 ROWS ONLY');
       expect(result.limit).to.equal(true);
     });
 
@@ -1754,38 +1752,6 @@ describe('identifier', () => {
     it('should not treat LIMIT inside a string literal as a real limit', () => {
       const [result] = identify("SELECT 'LIMIT 10' AS label FROM users");
       expect(result.limit).to.equal(false);
-    });
-  });
-
-  describe('SELECT INTO detection', () => {
-    it('should identify SELECT INTO as SELECT_INTO for mssql', () => {
-      const [result] = identify('SELECT * INTO NewTable FROM SourceTable', {
-        dialect: 'mssql',
-      });
-      expect(result.type).to.equal('SELECT_INTO');
-      expect(result.executionType).to.equal('MODIFICATION');
-    });
-
-    it('should identify SELECT INTO as SELECT_INTO for psql', () => {
-      const [result] = identify('SELECT * INTO new_table FROM source_table', {
-        dialect: 'psql',
-      });
-      expect(result.type).to.equal('SELECT_INTO');
-      expect(result.executionType).to.equal('MODIFICATION');
-    });
-
-    it('should NOT identify SELECT INTO for mysql (dialect without SELECT INTO TABLE syntax)', () => {
-      const [result] = identify('SELECT * INTO new_table FROM source_table', {
-        dialect: 'mysql',
-      });
-      expect(result.type).to.equal('SELECT');
-    });
-
-    it('should NOT treat INTO after FROM as SELECT_INTO (e.g. INSERT INTO target inside a CTE column)', () => {
-      const [result] = identify('SELECT col FROM t INTO OUTFILE "x"', {
-        dialect: 'mssql',
-      });
-      expect(result.type).to.equal('SELECT');
     });
   });
 });

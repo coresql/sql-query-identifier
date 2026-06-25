@@ -29,7 +29,6 @@ interface StatementParser {
  */
 export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   SELECT: 'LISTING',
-  SELECT_INTO: 'MODIFICATION',
   INSERT: 'MODIFICATION',
   DELETE: 'MODIFICATION',
   UPDATE: 'MODIFICATION',
@@ -1017,7 +1016,6 @@ function stateMachineStatementParser(
   let currentStepIndex = 0;
   let prevToken: Token | undefined;
   let prevNonWhitespaceToken: Token | undefined;
-  let sawFrom = false;
 
   let lastBlockOpener: Token | undefined;
   let anonBlockStarted = false;
@@ -1173,9 +1171,9 @@ function stateMachineStatementParser(
       }
 
       if (
-        statement.type === 'SELECT' &&
-        ((token.type === 'keyword' && token.value.toUpperCase() === 'LIMIT') ||
-          (token.type === 'keyword' && token.value.toUpperCase() === 'FETCH'))
+        statement.type === 'SELECT' && token.type === 'keyword' &&
+        (['LIMIT', 'FETCH'].includes(token.value.toUpperCase()) ||
+        dialect === 'mssql' && token.value.toUpperCase() === 'TOP')
       ) {
         statement.limit = true;
       }
@@ -1186,23 +1184,6 @@ function stateMachineStatementParser(
         token.value.toUpperCase() === 'OFFSET'
       ) {
         statement.offset = true;
-      }
-
-      if (
-        statement.type === 'SELECT' &&
-        !sawFrom &&
-        token.type === 'keyword' &&
-        token.value.toUpperCase() === 'INTO' &&
-        ['mssql', 'psql'].includes(dialect)
-      ) {
-        statement.type = 'SELECT_INTO';
-        statement.executionType = 'MODIFICATION';
-        delete statement.limit;
-        delete statement.offset;
-      }
-
-      if (token.type === 'keyword' && token.value.toUpperCase() === 'FROM') {
-        sawFrom = true;
       }
 
       if (statement.type && statement.start >= 0) {
