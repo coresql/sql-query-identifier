@@ -1753,5 +1753,71 @@ describe('identifier', () => {
       const [result] = identify("SELECT 'LIMIT 10' AS label FROM users");
       expect(result.limit).to.equal(false);
     });
+
+    describe('top-level only (ignoring subqueries and CTEs)', () => {
+      it('should not set limit=true when LIMIT only appears in a subquery in FROM', () => {
+        const [result] = identify('SELECT * FROM (SELECT * FROM tab1 LIMIT 10) AS sub');
+        expect(result.limit).to.equal(false);
+        expect(result.offset).to.equal(false);
+      });
+
+      it('should not set offset=true when OFFSET only appears in a subquery in FROM', () => {
+        const [result] = identify('SELECT * FROM (SELECT * FROM tab1 OFFSET 5) AS sub');
+        expect(result.limit).to.equal(false);
+        expect(result.offset).to.equal(false);
+      });
+
+      it('should not set limit/offset when both only appear in a subquery in FROM', () => {
+        const [result] = identify(
+          'SELECT * FROM (SELECT * FROM tab1 LIMIT 10 OFFSET 5) AS sub',
+        );
+        expect(result.limit).to.equal(false);
+        expect(result.offset).to.equal(false);
+      });
+
+      it('should not set limit=true when LIMIT only appears in a subquery in WHERE', () => {
+        const [result] = identify(
+          'SELECT * FROM users WHERE id IN (SELECT user_id FROM orders LIMIT 10)',
+        );
+        expect(result.limit).to.equal(false);
+      });
+
+      it('should not set limit=true when LIMIT only appears inside a CTE', () => {
+        const [result] = identify(
+          'WITH recent AS (SELECT * FROM tab1 LIMIT 10) SELECT * FROM recent',
+        );
+        expect(result.limit).to.equal(false);
+        expect(result.offset).to.equal(false);
+      });
+
+      it('should not set offset=true when OFFSET only appears inside a CTE', () => {
+        const [result] = identify(
+          'WITH recent AS (SELECT * FROM tab1 OFFSET 5) SELECT * FROM recent',
+        );
+        expect(result.limit).to.equal(false);
+        expect(result.offset).to.equal(false);
+      });
+
+      it('should set limit=true when CTE has inner LIMIT and outer also has LIMIT', () => {
+        const [result] = identify(
+          'WITH recent AS (SELECT * FROM tab1 LIMIT 10) SELECT * FROM recent LIMIT 5',
+        );
+        expect(result.limit).to.equal(true);
+      });
+
+      it('should set limit=true when subquery has inner LIMIT and outer also has LIMIT', () => {
+        const [result] = identify(
+          'SELECT * FROM (SELECT * FROM tab1 LIMIT 10) AS sub LIMIT 5',
+        );
+        expect(result.limit).to.equal(true);
+      });
+
+      it('should not set limit=true for FETCH only appearing in a subquery', () => {
+        const [result] = identify(
+          'SELECT * FROM (SELECT * FROM tab1 FETCH FIRST 10 ROWS ONLY) AS sub',
+        );
+        expect(result.limit).to.equal(false);
+      });
+    });
   });
 });

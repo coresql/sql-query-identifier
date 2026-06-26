@@ -92,6 +92,7 @@ const KEYWORDS = [
   'OFFSET',
   'FETCH',
   'TOP',
+  'ALL',
 ];
 
 const SNOWFLAKE_KEYWORDS = [
