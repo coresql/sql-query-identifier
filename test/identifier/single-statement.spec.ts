@@ -1768,9 +1768,7 @@ describe('identifier', () => {
       });
 
       it('should not set limit/offset when both only appear in a subquery in FROM', () => {
-        const [result] = identify(
-          'SELECT * FROM (SELECT * FROM tab1 LIMIT 10 OFFSET 5) AS sub',
-        );
+        const [result] = identify('SELECT * FROM (SELECT * FROM tab1 LIMIT 10 OFFSET 5) AS sub');
         expect(result.limit).to.equal(false);
         expect(result.offset).to.equal(false);
       });
@@ -1806,9 +1804,7 @@ describe('identifier', () => {
       });
 
       it('should set limit=true when subquery has inner LIMIT and outer also has LIMIT', () => {
-        const [result] = identify(
-          'SELECT * FROM (SELECT * FROM tab1 LIMIT 10) AS sub LIMIT 5',
-        );
+        const [result] = identify('SELECT * FROM (SELECT * FROM tab1 LIMIT 10) AS sub LIMIT 5');
         expect(result.limit).to.equal(true);
       });
 
