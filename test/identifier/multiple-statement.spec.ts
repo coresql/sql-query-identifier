@@ -28,6 +28,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -60,6 +62,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -85,6 +89,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
         {
           start: 35,
@@ -95,6 +101,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -119,6 +127,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
         {
           start: 20,
@@ -129,6 +139,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
         {
           start: 50,
@@ -139,6 +151,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -320,6 +334,8 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
+            limit: false,
+            offset: false,
           },
           {
             start: 250,
@@ -330,6 +346,8 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
+            limit: false,
+            offset: false,
           },
         ];
 
@@ -364,6 +382,8 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
+            limit: false,
+            offset: false,
           },
         ];
 
@@ -399,6 +419,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -433,6 +455,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -466,6 +490,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
         {
           start: 29,
@@ -507,6 +533,8 @@ describe('identifier', () => {
               parameters: [],
               tables: [],
               columns: [],
+              limit: false,
+              offset: false,
             },
             {
               start: 29 + offset,

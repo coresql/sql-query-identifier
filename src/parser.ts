@@ -495,6 +495,8 @@ function createSelectStatementParser(options: ParseOptions) {
       },
       add: (token) => {
         statement.type = 'SELECT';
+        statement.limit = false;
+        statement.offset = false;
         if (statement.start < 0) {
           statement.start = token.start;
         }
@@ -1019,6 +1021,7 @@ function stateMachineStatementParser(
   let anonBlockStarted = false;
 
   let openBlocks = 0;
+  let parensDepth = 0;
 
   const columnParser = new ColumnParser(dialect);
   const tableParser = new TableParser(dialect);
@@ -1166,6 +1169,34 @@ function stateMachineStatementParser(
         (token.value === '?' || !statement.parameters.includes(token.value))
       ) {
         statement.parameters.push(token.value);
+      }
+
+      if (statement.type === 'SELECT' && token.value === '(') {
+        parensDepth++;
+      }
+
+      if (statement.type === 'SELECT' && token.value === ')') {
+        parensDepth--;
+      }
+
+      if (
+        statement.type === 'SELECT' &&
+        token.type === 'keyword' &&
+        (['LIMIT', 'FETCH'].includes(token.value.toUpperCase()) ||
+          (dialect === 'mssql' && token.value.toUpperCase() === 'TOP')) &&
+        (nextToken.type !== 'keyword' || nextToken.value.toUpperCase() !== 'ALL') &&
+        parensDepth === 0
+      ) {
+        statement.limit = true;
+      }
+
+      if (
+        statement.type === 'SELECT' &&
+        token.type === 'keyword' &&
+        token.value.toUpperCase() === 'OFFSET' &&
+        parensDepth === 0
+      ) {
+        statement.offset = true;
       }
 
       if (statement.type && statement.start >= 0) {

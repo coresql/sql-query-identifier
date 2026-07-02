@@ -152,6 +152,8 @@ describe('Parser for dynamodb (PartiQL)', () => {
           parameters: ['?'],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ]);
     });

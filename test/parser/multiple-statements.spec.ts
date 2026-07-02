@@ -35,6 +35,8 @@ describe('parser', () => {
             parameters: [],
             tables: [],
             columns: [],
+            limit: false,
+            offset: false,
           },
         ],
         tokens: [
@@ -45,9 +47,21 @@ describe('parser', () => {
             end: 5,
           },
           {
-            type: 'unknown',
-            value: " INTO Persons (PersonID, Name) VALUES (1, 'Jack')",
+            type: 'whitespace',
+            value: ' ',
             start: 6,
+            end: 6,
+          },
+          {
+            type: 'keyword',
+            value: 'INTO',
+            start: 7,
+            end: 10,
+          },
+          {
+            type: 'unknown',
+            value: " Persons (PersonID, Name) VALUES (1, 'Jack')",
+            start: 11,
             end: 54,
           },
 
@@ -66,8 +80,20 @@ describe('parser', () => {
           },
           {
             type: 'unknown',
-            value: ' * FROM Persons',
+            value: ' * ',
             start: 62,
+            end: 64,
+          },
+          {
+            type: 'keyword',
+            value: 'FROM',
+            start: 65,
+            end: 68,
+          },
+          {
+            type: 'unknown',
+            value: ' Persons',
+            start: 69,
             end: 76,
           },
         ],
@@ -108,6 +134,8 @@ describe('parser', () => {
             parameters: [],
             tables: [],
             columns: [],
+            limit: false,
+            offset: false,
           },
         ],
         tokens: [
@@ -124,9 +152,21 @@ describe('parser', () => {
             end: 14,
           },
           {
-            type: 'unknown',
-            value: " INTO Persons (PersonID, Name) VALUES (1, 'Jack')",
+            type: 'whitespace',
+            value: ' ',
             start: 15,
+            end: 15,
+          },
+          {
+            type: 'keyword',
+            value: 'INTO',
+            start: 16,
+            end: 19,
+          },
+          {
+            type: 'unknown',
+            value: " Persons (PersonID, Name) VALUES (1, 'Jack')",
+            start: 20,
             end: 63,
           },
           {
@@ -149,8 +189,20 @@ describe('parser', () => {
           },
           {
             type: 'unknown',
-            value: " * FROM Persons';\n      ",
+            value: ' * ',
             start: 80,
+            end: 82,
+          },
+          {
+            type: 'keyword',
+            value: 'FROM',
+            start: 83,
+            end: 86,
+          },
+          {
+            type: 'unknown',
+            value: " Persons';\n      ",
+            start: 87,
             end: 103,
           },
         ],

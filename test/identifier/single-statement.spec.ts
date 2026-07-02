@@ -16,6 +16,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -34,6 +36,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -52,6 +56,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -70,6 +76,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -1197,6 +1205,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -1220,6 +1230,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -1243,6 +1255,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -1264,6 +1278,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -1286,6 +1302,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -1310,6 +1328,8 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -1360,6 +1380,8 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
+            limit: false,
+            offset: false,
           },
         ];
 
@@ -1383,6 +1405,8 @@ describe('identifier', () => {
             parameters: [],
             tables: [], // FIXME: should return 'table'?
             columns: [],
+            limit: false,
+            offset: false,
           },
         ];
 
@@ -1423,6 +1447,8 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
+            limit: false,
+            offset: false,
           },
         ];
 
@@ -1453,6 +1479,8 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
+            limit: false,
+            offset: false,
           },
         ];
 
@@ -1475,6 +1503,8 @@ describe('identifier', () => {
           parameters: ['$1', '$2'],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -1496,6 +1526,8 @@ describe('identifier', () => {
           parameters: ['$1', '$2', '$3', '$4'],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -1517,6 +1549,8 @@ describe('identifier', () => {
           parameters: [':one', ':two'],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -1538,6 +1572,8 @@ describe('identifier', () => {
           parameters: [':one', ':two', ':three'],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -1559,6 +1595,8 @@ describe('identifier', () => {
           parameters: ['?', '?', '?'],
           tables: [],
           columns: [],
+          limit: false,
+          offset: false,
         },
       ];
 
@@ -1654,6 +1692,128 @@ describe('identifier', () => {
       });
       // generic does not use hash comments, so both ? are detected as parameters
       expect(actual[0].parameters).to.eql(['?', '?']);
+    });
+  });
+
+  describe('LIMIT and OFFSET detection', () => {
+    it('should set limit=false and offset=false for a plain SELECT', () => {
+      const [result] = identify('SELECT * FROM users');
+      expect(result.limit).to.equal(false);
+      expect(result.offset).to.equal(false);
+    });
+
+    it('should set limit=true for SELECT with LIMIT', () => {
+      const [result] = identify('SELECT * FROM users LIMIT 10');
+      expect(result.limit).to.equal(true);
+      expect(result.offset).to.equal(false);
+    });
+
+    it('should set offset=true for SELECT with OFFSET', () => {
+      const [result] = identify('SELECT * FROM users OFFSET 5');
+      expect(result.limit).to.equal(false);
+      expect(result.offset).to.equal(true);
+    });
+
+    it('should set both limit and offset=true for SELECT with LIMIT and OFFSET', () => {
+      const [result] = identify('SELECT * FROM users LIMIT 10 OFFSET 5');
+      expect(result.limit).to.equal(true);
+      expect(result.offset).to.equal(true);
+    });
+
+    it('should set limit=true for SELECT with FETCH (ANSI syntax)', () => {
+      const [result] = identify('SELECT * FROM users FETCH FIRST 10 ROWS ONLY');
+      expect(result.limit).to.equal(true);
+    });
+
+    it('should set offset=true for SELECT with OFFSET ... FETCH', () => {
+      const [result] = identify('SELECT * FROM users OFFSET 5 ROWS FETCH NEXT 10 ROWS ONLY', {
+        dialect: 'mssql',
+      });
+      expect(result.limit).to.equal(true);
+      expect(result.offset).to.equal(true);
+    });
+
+    it('should detect LIMIT case-insensitively', () => {
+      const [result] = identify('select * from users limit 10');
+      expect(result.limit).to.equal(true);
+    });
+
+    it('should detect OFFSET case-insensitively', () => {
+      const [result] = identify('select * from users offset 5');
+      expect(result.offset).to.equal(true);
+    });
+
+    it('should not set limit/offset on non-SELECT statements', () => {
+      const [result] = identify('INSERT INTO users (id) VALUES (1)');
+      expect(result.limit).to.equal(undefined);
+      expect(result.offset).to.equal(undefined);
+    });
+
+    it('should not treat LIMIT inside a string literal as a real limit', () => {
+      const [result] = identify("SELECT 'LIMIT 10' AS label FROM users");
+      expect(result.limit).to.equal(false);
+    });
+
+    describe('top-level only (ignoring subqueries and CTEs)', () => {
+      it('should not set limit=true when LIMIT only appears in a subquery in FROM', () => {
+        const [result] = identify('SELECT * FROM (SELECT * FROM tab1 LIMIT 10) AS sub');
+        expect(result.limit).to.equal(false);
+        expect(result.offset).to.equal(false);
+      });
+
+      it('should not set offset=true when OFFSET only appears in a subquery in FROM', () => {
+        const [result] = identify('SELECT * FROM (SELECT * FROM tab1 OFFSET 5) AS sub');
+        expect(result.limit).to.equal(false);
+        expect(result.offset).to.equal(false);
+      });
+
+      it('should not set limit/offset when both only appear in a subquery in FROM', () => {
+        const [result] = identify('SELECT * FROM (SELECT * FROM tab1 LIMIT 10 OFFSET 5) AS sub');
+        expect(result.limit).to.equal(false);
+        expect(result.offset).to.equal(false);
+      });
+
+      it('should not set limit=true when LIMIT only appears in a subquery in WHERE', () => {
+        const [result] = identify(
+          'SELECT * FROM users WHERE id IN (SELECT user_id FROM orders LIMIT 10)',
+        );
+        expect(result.limit).to.equal(false);
+      });
+
+      it('should not set limit=true when LIMIT only appears inside a CTE', () => {
+        const [result] = identify(
+          'WITH recent AS (SELECT * FROM tab1 LIMIT 10) SELECT * FROM recent',
+        );
+        expect(result.limit).to.equal(false);
+        expect(result.offset).to.equal(false);
+      });
+
+      it('should not set offset=true when OFFSET only appears inside a CTE', () => {
+        const [result] = identify(
+          'WITH recent AS (SELECT * FROM tab1 OFFSET 5) SELECT * FROM recent',
+        );
+        expect(result.limit).to.equal(false);
+        expect(result.offset).to.equal(false);
+      });
+
+      it('should set limit=true when CTE has inner LIMIT and outer also has LIMIT', () => {
+        const [result] = identify(
+          'WITH recent AS (SELECT * FROM tab1 LIMIT 10) SELECT * FROM recent LIMIT 5',
+        );
+        expect(result.limit).to.equal(true);
+      });
+
+      it('should set limit=true when subquery has inner LIMIT and outer also has LIMIT', () => {
+        const [result] = identify('SELECT * FROM (SELECT * FROM tab1 LIMIT 10) AS sub LIMIT 5');
+        expect(result.limit).to.equal(true);
+      });
+
+      it('should not set limit=true for FETCH only appearing in a subquery', () => {
+        const [result] = identify(
+          'SELECT * FROM (SELECT * FROM tab1 FETCH FIRST 10 ROWS ONLY) AS sub',
+        );
+        expect(result.limit).to.equal(false);
+      });
     });
   });
 });
