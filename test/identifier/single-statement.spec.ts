@@ -1847,5 +1847,12 @@ describe('identifier', () => {
       });
       expect(result.type).to.equal('SELECT');
     });
+
+    it('should NOT treat INTO inside a subquery as SELECT_INTO for the outer query', () => {
+      const [result] = identify('SELECT (SELECT id INTO foo FROM bar) AS x FROM t', {
+        dialect: 'psql',
+      });
+      expect(result.type).to.equal('SELECT');
+    });
   });
 });

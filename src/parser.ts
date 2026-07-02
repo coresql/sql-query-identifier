@@ -1202,16 +1202,23 @@ function stateMachineStatementParser(
       }
 
       if (
-        statement.type === 'SELECT' && !sawFrom &&
+        statement.type === 'SELECT' &&
+        !sawFrom &&
         token.type === 'keyword' &&
         token.value.toUpperCase() === 'INTO' &&
-        ['mssql', 'psql'].includes(dialect)
+        ['mssql', 'psql'].includes(dialect) &&
+        parensDepth === 0
       ) {
         statement.type = 'SELECT_INTO';
         statement.executionType = 'MODIFICATION';
       }
 
-      if (statement.type === 'SELECT' && token.type === 'keyword' && token.value.toUpperCase() === 'FROM') {
+      if (
+        statement.type === 'SELECT' &&
+        token.type === 'keyword' &&
+        token.value.toUpperCase() === 'FROM' &&
+        parensDepth === 0
+      ) {
         sawFrom = true;
       }
 
