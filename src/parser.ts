@@ -1203,10 +1203,9 @@ function stateMachineStatementParser(
 
       if (
         statement.type === 'SELECT' &&
-        !sawFrom &&
         token.type === 'keyword' &&
         token.value.toUpperCase() === 'INTO' &&
-        ['mssql', 'psql'].includes(dialect) &&
+        ((['mssql', 'psql'].includes(dialect) && !sawFrom) || dialect === 'mysql') &&
         parensDepth === 0
       ) {
         statement.type = 'SELECT_INTO';
