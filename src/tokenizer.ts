@@ -108,6 +108,7 @@ const SNOWFLAKE_KEYWORDS = [
   'STREAMS',
   'TASKS',
   'PIPES',
+  'INTO',
 ];
 
 const INDIVIDUALS: Record<string, Token['type']> = {

@@ -29,6 +29,7 @@ interface StatementParser {
  */
 export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   SELECT: 'LISTING',
+  SELECT_INTO: 'MODIFICATION',
   INSERT: 'MODIFICATION',
   DELETE: 'MODIFICATION',
   UPDATE: 'MODIFICATION',
@@ -1016,6 +1017,7 @@ function stateMachineStatementParser(
   let currentStepIndex = 0;
   let prevToken: Token | undefined;
   let prevNonWhitespaceToken: Token | undefined;
+  let sawFrom = false;
 
   let lastBlockOpener: Token | undefined;
   let anonBlockStarted = false;
@@ -1197,6 +1199,20 @@ function stateMachineStatementParser(
         parensDepth === 0
       ) {
         statement.offset = true;
+      }
+
+      if (
+        statement.type === 'SELECT' && !sawFrom &&
+        token.type === 'keyword' &&
+        token.value.toUpperCase() === 'INTO' &&
+        ['mssql', 'psql'].includes(dialect)
+      ) {
+        statement.type = 'SELECT_INTO';
+        statement.executionType = 'MODIFICATION';
+      }
+
+      if (statement.type === 'SELECT' && token.type === 'keyword' && token.value.toUpperCase() === 'FROM') {
+        sawFrom = true;
       }
 
       if (statement.type && statement.start >= 0) {
