@@ -20,7 +20,7 @@ jobs:
 
       # Ensure npm 11.5.1 or later is installed for OIDC
       - name: Update npm
-        run: npm install -g npm@11
+        run: npm install -g npm@11 # Workaround until npm 12 gets fixed
 
       - run: npm install
       - run: npm run lint
