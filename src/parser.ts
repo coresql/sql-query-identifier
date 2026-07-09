@@ -1030,6 +1030,8 @@ function stateMachineStatementParser(
 
   const statementsWithEnds = getStatementsWithEnds(dialect);
 
+  const declaredVariables = new Set<string>();
+
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
   const isValidToken = (step: Step, token: Token) => {
     if (!step.validation) {
@@ -1166,11 +1168,17 @@ function stateMachineStatementParser(
         }
       }
 
-      if (
-        token.type === 'parameter' &&
-        (token.value === '?' || !statement.parameters.includes(token.value))
-      ) {
-        statement.parameters.push(token.value);
+      if (token.type === 'parameter') {
+        // Variables declared via DECLARE inside a function/procedure body are
+        // local — they aren't user-supplied parameters, so exclude them.
+        if (prevNonWhitespaceToken?.value.toUpperCase() === 'DECLARE') {
+          declaredVariables.add(token.value);
+        } else if (
+          !declaredVariables.has(token.value) &&
+          (token.value === '?' || !statement.parameters.includes(token.value))
+        ) {
+          statement.parameters.push(token.value);
+        }
       }
 
       if (statement.type === 'SELECT' && token.value === '(') {
@@ -1416,7 +1424,12 @@ export function defaultParamTypesFor(dialect: Dialect): ParamTypes {
       };
     case 'mssql':
       return {
+        named: ['@', ':'],
+      };
+    case 'oracle':
+      return {
         named: [':'],
+        numbered: [':'],
       };
     case 'bigquery':
       return {
@@ -1428,7 +1441,7 @@ export function defaultParamTypesFor(dialect: Dialect): ParamTypes {
       return {
         positional: true,
         numbered: ['?'],
-        named: [':', '@'],
+        named: [':', '@', '$'],
       };
     case 'dynamodb':
       // DynamoDB PartiQL supports positional `?` placeholders only; values are
