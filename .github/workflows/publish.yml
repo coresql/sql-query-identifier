@@ -7,7 +7,7 @@ on:
 permissions:
   id-token: write
   contents: write
-      
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -20,8 +20,8 @@ jobs:
 
       # Ensure npm 11.5.1 or later is installed for OIDC
       - name: Update npm
-        run: npm install -g npm@latest
-        
+        run: npm install -g npm@11
+
       - run: npm install
       - run: npm run lint
 
