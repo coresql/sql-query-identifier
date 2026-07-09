@@ -1816,4 +1816,85 @@ describe('identifier', () => {
       });
     });
   });
+
+  describe('SELECT INTO detection', () => {
+    it('should identify SELECT INTO as SELECT_INTO for mssql', () => {
+      const [result] = identify('SELECT * INTO NewTable FROM SourceTable', {
+        dialect: 'mssql',
+      });
+      expect(result.type).to.equal('SELECT_INTO');
+      expect(result.executionType).to.equal('MODIFICATION');
+    });
+
+    it('should identify SELECT INTO as SELECT_INTO for psql', () => {
+      const [result] = identify('SELECT * INTO new_table FROM source_table', {
+        dialect: 'psql',
+      });
+      expect(result.type).to.equal('SELECT_INTO');
+      expect(result.executionType).to.equal('MODIFICATION');
+    });
+
+    it('should identify SELECT INTO OUTFILE after FROM as SELECT_INTO for mysql', () => {
+      const [result] = identify("SELECT a, b FROM t INTO OUTFILE '/tmp/out'", {
+        dialect: 'mysql',
+      });
+      expect(result.type).to.equal('SELECT_INTO');
+      expect(result.executionType).to.equal('MODIFICATION');
+    });
+
+    it('should identify SELECT INTO OUTFILE before FROM as SELECT_INTO for mysql', () => {
+      const [result] = identify("SELECT a, b INTO OUTFILE '/tmp/out' FROM t", {
+        dialect: 'mysql',
+      });
+      expect(result.type).to.equal('SELECT_INTO');
+    });
+
+    it('should identify SELECT INTO DUMPFILE as SELECT_INTO for mysql', () => {
+      const [result] = identify("SELECT a FROM t INTO DUMPFILE '/tmp/out'", {
+        dialect: 'mysql',
+      });
+      expect(result.type).to.equal('SELECT_INTO');
+    });
+
+    it('should identify SELECT INTO variables (after FROM) as SELECT_INTO for mysql', () => {
+      const [result] = identify('SELECT a FROM t INTO @var', { dialect: 'mysql' });
+      expect(result.type).to.equal('SELECT_INTO');
+    });
+
+    it('should identify SELECT INTO variables (before FROM) as SELECT_INTO for mysql', () => {
+      const [result] = identify('SELECT a, b INTO @v1, @v2 FROM t', { dialect: 'mysql' });
+      expect(result.type).to.equal('SELECT_INTO');
+    });
+
+    it('should NOT treat INTO after FROM as SELECT_INTO for mssql (only INTO before FROM applies)', () => {
+      const [result] = identify('SELECT col FROM t INTO OUTFILE "x"', {
+        dialect: 'mssql',
+      });
+      expect(result.type).to.equal('SELECT');
+    });
+
+    it('should NOT treat a bare SELECT as SELECT_INTO for mysql', () => {
+      const [result] = identify('SELECT a FROM t', { dialect: 'mysql' });
+      expect(result.type).to.equal('SELECT');
+    });
+
+    it('should NOT treat INSERT INTO as SELECT_INTO for mysql', () => {
+      const [result] = identify('INSERT INTO t (id) VALUES (1)', { dialect: 'mysql' });
+      expect(result.type).to.equal('INSERT');
+    });
+
+    it('should NOT treat INTO inside a subquery as SELECT_INTO for the outer query (psql)', () => {
+      const [result] = identify('SELECT (SELECT id INTO foo FROM bar) AS x FROM t', {
+        dialect: 'psql',
+      });
+      expect(result.type).to.equal('SELECT');
+    });
+
+    it('should NOT treat INTO inside a subquery as SELECT_INTO for the outer query (mysql)', () => {
+      const [result] = identify('SELECT a FROM (SELECT id INTO x FROM y) AS z', {
+        dialect: 'mysql',
+      });
+      expect(result.type).to.equal('SELECT');
+    });
+  });
 });
