@@ -48,6 +48,7 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
     };
     if (statement.limit !== undefined) result.limit = statement.limit;
     if (statement.offset !== undefined) result.offset = statement.offset;
+    if (statement.where !== undefined) result.where = statement.where;
     return result;
   });
 }

@@ -281,6 +281,113 @@ describe('scan', () => {
     expect(actual).to.eql(expected);
   });
 
+  describe('backslash escapes in strings', () => {
+    it('scans backslash-escaped quotes for mysql', () => {
+      expect(scanToken(initState("'It\\'s' x"), 'mysql').value).to.eql("'It\\'s'");
+      expect(scanToken(initState('"a\\"b" x'), 'mysql').value).to.eql('"a\\"b"');
+      expect(scanToken(initState("'C:\\\\' x"), 'mysql').value).to.eql("'C:\\\\'");
+    });
+
+    it('scans E strings with backslash-escaped quotes for psql', () => {
+      expect(scanToken(initState("E'It\\'s' x"), 'psql')).to.eql({
+        type: 'string',
+        value: "E'It\\'s'",
+        start: 0,
+        end: 7,
+      });
+      expect(scanToken(initState("e'It\\'s' x"), 'psql').value).to.eql("e'It\\'s'");
+    });
+
+    it('does not treat backslashes as escapes in plain strings for psql', () => {
+      expect(scanToken(initState("'C:\\' x"), 'psql').value).to.eql("'C:\\'");
+    });
+
+    ['bigquery', 'snowflake'].forEach((dialect) => {
+      it(`scans backslash-escaped quotes for ${dialect}`, () => {
+        expect(scanToken(initState("'It\\'s' x"), dialect as Dialect).value).to.eql("'It\\'s'");
+      });
+    });
+
+    it('does not treat backslashes as escapes for generic', () => {
+      expect(scanToken(initState("'C:\\' x")).value).to.eql("'C:\\'");
+    });
+  });
+
+  describe('oracle q-quoted strings', () => {
+    it('scans q-quoted strings with bracket delimiters', () => {
+      expect(scanToken(initState("q'[It's]' x"), 'oracle')).to.eql({
+        type: 'string',
+        value: "q'[It's]'",
+        start: 0,
+        end: 8,
+      });
+      expect(scanToken(initState("Q'{It's}' x"), 'oracle').value).to.eql("Q'{It's}'");
+      expect(scanToken(initState("q'<It's>' x"), 'oracle').value).to.eql("q'<It's>'");
+      expect(scanToken(initState("q'(It's)' x"), 'oracle').value).to.eql("q'(It's)'");
+    });
+
+    it('scans q-quoted strings with any other delimiter', () => {
+      expect(scanToken(initState("q'!It's!' x"), 'oracle').value).to.eql("q'!It's!'");
+    });
+
+    it('scans nq-quoted strings', () => {
+      expect(scanToken(initState("nq'[It's]' x"), 'oracle').value).to.eql("nq'[It's]'");
+    });
+
+    it('does not scan q-quoted strings for other dialects', () => {
+      expect(scanToken(initState("q'[It's]'"), 'psql').value).to.eql('q');
+    });
+  });
+
+  describe('nested block comments', () => {
+    ['psql', 'mssql'].forEach((dialect) => {
+      it(`scans nested block comments for ${dialect}`, () => {
+        const comment = '/* a /* b */ c */';
+        expect(scanToken(initState(`${comment} x`), dialect as Dialect)).to.eql({
+          type: 'comment-block',
+          value: comment,
+          start: 0,
+          end: 16,
+        });
+      });
+    });
+
+    it('does not scan nested block comments for mysql', () => {
+      expect(scanToken(initState('/* a /* b */ c */'), 'mysql').value).to.eql('/* a /* b */');
+    });
+  });
+
+  describe('keywords used as names', () => {
+    const scanAt = (input: string, start: number, dialect: Dialect) =>
+      scanToken({ input, start, end: input.length - 1, position: start - 1 }, dialect);
+
+    it('does not scan a keyword after a dot as a keyword', () => {
+      expect(scanAt('t.where', 2, 'psql')).to.eql({
+        type: 'unknown',
+        value: 'where',
+        start: 2,
+        end: 6,
+      });
+      expect(scanAt('t.limit', 2, 'mysql').type).to.eql('unknown');
+    });
+
+    it('does not scan a keyword after @ as a keyword', () => {
+      expect(scanAt('@where', 1, 'mssql').type).to.eql('unknown');
+    });
+
+    it('does not scan a keyword after a dot with spaces around it as a keyword', () => {
+      expect(scanAt('t . where', 4, 'psql').type).to.eql('unknown');
+    });
+
+    it('still scans a keyword after a number with a trailing dot', () => {
+      expect(scanAt('1. where', 3, 'psql').type).to.eql('keyword');
+    });
+
+    it('still scans a keyword after a line comment ending in a dot', () => {
+      expect(scanAt('-- done.\nwhere', 9, 'psql').type).to.eql('keyword');
+    });
+  });
+
   describe('tokenizing parameters', () => {
     describe('tokenizing just parameter starting character', () => {
       [

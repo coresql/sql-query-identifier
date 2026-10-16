@@ -93,6 +93,7 @@ const KEYWORDS = [
   'FETCH',
   'TOP',
   'ALL',
+  'WHERE',
 ];
 
 const SNOWFLAKE_KEYWORDS = [
@@ -113,6 +114,13 @@ const SNOWFLAKE_KEYWORDS = [
 
 const INDIVIDUALS: Record<string, Token['type']> = {
   ';': 'semicolon',
+};
+
+const ORACLE_QUOTE_CLOSINGS: Record<string, string> = {
+  '[': ']',
+  '{': '}',
+  '<': '>',
+  '(': ')',
 };
 
 const ENDTOKENS: Record<string, Char> = {
@@ -138,11 +146,21 @@ export function scanToken(
   }
 
   if (isCommentBlock(ch, state)) {
-    return scanCommentBlock(state);
+    return scanCommentBlock(state, dialect);
   }
 
   if (isString(ch, dialect) && ch !== null) {
-    return scanString(state, ENDTOKENS[ch]);
+    return scanString(state, ENDTOKENS[ch], hasBackslashEscapes(dialect));
+  }
+
+  // Postgres escape string: E'It\'s'
+  if (dialect === 'psql' && (ch === 'E' || ch === 'e') && peek(state) === "'") {
+    read(state);
+    return scanString(state, "'", true);
+  }
+
+  if (dialect === 'oracle' && isOracleQuotedString(ch, state)) {
+    return scanOracleQuotedString(state);
   }
 
   if (isParameter(ch, state, paramTypes)) {
@@ -296,10 +314,15 @@ function scanDollarQuotedString(state: State): Token {
   };
 }
 
-function scanString(state: State, endToken: Char): Token {
+function scanString(state: State, endToken: Char, backslashEscapes = false): Token {
   let nextChar: Char;
   do {
     nextChar = read(state);
+    // supporting backslash escaping: 'str\'ing'
+    if (backslashEscapes && nextChar === '\\') {
+      read(state);
+      continue;
+    }
     // supporting double quote escaping: 'str''ing'
     if (nextChar === endToken) {
       if (peek(state) === endToken) {
@@ -330,6 +353,23 @@ function getCustomParam(state: State, paramTypes: ParamTypes): string | null | u
     .filter((value) => !!value)[0];
 
   return matches ? matches[0] : null;
+}
+
+// Oracle alternative quoting: q'[It's]', nq'{It's}', q'!It's!'
+function scanOracleQuotedString(state: State): Token {
+  const delimiterPos = state.input.indexOf("'", state.start) + 1;
+  const delimiter = state.input[delimiterPos];
+  const closing = delimiter ? (ORACLE_QUOTE_CLOSINGS[delimiter] ?? delimiter) + "'" : null;
+  const end = closing ? state.input.indexOf(closing, delimiterPos + 1) : -1;
+  state.position = end === -1 ? state.input.length - 1 : end + 1;
+
+  const value = state.input.slice(state.start, state.position + 1);
+  return {
+    type: 'string',
+    value,
+    start: state.start,
+    end: state.start + value.length - 1,
+  };
 }
 
 function scanParameter(state: State, dialect: Dialect, paramTypes: ParamTypes): Token {
@@ -410,14 +450,25 @@ function scanParameter(state: State, dialect: Dialect, paramTypes: ParamTypes): 
   };
 }
 
-function scanCommentBlock(state: State): Token {
+function scanCommentBlock(state: State, dialect: Dialect): Token {
   let nextChar: Char = '';
   let prevChar: Char;
+  // Postgres and SQL Server allow nested block comments: /* a /* b */ c */
+  const nested = dialect === 'psql' || dialect === 'mssql';
+  let depth = 1;
 
   do {
     prevChar = nextChar;
     nextChar = read(state);
-  } while ((prevChar || '') + (nextChar || '') !== '*/' && nextChar !== null);
+    const pair = (prevChar || '') + (nextChar || '');
+    if (pair === '*/') {
+      depth--;
+      nextChar = depth > 0 ? '' : nextChar;
+    } else if (nested && pair === '/*') {
+      depth++;
+      nextChar = '';
+    }
+  } while (depth > 0 && nextChar !== null);
 
   if (nextChar !== null && nextChar !== '/') {
     unread(state);
@@ -476,7 +527,7 @@ function scanWord(state: State, dialect: Dialect): Token {
   }
 
   const value = state.input.slice(state.start, state.position + 1);
-  if (!isKeyword(value, dialect)) {
+  if (!isKeyword(value, dialect) || isQualifiedName(state)) {
     return skipWord(state, value);
   }
 
@@ -525,8 +576,37 @@ function isWhitespace(ch: Char): boolean {
   return ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r';
 }
 
+function isInlineSpace(ch: Char): boolean {
+  return ch === ' ' || ch === '\t';
+}
+
 function isAlphaNumeric(ch: Char): boolean {
   return ch !== null && /\w/.test(ch);
+}
+
+// a column or variable named like a keyword: t.where, t . where, @where
+function isQualifiedName(state: State): boolean {
+  const { input } = state;
+  let i = state.start - 1;
+  if (input[i] === '@') {
+    return true;
+  }
+  // stay on the same line, so a line comment ending in a dot (-- done.\nDELETE ...) doesn't count
+  while (i >= 0 && isInlineSpace(input[i])) i--;
+  if (input[i] !== '.') {
+    return false;
+  }
+
+  // a number with a trailing dot (1. FROM t) is not a qualifier
+  let end = i - 1;
+  while (end >= 0 && isInlineSpace(input[end])) end--;
+  let begin = end;
+  while (begin >= 0 && isAlphaNumeric(input[begin])) begin--;
+  return !/^\d+$/.test(input.slice(begin + 1, end + 1));
+}
+
+function hasBackslashEscapes(dialect: Dialect): boolean {
+  return ['mysql', 'bigquery', 'snowflake'].includes(dialect);
 }
 
 function isString(ch: Char, dialect: Dialect): boolean {
@@ -577,6 +657,13 @@ function isParameter(ch: Char, state: State, paramTypes: ParamTypes): boolean {
 
 function isDollarQuotedString(state: State): boolean {
   return /^\$[\w]*\$/.exec(state.input.slice(state.start)) !== null;
+}
+
+function isOracleQuotedString(ch: Char, state: State): boolean {
+  if (ch !== 'q' && ch !== 'Q' && ch !== 'n' && ch !== 'N') {
+    return false;
+  }
+  return /^n?q'/i.test(state.input.slice(state.start, state.start + 3));
 }
 
 function isQuotedIdentifier(ch: Char, dialect: Dialect): boolean {
