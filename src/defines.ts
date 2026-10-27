@@ -88,6 +88,7 @@ export type StatementType =
   | 'COMMIT'
   | 'ROLLBACK'
   | 'ANON_BLOCK'
+  | 'DELIMITER'
   | 'MERGE'
   | 'CALL'
   | 'GRANT'
@@ -108,6 +109,7 @@ export type ExecutionType =
   | 'INFORMATION'
   | 'ANON_BLOCK'
   | 'TRANSACTION'
+  | 'NO_OP'
   | 'UNKNOWN';
 
 export interface ParamTypes {
@@ -151,6 +153,18 @@ export interface IdentifyResult {
   parameters: string[];
   tables: TableReference[];
   columns: ColumnReference[];
+  /**
+   * The terminator string (e.g. `;`, `$`, `$$`) that ended this statement.
+   * `undefined` when the statement ran to EOF without a terminator, or for
+   * `DELIMITER` statements (which are terminated by end-of-line, not a
+   * delimiter).
+   */
+  delimiter?: string;
+  /**
+   * Only set for statements of type `DELIMITER`. The new terminator string
+   * that should be used for statements that follow.
+   */
+  newDelimiter?: string;
   limit?: boolean;
   offset?: boolean;
 }
@@ -160,7 +174,7 @@ export interface Statement {
   end: number;
   type?: StatementType;
   executionType?: ExecutionType;
-  endStatement?: string;
+  delimiter?: string;
   canEnd?: boolean;
   definer?: number;
   algorithm?: number;
@@ -171,6 +185,7 @@ export interface Statement {
   limit?: boolean;
   offset?: boolean;
   isCte?: boolean;
+  newDelimiter?: string;
 }
 
 export interface ConcreteStatement extends Statement {
@@ -191,7 +206,7 @@ export interface Token {
     | 'comment-inline'
     | 'comment-block'
     | 'string'
-    | 'semicolon'
+    | 'delimiter'
     | 'keyword'
     | 'parameter'
     | 'table'
