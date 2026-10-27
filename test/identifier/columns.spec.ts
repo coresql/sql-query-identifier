@@ -575,12 +575,12 @@ describe('identifier', () => {
     describe('edge cases', () => {
       it('should handle query with quoted identifier', () => {
         const actual = identify('SELECT "column name" FROM users', { identifyColumns: true });
-        expect(actual[0].columns).to.eql([{ name: '"column name"', isWildcard: false }]);
+        expect(actual[0].columns).to.eql([{ name: 'column name', isWildcard: false }]);
       });
 
       it('should handle query with backtick quoted identifier', () => {
         const actual = identify('SELECT `column name` FROM users', { identifyColumns: true });
-        expect(actual[0].columns).to.eql([{ name: '`column name`', isWildcard: false }]);
+        expect(actual[0].columns).to.eql([{ name: 'column name', isWildcard: false }]);
       });
 
       it('should handle inline comments in column list', () => {
@@ -608,14 +608,14 @@ describe('identifier', () => {
           const actual = identify('SELECT "column.with.dots" FROM users', {
             identifyColumns: true,
           });
-          expect(actual[0].columns).to.eql([{ name: '"column.with.dots"', isWildcard: false }]);
+          expect(actual[0].columns).to.eql([{ name: 'column.with.dots', isWildcard: false }]);
         });
 
         it('should handle backtick identifier with dots inside', () => {
           const actual = identify('SELECT `column.with.dots` FROM users', {
             identifyColumns: true,
           });
-          expect(actual[0].columns).to.eql([{ name: '`column.with.dots`', isWildcard: false }]);
+          expect(actual[0].columns).to.eql([{ name: 'column.with.dots', isWildcard: false }]);
         });
 
         it('should handle mixed quoted and unquoted columns', () => {
@@ -623,9 +623,9 @@ describe('identifier', () => {
             identifyColumns: true,
           });
           expect(actual[0].columns).to.eql([
-            { name: '"first name"', isWildcard: false },
+            { name: 'first name', isWildcard: false },
             { name: 'last_name', isWildcard: false },
-            { name: '"middle name"', isWildcard: false },
+            { name: 'middle name', isWildcard: false },
           ]);
         });
 
@@ -634,7 +634,7 @@ describe('identifier', () => {
             identifyColumns: true,
           });
           expect(actual[0].columns).to.eql([
-            { name: '"column name"', alias: 'col', isWildcard: false },
+            { name: 'column name', alias: 'col', isWildcard: false },
           ]);
         });
 
@@ -643,8 +643,119 @@ describe('identifier', () => {
             identifyColumns: true,
           });
           expect(actual[0].columns).to.eql([
-            { name: '"column name"', table: 'users', isWildcard: false },
+            { name: 'column name', table: 'users', isWildcard: false },
           ]);
+        });
+
+        it('should strip MSSQL bracket identifiers', () => {
+          const actual = identify('SELECT [col name] FROM [my table]', {
+            identifyColumns: true,
+            identifyTables: true,
+            dialect: 'mssql',
+          });
+          expect(actual[0].columns).to.eql([{ name: 'col name', isWildcard: false }]);
+          expect(actual[0].tables).to.eql([{ name: 'my table' }]);
+        });
+
+        it('should strip fully-qualified quoted identifier', () => {
+          const actual = identify('SELECT "s"."t"."c" FROM "s"."t"', {
+            identifyColumns: true,
+            identifyTables: true,
+          });
+          expect(actual[0].columns).to.eql([
+            { name: 'c', table: 't', schema: 's', isWildcard: false },
+          ]);
+          expect(actual[0].tables).to.eql([{ name: 't', schema: 's' }]);
+        });
+
+        it('should unescape doubled double-quote in identifier', () => {
+          const actual = identify('SELECT "weird""name" FROM t', {
+            identifyColumns: true,
+            identifyTables: true,
+          });
+          expect(actual[0].columns).to.eql([{ name: 'weird"name', isWildcard: false }]);
+          expect(actual[0].tables).to.eql([{ name: 't' }]);
+        });
+
+        it('should unescape doubled backtick in identifier', () => {
+          const actual = identify('SELECT `weird``name` FROM t', {
+            identifyColumns: true,
+            identifyTables: true,
+          });
+          expect(actual[0].columns).to.eql([{ name: 'weird`name', isWildcard: false }]);
+          expect(actual[0].tables).to.eql([{ name: 't' }]);
+        });
+
+        it('should unescape doubled close-bracket in MSSQL identifier', () => {
+          const actual = identify('SELECT [weird]]name] FROM [weird]]table]', {
+            identifyColumns: true,
+            identifyTables: true,
+            dialect: 'mssql',
+          });
+          expect(actual[0].columns).to.eql([{ name: 'weird]name', isWildcard: false }]);
+          expect(actual[0].tables).to.eql([{ name: 'weird]table' }]);
+        });
+
+        it('should unescape doubled double-quote in Oracle identifier', () => {
+          const actual = identify('SELECT "weird""name" FROM "weird""table"', {
+            identifyColumns: true,
+            identifyTables: true,
+            dialect: 'oracle',
+          });
+          expect(actual[0].columns).to.eql([{ name: 'weird"name', isWildcard: false }]);
+          expect(actual[0].tables).to.eql([{ name: 'weird"table' }]);
+        });
+
+        it('should pass through literal `[` inside MSSQL bracket identifier', () => {
+          const actual = identify('SELECT [foo[bar] FROM [baz[qux]', {
+            identifyColumns: true,
+            identifyTables: true,
+            dialect: 'mssql',
+          });
+          expect(actual[0].columns).to.eql([{ name: 'foo[bar', isWildcard: false }]);
+          expect(actual[0].tables).to.eql([{ name: 'baz[qux' }]);
+        });
+
+        it('should strip and unescape quoted identifiers under generic dialect', () => {
+          const actual = identify('SELECT "weird""name", `back``tick` FROM "t"', {
+            identifyColumns: true,
+            identifyTables: true,
+            dialect: 'generic',
+          });
+          expect(actual[0].columns).to.eql([
+            { name: 'weird"name', isWildcard: false },
+            { name: 'back`tick', isWildcard: false },
+          ]);
+          expect(actual[0].tables).to.eql([{ name: 't' }]);
+        });
+
+        it('should strip and unescape quoted identifiers under sqlite dialect', () => {
+          const actual = identify('SELECT "weird""name" FROM "t"', {
+            identifyColumns: true,
+            identifyTables: true,
+            dialect: 'sqlite',
+          });
+          expect(actual[0].columns).to.eql([{ name: 'weird"name', isWildcard: false }]);
+          expect(actual[0].tables).to.eql([{ name: 't' }]);
+        });
+
+        it('should handle escape immediately before the closing quote', () => {
+          const actual = identify('SELECT "a""" FROM t', {
+            identifyColumns: true,
+            identifyTables: true,
+          });
+          expect(actual[0].columns).to.eql([{ name: 'a"', isWildcard: false }]);
+          expect(actual[0].tables).to.eql([{ name: 't' }]);
+        });
+
+        it('should unescape backslash-escaped backtick in BigQuery identifier', () => {
+          const actual = identify('SELECT `a\\`b` FROM `t\\`u`', {
+            identifyColumns: true,
+            identifyTables: true,
+            dialect: 'bigquery',
+          });
+          expect(actual[0].columns).to.eql([{ name: 'a`b', isWildcard: false }]);
+          expect(actual[0].tables).to.eql([{ name: 't`u' }]);
         });
       });
 
@@ -761,18 +872,18 @@ describe('identifier', () => {
           identifyColumns: true,
         });
         expect(actual[0].columns).to.eql([
-          { name: 'column_1', alias: '"select"', isWildcard: false },
+          { name: 'column_1', alias: 'select', isWildcard: false },
         ]);
       });
 
       it('should handle alias with special characters', () => {
         const actual = identify('SELECT id AS "user-id" FROM users', { identifyColumns: true });
-        expect(actual[0].columns).to.eql([{ name: 'id', alias: '"user-id"', isWildcard: false }]);
+        expect(actual[0].columns).to.eql([{ name: 'id', alias: 'user-id', isWildcard: false }]);
       });
 
       it('should handle backtick alias', () => {
         const actual = identify('SELECT id AS `user id` FROM users', { identifyColumns: true });
-        expect(actual[0].columns).to.eql([{ name: 'id', alias: '`user id`', isWildcard: false }]);
+        expect(actual[0].columns).to.eql([{ name: 'id', alias: 'user id', isWildcard: false }]);
       });
 
       it('should handle mixed explicit and implicit aliases', () => {

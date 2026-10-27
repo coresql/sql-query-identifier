@@ -5,7 +5,7 @@ import { ParamTypes } from '../src/defines';
 describe('identify', () => {
   it('should throw error for invalid dialect', () => {
     expect(() => identify('SELECT * FROM foo', { dialect: 'invalid' as Dialect })).to.throw(
-      'Unknown dialect. Allowed values: mssql, sqlite, mysql, oracle, psql, bigquery, generic',
+      'Unknown dialect. Allowed values: mssql, sqlite, mysql, oracle, psql, bigquery, dynamodb, snowflake, generic',
     );
   });
 
@@ -20,6 +20,8 @@ describe('identify', () => {
         parameters: ['$1', '$2'],
         tables: [],
         columns: [],
+        limit: false,
+        offset: false,
       },
     ]);
   });
@@ -44,6 +46,8 @@ describe('identify', () => {
         parameters: ['?', '$1', ':fizzz', ':"buzz buzz"', '{fooo}'],
         tables: [],
         columns: [],
+        limit: false,
+        offset: false,
       },
     ]);
   });
@@ -65,6 +69,8 @@ describe('identify', () => {
         parameters: [],
         tables: [],
         columns: [],
+        limit: false,
+        offset: false,
       },
     ]);
   });
@@ -87,6 +93,8 @@ describe('identify', () => {
         parameters: ['$1'],
         tables: [],
         columns: [],
+        limit: false,
+        offset: false,
       },
     ]);
   });
@@ -104,6 +112,8 @@ describe('identify', () => {
         parameters: [],
         tables: [{ name: 'foo' }, { name: 'bar' }],
         columns: [],
+        limit: false,
+        offset: false,
       },
     ]);
   });
@@ -126,6 +136,8 @@ describe('identify', () => {
           { name: 'bar', schema: 'public' },
         ],
         columns: [],
+        limit: false,
+        offset: false,
       },
     ]);
   });

@@ -29,6 +29,7 @@ interface StatementParser {
  */
 export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   SELECT: 'LISTING',
+  SELECT_INTO: 'MODIFICATION',
   INSERT: 'MODIFICATION',
   DELETE: 'MODIFICATION',
   UPDATE: 'MODIFICATION',
@@ -93,18 +94,56 @@ export const EXECUTION_TYPES: Record<StatementType, ExecutionType> = {
   BEGIN_TRANSACTION: 'TRANSACTION',
   COMMIT: 'TRANSACTION',
   ROLLBACK: 'TRANSACTION',
+  MERGE: 'MODIFICATION',
+  CALL: 'MODIFICATION',
+  GRANT: 'MODIFICATION',
+  REVOKE: 'MODIFICATION',
+  EXPLAIN: 'INFORMATION',
+  DESCRIBE: 'INFORMATION',
+  USE: 'INFORMATION',
+  COPY: 'MODIFICATION',
+  PUT: 'MODIFICATION',
+  GET: 'LISTING',
+  LIST: 'LISTING',
+  REMOVE: 'MODIFICATION',
+  SHOW_WAREHOUSES: 'LISTING',
+  SHOW_USERS: 'LISTING',
+  SHOW_ROLES: 'LISTING',
+  SHOW_SCHEMAS: 'LISTING',
+  SHOW_STAGES: 'LISTING',
+  SHOW_INTEGRATIONS: 'LISTING',
+  SHOW_STREAMS: 'LISTING',
+  SHOW_TASKS: 'LISTING',
+  SHOW_PIPES: 'LISTING',
+  SHOW_SEQUENCES: 'LISTING',
   UNKNOWN: 'UNKNOWN',
   ANON_BLOCK: 'ANON_BLOCK',
   DELIMITER: 'NO_OP',
 };
 
-const statementsWithEnds = [
-  'CREATE_TRIGGER',
-  'CREATE_FUNCTION',
-  'CREATE_PROCEDURE',
-  'ANON_BLOCK',
-  'UNKNOWN',
-];
+// Statement types whose bodies may legitimately contain token-level semicolons
+// (e.g. a BEGIN...END block), so a semicolon does not necessarily terminate them.
+// They only terminate once their body has completed (statement.canEnd) or, for
+// string/dollar-quoted bodies, once that body has been consumed (see the
+// string-body handling in stateMachineStatementParser).
+function getStatementsWithEnds(dialect: Dialect): StatementType[] {
+  const statementsWithEnds: StatementType[] = [
+    'CREATE_FUNCTION',
+    'CREATE_PROCEDURE',
+    'ANON_BLOCK',
+    'UNKNOWN',
+  ];
+
+  // In PostgreSQL and Snowflake a trigger only references a function and never
+  // carries an inline body, so its first semicolon always terminates it. Other
+  // dialects (mssql, mysql, sqlite, ...) support inline BEGIN...END trigger
+  // bodies whose token-level semicolons must not terminate the statement early.
+  if (!['psql', 'snowflake'].includes(dialect)) {
+    statementsWithEnds.push('CREATE_TRIGGER');
+  }
+
+  return statementsWithEnds;
+}
 
 const blockOpeners: Record<Dialect, string[]> = {
   generic: ['BEGIN', 'CASE'],
@@ -114,6 +153,8 @@ const blockOpeners: Record<Dialect, string[]> = {
   sqlite: ['BEGIN', 'CASE'],
   oracle: ['DECLARE', 'BEGIN', 'CASE'],
   bigquery: ['BEGIN', 'CASE', 'IF', 'LOOP', 'REPEAT', 'WHILE', 'FOR'],
+  dynamodb: [],
+  snowflake: ['DECLARE', 'BEGIN', 'CASE', 'LOOP', 'IF', 'WHILE', 'FOR', 'REPEAT'],
 };
 
 interface ParseOptions {
@@ -369,13 +410,38 @@ function createStatementParserByToken(
   options: ParseOptions,
 ): StatementParser {
   if (token.type === 'keyword') {
+    // DynamoDB PartiQL only supports DML: SELECT, INSERT, UPDATE, DELETE.
+    // No DDL (CREATE/DROP/ALTER/TRUNCATE), SHOW, or transaction control statements
+    // are part of the DynamoDB PartiQL grammar.
+    //
+    // Spec: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.statements.html
+    //   SELECT  https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.select.html
+    //   INSERT  https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.insert.html
+    //   UPDATE  https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.update.html
+    //   DELETE  https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.delete.html
+    // Transactions and batches are exposed as DynamoDB API operations
+    // (ExecuteTransaction / BatchExecuteStatement), not as SQL keywords:
+    //   https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.multiplestatements.transactions.html
+    //   https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.multiplestatements.batching.html
+    if (
+      options.dialect === 'dynamodb' &&
+      !['SELECT', 'INSERT', 'UPDATE', 'DELETE'].includes(token.value.toUpperCase())
+    ) {
+      if (!options.isStrict) {
+        return createUnknownStatementParser(options);
+      }
+      throw new Error(
+        `Statement "${token.value}" is not supported by the DynamoDB PartiQL dialect.`,
+      );
+    }
+
     switch (token.value.toUpperCase()) {
       case 'SELECT':
         return createSelectStatementParser(options);
       case 'CREATE':
         return createCreateStatementParser(options);
       case 'SHOW':
-        if (['mysql', 'generic'].includes(options.dialect)) {
+        if (['mysql', 'generic', 'snowflake'].includes(options.dialect)) {
           return createShowStatementParser(options);
         }
         break;
@@ -392,7 +458,13 @@ function createStatementParserByToken(
       case 'TRUNCATE':
         return createTruncateStatementParser(options);
       case 'BEGIN':
-        if (['bigquery', 'oracle'].includes(options.dialect) && nextToken.value !== 'TRANSACTION') {
+        if (
+          (['bigquery', 'oracle'].includes(options.dialect) &&
+            nextToken.value.toUpperCase() !== 'TRANSACTION') ||
+          (options.dialect === 'snowflake' &&
+            nextToken.value.toUpperCase() !== 'WORK' &&
+            nextToken.value.toUpperCase() !== 'TRANSACTION')
+        ) {
           return createBlockStatementParser(options);
         }
         return createBeginTransactionStatementParser(options);
@@ -406,12 +478,46 @@ function createStatementParserByToken(
       case 'ROLLBACK':
         return createRollbackStatementParser(options);
       case 'DECLARE':
-        if (options.dialect === 'oracle') {
+        if (['oracle', 'snowflake'].includes(options.dialect)) {
           return createBlockStatementParser(options);
         }
         break;
       // DELIMITER is intercepted inline in parse() for the mysql dialect,
       // so we never reach a `case 'DELIMITER'` here for that dialect.
+      case 'MERGE':
+        return createMergeStatementParser(options);
+      case 'CALL':
+        return createCallStatementParser(options);
+      case 'GRANT':
+        return createGrantStatementParser(options);
+      case 'REVOKE':
+        return createRevokeStatementParser(options);
+      case 'EXPLAIN':
+        return createExplainStatementParser(options);
+      case 'DESCRIBE':
+      case 'DESC':
+        return createDescribeStatementParser(options);
+      case 'USE':
+        if (['mssql', 'mysql', 'snowflake'].includes(options.dialect)) {
+          return createUseStatementParser(options);
+        }
+        break;
+      case 'COPY':
+        return createCopyStatementParser(options);
+      case 'PUT':
+        if (options.dialect === 'snowflake') return createPutStatementParser(options);
+        break;
+      case 'GET':
+        if (options.dialect === 'snowflake') return createGetStatementParser(options);
+        break;
+      case 'LIST':
+      case 'LS':
+        if (options.dialect === 'snowflake') return createListStatementParser(options);
+        break;
+      case 'REMOVE':
+      case 'RM':
+        if (options.dialect === 'snowflake') return createRemoveStatementParser(options);
+        break;
       default:
         break;
     }
@@ -436,6 +542,8 @@ function createSelectStatementParser(options: ParseOptions) {
       },
       add: (token) => {
         statement.type = 'SELECT';
+        statement.limit = false;
+        statement.offset = false;
         if (statement.start < 0) {
           statement.start = token.start;
         }
@@ -457,7 +565,9 @@ function createBlockStatementParser(options: ParseOptions) {
       preCanGoToNext: () => false,
       validation: {
         acceptTokens: [
-          ...(options.dialect === 'oracle' ? [{ type: 'keyword', value: 'DECLARE' }] : []),
+          ...(['oracle', 'snowflake'].includes(options.dialect)
+            ? [{ type: 'keyword', value: 'DECLARE' }]
+            : []),
           { type: 'keyword', value: 'BEGIN' },
         ],
       },
@@ -705,6 +815,80 @@ function createTruncateStatementParser(options: ParseOptions) {
   return stateMachineStatementParser(statement, steps, options);
 }
 
+function createSingleKeywordStatementParser(
+  options: ParseOptions,
+  type: StatementType,
+  keywords: string[],
+) {
+  const statement = createInitialStatement();
+
+  const steps: Step[] = [
+    {
+      preCanGoToNext: () => false,
+      validation: {
+        acceptTokens: keywords.map((value) => ({ type: 'keyword', value })),
+      },
+      add: (token) => {
+        statement.type = type;
+        if (statement.start < 0) {
+          statement.start = token.start;
+        }
+      },
+      postCanGoToNext: () => true,
+    },
+  ];
+
+  return stateMachineStatementParser(statement, steps, options);
+}
+
+function createMergeStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'MERGE', ['MERGE']);
+}
+
+function createCallStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'CALL', ['CALL']);
+}
+
+function createGrantStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'GRANT', ['GRANT']);
+}
+
+function createRevokeStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'REVOKE', ['REVOKE']);
+}
+
+function createExplainStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'EXPLAIN', ['EXPLAIN']);
+}
+
+function createDescribeStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'DESCRIBE', ['DESCRIBE', 'DESC']);
+}
+
+function createUseStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'USE', ['USE']);
+}
+
+function createCopyStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'COPY', ['COPY']);
+}
+
+function createPutStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'PUT', ['PUT']);
+}
+
+function createGetStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'GET', ['GET']);
+}
+
+function createListStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'LIST', ['LIST', 'LS']);
+}
+
+function createRemoveStatementParser(options: ParseOptions) {
+  return createSingleKeywordStatementParser(options, 'REMOVE', ['REMOVE', 'RM']);
+}
+
 function createShowStatementParser(options: ParseOptions) {
   const statement = createInitialStatement();
 
@@ -761,6 +945,16 @@ function createShowStatementParser(options: ParseOptions) {
           { type: 'keyword', value: 'TRIGGERS' },
           { type: 'keyword', value: 'VARIABLES' },
           { type: 'keyword', value: 'WARNINGS' },
+          { type: 'keyword', value: 'WAREHOUSES' },
+          { type: 'keyword', value: 'USERS' },
+          { type: 'keyword', value: 'ROLES' },
+          { type: 'keyword', value: 'SCHEMAS' },
+          { type: 'keyword', value: 'STAGES' },
+          { type: 'keyword', value: 'INTEGRATIONS' },
+          { type: 'keyword', value: 'STREAMS' },
+          { type: 'keyword', value: 'TASKS' },
+          { type: 'keyword', value: 'PIPES' },
+          { type: 'keyword', value: 'SEQUENCES' },
         ],
       },
       add: (token) => {
@@ -965,14 +1159,18 @@ function stateMachineStatementParser(
   let currentStepIndex = 0;
   let prevToken: Token | undefined;
   let prevNonWhitespaceToken: Token | undefined;
+  let sawFrom = false;
 
   let lastBlockOpener: Token | undefined;
   let anonBlockStarted = false;
 
   let openBlocks = 0;
+  let parensDepth = 0;
 
   const columnParser = new ColumnParser(dialect);
-  const tableParser = new TableParser();
+  const tableParser = new TableParser(dialect);
+
+  const statementsWithEnds = getStatementsWithEnds(dialect);
 
   /* eslint arrow-body-style: 0, no-extra-parens: 0 */
   const isValidToken = (step: Step, token: Token) => {
@@ -1047,6 +1245,23 @@ function stateMachineStatementParser(
         return;
       }
 
+      // A CREATE FUNCTION / PROCEDURE body can be supplied as a quoted or
+      // dollar-quoted string following the AS keyword (e.g. PostgreSQL
+      // `AS 'select 1'` / `AS $$ ... $$`, Snowflake `AS $$ ... $$`). Such a body
+      // is a single token, so it never opens a BEGIN...END block and canEnd would
+      // otherwise never be set, causing the statement to swallow whatever follows.
+      // Once the string body has been consumed at the top level, allow the next
+      // semicolon to terminate the statement.
+      if (
+        token.type === 'string' &&
+        openBlocks === 0 &&
+        prevNonWhitespaceToken?.type === 'keyword' &&
+        prevNonWhitespaceToken.value.toUpperCase() === 'AS' &&
+        (statement.type === 'CREATE_FUNCTION' || statement.type === 'CREATE_PROCEDURE')
+      ) {
+        statement.canEnd = true;
+      }
+
       if (
         token.type === 'keyword' &&
         blockOpeners[dialect].includes(token.value.toUpperCase()) &&
@@ -1054,12 +1269,13 @@ function stateMachineStatementParser(
         (token.value.toUpperCase() !== 'BEGIN' ||
           (token.value.toUpperCase() === 'BEGIN' &&
             nextToken.value.toUpperCase() !== 'TRANSACTION' &&
+            (dialect !== 'snowflake' || nextToken.value.toUpperCase() !== 'WORK') &&
             (dialect !== 'sqlite' ||
               (dialect === 'sqlite' &&
                 !['DEFERRED', 'IMMEDIATE', 'EXCLUSIVE'].includes(nextToken.value.toUpperCase())))))
       ) {
         if (
-          dialect === 'oracle' &&
+          ['oracle', 'snowflake'].includes(dialect) &&
           lastBlockOpener?.value === 'DECLARE' &&
           token.value.toUpperCase() === 'BEGIN'
         ) {
@@ -1099,6 +1315,54 @@ function stateMachineStatementParser(
         statement.parameters.push(token.value);
       }
 
+      if (statement.type === 'SELECT' && token.value === '(') {
+        parensDepth++;
+      }
+
+      if (statement.type === 'SELECT' && token.value === ')') {
+        parensDepth--;
+      }
+
+      if (
+        statement.type === 'SELECT' &&
+        token.type === 'keyword' &&
+        (['LIMIT', 'FETCH'].includes(token.value.toUpperCase()) ||
+          (dialect === 'mssql' && token.value.toUpperCase() === 'TOP')) &&
+        (nextToken.type !== 'keyword' || nextToken.value.toUpperCase() !== 'ALL') &&
+        parensDepth === 0
+      ) {
+        statement.limit = true;
+      }
+
+      if (
+        statement.type === 'SELECT' &&
+        token.type === 'keyword' &&
+        token.value.toUpperCase() === 'OFFSET' &&
+        parensDepth === 0
+      ) {
+        statement.offset = true;
+      }
+
+      if (
+        statement.type === 'SELECT' &&
+        token.type === 'keyword' &&
+        token.value.toUpperCase() === 'INTO' &&
+        ((['mssql', 'psql'].includes(dialect) && !sawFrom) || dialect === 'mysql') &&
+        parensDepth === 0
+      ) {
+        statement.type = 'SELECT_INTO';
+        statement.executionType = 'MODIFICATION';
+      }
+
+      if (
+        statement.type === 'SELECT' &&
+        token.type === 'keyword' &&
+        token.value.toUpperCase() === 'FROM' &&
+        parensDepth === 0
+      ) {
+        sawFrom = true;
+      }
+
       if (statement.type && statement.start >= 0) {
         // statement has already been identified
         // just wait until end of the statement
@@ -1117,11 +1381,20 @@ function stateMachineStatementParser(
       }
 
       if (
-        ['psql', 'mssql', 'bigquery'].includes(dialect) &&
+        ['psql', 'mssql', 'bigquery', 'snowflake'].includes(dialect) &&
         token.value.toUpperCase() === 'MATERIALIZED'
       ) {
         setPrevToken(token);
         return;
+      }
+
+      let afterOrTokens: string[];
+      if (dialect === 'mssql') {
+        afterOrTokens = ['ALTER'];
+      } else if (dialect === 'snowflake') {
+        afterOrTokens = ['ALTER', 'REPLACE'];
+      } else {
+        afterOrTokens = ['REPLACE'];
       }
 
       // technically these dialects don't allow "OR REPLACE" or "OR ALTER" between all statement
@@ -1132,7 +1405,7 @@ function stateMachineStatementParser(
         dialect !== 'sqlite' &&
         (token.value.toUpperCase() === 'OR' ||
           (prevNonWhitespaceToken?.value.toUpperCase() === 'OR' &&
-            token.value.toUpperCase() === (dialect === 'mssql' ? 'ALTER' : 'REPLACE')))
+            afterOrTokens.includes(token.value.toUpperCase())))
       ) {
         setPrevToken(token);
         return;
@@ -1142,7 +1415,9 @@ function stateMachineStatementParser(
       if (
         (dialect === 'psql' && ['TEMP', 'TEMPORARY'].includes(token.value.toUpperCase())) ||
         (dialect === 'sqlite' &&
-          ['TEMP', 'TEMPORARY', 'VIRTUAL'].includes(token.value.toUpperCase()))
+          ['TEMP', 'TEMPORARY', 'VIRTUAL'].includes(token.value.toUpperCase())) ||
+        (dialect === 'snowflake' &&
+          ['TEMP', 'TEMPORARY', 'TRANSIENT', 'VOLATILE'].includes(token.value.toUpperCase()))
       ) {
         setPrevToken(token);
         return;
@@ -1163,7 +1438,9 @@ function stateMachineStatementParser(
       }
 
       if (statement.definer !== undefined && statement.definer > 0) {
-        if (statement.definer === 1 && prevToken?.type === 'whitespace') {
+        // Enter consume mode once the user@host begins, with or without a
+        // whitespace separating it from "=".
+        if (statement.definer === 1) {
           statement.definer++;
           setPrevToken(token);
           return;
@@ -1294,6 +1571,20 @@ export function defaultParamTypesFor(dialect: Dialect): ParamTypes {
         positional: true,
         numbered: ['?'],
         named: [':', '@'],
+      };
+    case 'dynamodb':
+      // DynamoDB PartiQL supports positional `?` placeholders only; values are
+      // bound out-of-band via the `Parameters` field on the ExecuteStatement /
+      // ExecuteTransaction / BatchExecuteStatement API calls.
+      // See: https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ExecuteStatement.html
+      //      https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/ql-reference.multiplestatements.batching.html
+      return {
+        positional: true,
+      };
+    case 'snowflake':
+      return {
+        positional: true,
+        named: [':'],
       };
     default:
       return {

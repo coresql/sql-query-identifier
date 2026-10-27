@@ -1,4 +1,5 @@
-import { TableReference, Token } from './defines';
+import { Dialect, TableReference, Token } from './defines';
+import { maybeStripQuotes } from './utils';
 
 export class TableParser {
   private parts: string[] = [];
@@ -8,6 +9,8 @@ export class TableParser {
   private waitingForAlias = false;
   private maybeCommaSep = false;
   private parensDepth = 0;
+
+  constructor(private dialect: Dialect) {}
 
   // keywords that come directly before a table name.
   // v1 - keeping it very simple.
@@ -140,20 +143,20 @@ export class TableParser {
     if (this.parts.length === 1) {
       const name = this.parts[0];
       table = {
-        name,
+        name: maybeStripQuotes(name, this.dialect),
       };
     } else if (this.parts.length === 2) {
       const [schema, name] = this.parts;
       table = {
-        name,
-        schema,
+        name: maybeStripQuotes(name, this.dialect),
+        schema: maybeStripQuotes(schema, this.dialect),
       };
     } else if (this.parts.length === 3) {
       const [database, schema, name] = this.parts;
       table = {
-        name,
-        schema,
-        database,
+        name: maybeStripQuotes(name, this.dialect),
+        schema: maybeStripQuotes(schema, this.dialect),
+        database: maybeStripQuotes(database, this.dialect),
       };
     } else {
       const fullName = this.parts.join('.');
@@ -163,7 +166,7 @@ export class TableParser {
     }
 
     if (!!this.alias && !!table) {
-      table.alias = this.alias;
+      table.alias = maybeStripQuotes(this.alias, this.dialect);
     }
 
     return table;

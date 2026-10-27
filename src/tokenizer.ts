@@ -3,6 +3,7 @@
  */
 
 import type { Token, State, Dialect, ParamTypes } from './defines';
+import { getStartQuotes } from './utils';
 
 type Char = string | null;
 
@@ -73,6 +74,42 @@ const KEYWORDS = [
   'VARIABLES',
   'WARNINGS',
   'DELIMITER',
+  'MERGE',
+  'CALL',
+  'GRANT',
+  'REVOKE',
+  'EXPLAIN',
+  'DESCRIBE',
+  'DESC',
+  'USE',
+  'COPY',
+  'USERS',
+  'ROLES',
+  'SCHEMAS',
+  'SEQUENCES',
+  'INTO',
+  'FROM',
+  'LIMIT',
+  'OFFSET',
+  'FETCH',
+  'TOP',
+  'ALL',
+];
+
+const SNOWFLAKE_KEYWORDS = [
+  'PUT',
+  'GET',
+  'LIST',
+  'LS',
+  'REMOVE',
+  'RM',
+  'WAREHOUSES',
+  'STAGES',
+  'INTEGRATIONS',
+  'STREAMS',
+  'TASKS',
+  'PIPES',
+  'INTO',
 ];
 
 const ENDTOKENS: Record<string, Char> = {
@@ -117,7 +154,7 @@ export function scanToken(
   }
 
   if (isQuotedIdentifier(ch, dialect) && ch !== null) {
-    return scanQuotedIdentifier(state, ENDTOKENS[ch]);
+    return scanQuotedIdentifier(state, ENDTOKENS[ch], dialect);
   }
 
   // Match the current statement terminator. Handles ';', '$', '$$', '//', etc.
@@ -130,7 +167,7 @@ export function scanToken(
   }
 
   if (isLetter(ch)) {
-    return scanWord(state);
+    return scanWord(state, dialect);
   }
 
   return skipChar(state);
@@ -186,8 +223,18 @@ function peek(state: State): Char {
   return state.input[state.position + 1];
 }
 
-function isKeyword(word: string): boolean {
-  return KEYWORDS.includes(word.toUpperCase());
+function getDialectSpecificKeywords(dialect: Dialect): string[] {
+  switch (dialect) {
+    case 'snowflake':
+      return SNOWFLAKE_KEYWORDS;
+    default:
+      return [];
+  }
+}
+
+function isKeyword(word: string, dialect: Dialect): boolean {
+  const dialectSpecific = getDialectSpecificKeywords(dialect);
+  return KEYWORDS.includes(word.toUpperCase()) || dialectSpecific.includes(word.toUpperCase());
 }
 
 function scanWhitespace(state: State): Token {
@@ -403,11 +450,24 @@ function scanCommentBlock(state: State): Token {
   };
 }
 
-function scanQuotedIdentifier(state: State, endToken: Char): Token {
-  let nextChar: Char;
-  do {
+function scanQuotedIdentifier(state: State, endToken: Char, dialect: Dialect): Token {
+  let nextChar: Char = peek(state);
+  while (nextChar !== null) {
     nextChar = read(state);
-  } while (endToken !== nextChar && nextChar !== null);
+    if (nextChar === null) break;
+
+    if (nextChar === endToken && peek(state) === endToken) {
+      read(state);
+      continue;
+    }
+
+    if (dialect === 'bigquery' && nextChar === '\\' && peek(state) === endToken) {
+      read(state);
+      continue;
+    }
+
+    if (nextChar === endToken) break;
+  }
 
   if (nextChar !== null && endToken !== nextChar) {
     unread(state);
@@ -422,7 +482,7 @@ function scanQuotedIdentifier(state: State, endToken: Char): Token {
   };
 }
 
-function scanWord(state: State): Token {
+function scanWord(state: State, dialect: Dialect): Token {
   let nextChar: Char;
 
   do {
@@ -434,7 +494,7 @@ function scanWord(state: State): Token {
   }
 
   const value = state.input.slice(state.start, state.position + 1);
-  if (!isKeyword(value)) {
+  if (!isKeyword(value, dialect)) {
     return skipWord(state, value);
   }
 
@@ -523,7 +583,7 @@ function isDollarQuotedString(state: State): boolean {
 }
 
 function isQuotedIdentifier(ch: Char, dialect: Dialect): boolean {
-  const startQuoteChars: Char[] = dialect === 'mssql' ? ['"', '['] : ['"', '`'];
+  const startQuoteChars: Char[] = getStartQuotes(dialect);
   return startQuoteChars.includes(ch);
 }
 

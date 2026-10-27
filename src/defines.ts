@@ -5,6 +5,8 @@ export const DIALECTS = [
   'oracle',
   'psql',
   'bigquery',
+  'dynamodb',
+  'snowflake',
   'generic',
 ] as const;
 export type Dialect = (typeof DIALECTS)[number];
@@ -13,6 +15,7 @@ export type StatementType =
   | 'UPDATE'
   | 'DELETE'
   | 'SELECT'
+  | 'SELECT_INTO'
   | 'TRUNCATE'
   | 'CREATE_DATABASE'
   | 'CREATE_SCHEMA'
@@ -53,6 +56,16 @@ export type StatementType =
   | 'SHOW_KEYS'
   | 'SHOW_INDEX'
   | 'SHOW_TABLE'
+  | 'SHOW_WAREHOUSES'
+  | 'SHOW_USERS'
+  | 'SHOW_ROLES'
+  | 'SHOW_SCHEMAS'
+  | 'SHOW_STAGES'
+  | 'SHOW_INTEGRATIONS'
+  | 'SHOW_STREAMS'
+  | 'SHOW_TASKS'
+  | 'SHOW_PIPES'
+  | 'SHOW_SEQUENCES'
   | 'SHOW_TABLES'
   | 'SHOW_COLUMNS'
   | 'DROP_DATABASE'
@@ -76,6 +89,18 @@ export type StatementType =
   | 'ROLLBACK'
   | 'ANON_BLOCK'
   | 'DELIMITER'
+  | 'MERGE'
+  | 'CALL'
+  | 'GRANT'
+  | 'REVOKE'
+  | 'EXPLAIN'
+  | 'DESCRIBE'
+  | 'USE'
+  | 'COPY'
+  | 'PUT'
+  | 'GET'
+  | 'LIST'
+  | 'REMOVE'
   | 'UNKNOWN';
 
 export type ExecutionType =
@@ -140,6 +165,8 @@ export interface IdentifyResult {
    * that should be used for statements that follow.
    */
   newDelimiter?: string;
+  limit?: boolean;
+  offset?: boolean;
 }
 
 export interface Statement {
@@ -155,6 +182,8 @@ export interface Statement {
   parameters: string[];
   tables: TableReference[];
   columns: ColumnReference[];
+  limit?: boolean;
+  offset?: boolean;
   isCte?: boolean;
   newDelimiter?: string;
 }
