@@ -24,7 +24,7 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
   // Default parameter types for each dialect
   const paramTypes = options.paramTypes || defaultParamTypesFor(dialect);
 
-  const result = parse(
+  const parsed = parse(
     query,
     isStrict,
     dialect,
@@ -34,11 +34,43 @@ export function identify(query: string, options: IdentifyOptions = {}): Identify
   );
   const sort = dialect === 'psql' && !options.paramTypes;
 
-  return result.body.map((statement) => {
+  // Use token boundaries so comment markers inside strings cannot become headers.
+  let tokenIndex = 0;
+  let previousEnd = -1;
+  return parsed.body.map((statement) => {
+    let start = statement.start;
+    let leadingStart: number | undefined;
+    let firstComment: number | undefined;
+    while (
+      (options.includeLeadingComments === true || options.includeLeadingWhitespace === true) &&
+      tokenIndex < parsed.tokens.length &&
+      parsed.tokens[tokenIndex].start < statement.start
+    ) {
+      const token = parsed.tokens[tokenIndex++];
+      if (token.end <= previousEnd) continue;
+      if (token.type === 'whitespace') {
+        if (leadingStart === undefined) leadingStart = token.start;
+      } else if (
+        options.includeLeadingComments === true &&
+        (token.type === 'comment-inline' || token.type === 'comment-block')
+      ) {
+        if (leadingStart === undefined) leadingStart = token.start;
+        if (firstComment === undefined) firstComment = token.start;
+      } else {
+        leadingStart = undefined;
+        firstComment = undefined;
+      }
+    }
+    if (options.includeLeadingWhitespace === true && leadingStart !== undefined) {
+      start = leadingStart;
+    } else if (options.includeLeadingComments === true && firstComment !== undefined) {
+      start = firstComment;
+    }
+    previousEnd = statement.end;
     const result: IdentifyResult = {
-      start: statement.start,
+      start,
       end: statement.end,
-      text: query.substring(statement.start, statement.end + 1),
+      text: query.substring(start, statement.end + 1),
       type: statement.type,
       executionType: statement.executionType,
       // we want to sort the postgres params: $1 $2 $3, regardless of the order they appear

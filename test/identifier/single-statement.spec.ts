@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { Dialect, identify } from '../../src';
+import { Dialect, identify, Options } from '../../src';
 
 describe('identifier', () => {
   describe('given queries with a single statement', () => {
@@ -1896,5 +1896,138 @@ describe('identifier', () => {
       });
       expect(result.type).to.equal('SELECT');
     });
+  });
+});
+
+const options = { dialect: 'mssql', includeLeadingComments: true } as Options;
+
+describe('includeLeadingComments', () => {
+  it('keeps the default keyword offsets and text', () => {
+    const sql = '-- header\nCREATE PROCEDURE p AS SELECT 1;';
+    const actual = identify(sql, { dialect: 'mssql' })[0];
+    expect(actual.start).to.equal(sql.indexOf('CREATE'));
+    expect(actual.text).to.equal(sql.slice(actual.start, actual.end + 1));
+  });
+
+  it('starts at the first comment without leading whitespace', () => {
+    const sql = '  -- header\n/* detail */\nCREATE PROCEDURE p AS SELECT 1;';
+    const actual = identify(sql, options)[0];
+    expect(actual.start).to.equal(2);
+    expect(actual.text).to.equal(sql.slice(2));
+    expect(actual.type).to.equal('CREATE_PROCEDURE');
+  });
+
+  it('does not include empty statement delimiters', () => {
+    const sql = '; ;\n-- header\nSELECT 1;';
+    const actual = identify(sql, options)[0];
+    expect(actual.start).to.equal(4);
+    expect(actual.text).to.equal(sql.slice(4));
+  });
+
+  it('keeps each header with its own statement', () => {
+    const sql = '-- first\nCREATE VIEW a AS SELECT 1;\n/* second */\nCREATE VIEW b AS SELECT 2;';
+    const actual = identify(sql, options);
+    expect(actual).to.have.length(2);
+    expect(actual[0].text).to.equal(sql.slice(0, sql.indexOf(';') + 1));
+    expect(actual[1].start).to.equal(sql.indexOf('/* second */'));
+    expect(actual[1].text).to.equal(sql.slice(actual[1].start));
+  });
+
+  it('does not change whitespace-only prefixes', () => {
+    expect(identify('  SELECT 1;', options)[0].start).to.equal(2);
+  });
+
+  it('does not treat comment markers in strings as headers', () => {
+    const actual = identify("SELECT '-- not a header'; SELECT 2;", options);
+    expect(actual[1].text).to.equal('SELECT 2;');
+  });
+});
+
+describe('includeLeadingWhitespace', () => {
+  for (const includeLeadingComments of [false, true]) {
+    for (const includeLeadingWhitespace of [false, true]) {
+      const flags = {
+        dialect: 'mssql',
+        includeLeadingComments,
+        includeLeadingWhitespace,
+      } as Options;
+      it(`keeps independent boundaries with comments=${String(
+        includeLeadingComments,
+      )}, whitespace=${String(includeLeadingWhitespace)}`, () => {
+        const sql = '  -- header\n /* detail */\n  CREATE VIEW v AS SELECT 1;';
+        const actual = identify(sql, flags)[0];
+        const start = includeLeadingComments
+          ? includeLeadingWhitespace
+            ? 0
+            : sql.indexOf('--')
+          : includeLeadingWhitespace
+          ? sql.indexOf('\n  CREATE')
+          : sql.indexOf('CREATE');
+        expect(actual.start).to.equal(start);
+        expect(actual.text).to.equal(sql.slice(start));
+        expect(actual.end).to.equal(sql.length - 1);
+        expect(actual.type).to.equal('CREATE_VIEW');
+        expect(actual.parameters).to.deep.equal([]);
+      });
+    }
+  }
+
+  it('includes whitespace-only prefixes when enabled', () => {
+    const sql = ' \n\tSELECT 1;';
+    const actual = identify(sql, { includeLeadingWhitespace: true })[0];
+    expect(actual.start).to.equal(0);
+    expect(actual.text).to.equal(sql);
+  });
+
+  it('keeps delimiters out and preserves each contiguous prefix with both options', () => {
+    const sql = '; ;\n -- first\nSELECT 1;\n /* second */\nSELECT 2;';
+    const actual = identify(sql, { includeLeadingComments: true, includeLeadingWhitespace: true });
+    expect(actual).to.have.length(2);
+    expect(actual[0].start).to.equal(3);
+    expect(actual[0].text).to.equal(sql.slice(3, sql.indexOf('SELECT 1;') + 9));
+    expect(actual[1].start).to.equal(sql.indexOf('SELECT 1;') + 9);
+    expect(actual[1].text).to.equal(sql.slice(actual[1].start));
+  });
+});
+
+describe('leading boundary compatibility', () => {
+  it('does not cross a comment when only whitespace is enabled', () => {
+    const sql = '  /* header */SELECT 1;';
+    const actual = identify(sql, { includeLeadingWhitespace: true })[0];
+    expect(actual.start).to.equal(sql.indexOf('SELECT'));
+    expect(actual.text).to.equal('SELECT 1;');
+  });
+
+  it('does not cross a delimiter when only whitespace is enabled', () => {
+    const sql = '; ; \nSELECT 1;';
+    const actual = identify(sql, { includeLeadingWhitespace: true })[0];
+    expect(actual.start).to.equal(3);
+    expect(actual.text).to.equal(sql.slice(3));
+  });
+
+  it('keeps parameter extraction unchanged with both options enabled', () => {
+    const sql = "  -- header\nSELECT '-- literal', ?;";
+    const flags = {
+      dialect: 'mysql',
+      includeLeadingComments: true,
+      includeLeadingWhitespace: true,
+    } as Options;
+    const expected = identify(sql, { dialect: 'mysql' })[0];
+    const actual = identify(sql, flags)[0];
+    expect(actual.start).to.equal(0);
+    expect(actual.text).to.equal(sql);
+    expect(actual.end).to.equal(expected.end);
+    expect(actual.type).to.equal(expected.type);
+    expect(actual.executionType).to.equal(expected.executionType);
+    expect(actual.parameters).to.deep.equal(expected.parameters);
+  });
+});
+
+describe('line comment whitespace boundary', () => {
+  it('does not include the newline owned by an excluded line comment', () => {
+    const sql = '  -- header\n  SELECT 1;';
+    const actual = identify(sql, { includeLeadingWhitespace: true })[0];
+    expect(actual.start).to.equal(sql.indexOf('  SELECT'));
+    expect(actual.text).to.equal('  SELECT 1;');
   });
 });
