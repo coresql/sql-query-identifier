@@ -152,6 +152,38 @@ console.log(statements);
 1. `options (object)`: allow to set different configurations
     1. `strict (bool)`: allow disable strict mode which will ignore unknown types *(default=true)*
     2. `dialect (string)`: Specify your database dialect, values: `generic`, `mysql`, `oracle`, `psql`, `sqlite`, `mssql`, `bigquery` and `dynamodb`. *(default=generic)*
+    3. `includeLeadingComments (bool)`: Include leading comments in statement `text` and `start`, starting at the first comment unless `includeLeadingWhitespace` is also enabled. *(default=false)*
+    4. `includeLeadingWhitespace (bool)`: Include whitespace immediately before the statement, or before its leading comments when `includeLeadingComments` is enabled. *(default=false)*
+
+### Leading comments and whitespace
+
+Both options default to `false`, so existing callers still receive text and
+offsets that start at the first keyword. Neither option changes `end`.
+
+For `  -- header\n  SELECT 1;`:
+
+| Options | Returned `text` starts at |
+| --- | --- |
+| Neither | `SELECT` |
+| `includeLeadingComments` | `-- header` |
+| `includeLeadingWhitespace` | The two spaces after the comment line |
+| Both | The two spaces before `-- header` |
+
+Comment-only mode keeps whitespace between comments and the keyword because
+`text` remains a contiguous source substring. Whitespace-only mode does not cross
+or include a comment. The tokenizer includes a line comment's terminating newline
+in that comment token, so whitespace-only mode does not retain that newline.
+Semicolon delimiters are excluded in every mode.
+
+To preserve a module's header comments and their leading whitespace:
+
+```js
+identify('  -- header\nCREATE VIEW v AS SELECT 1;', {
+  dialect: 'mssql',
+  includeLeadingComments: true,
+  includeLeadingWhitespace: true,
+});
+```
 
 ### DynamoDB (PartiQL)
 
