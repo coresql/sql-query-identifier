@@ -66,7 +66,7 @@ VERSION="${INPUT_VERSION:-$default_version}"
 
 # Step 3: Validate and clean the version
 VERSION=$(validate_version "$VERSION")
-NEW_TAG="$VERSION"
+NEW_TAG="v$VERSION"
 
 # Confirm with the user
 echo ""
