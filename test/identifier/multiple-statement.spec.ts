@@ -3,6 +3,86 @@ import { expect } from 'chai';
 import { identify } from '../../src';
 
 describe('identifier', () => {
+  describe('MySQL DELIMITER directive', () => {
+    it('should identify the canonical example from issue #66', () => {
+      const actual = identify('\nSELECT 1;\n\nDELIMITER $\n\nSELECT 2$\n\nSELECT 3$\n', {
+        dialect: 'mysql',
+      });
+      expect(actual).to.eql([
+        {
+          start: 1,
+          end: 9,
+          text: 'SELECT 1;',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+          tables: [],
+          columns: [],
+          delimiter: ';',
+          limit: false,
+          offset: false,
+        },
+        {
+          start: 12,
+          end: 22,
+          text: 'DELIMITER $',
+          type: 'DELIMITER',
+          executionType: 'NO_OP',
+          parameters: [],
+          tables: [],
+          columns: [],
+          newDelimiter: '$',
+        },
+        {
+          start: 25,
+          end: 33,
+          text: 'SELECT 2$',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+          tables: [],
+          columns: [],
+          delimiter: '$',
+          limit: false,
+          offset: false,
+        },
+        {
+          start: 36,
+          end: 44,
+          text: 'SELECT 3$',
+          type: 'SELECT',
+          executionType: 'LISTING',
+          parameters: [],
+          tables: [],
+          columns: [],
+          delimiter: '$',
+          limit: false,
+          offset: false,
+        },
+      ]);
+    });
+
+    it('should split a CREATE PROCEDURE body with $$ delimiter', () => {
+      const input =
+        'DELIMITER $$\nCREATE PROCEDURE foo()\nBEGIN\n  SELECT 1;\n  SELECT 2;\nEND$$\nDELIMITER ;';
+      const actual = identify(input, { dialect: 'mysql' });
+
+      expect(actual).to.have.lengthOf(3);
+      expect(actual[0]).to.include({ type: 'DELIMITER', text: 'DELIMITER $$' });
+      expect(actual[1]).to.include({
+        type: 'CREATE_PROCEDURE',
+        text: 'CREATE PROCEDURE foo()\nBEGIN\n  SELECT 1;\n  SELECT 2;\nEND$$',
+      });
+      expect(actual[2]).to.include({ type: 'DELIMITER', text: 'DELIMITER ;' });
+    });
+
+    it('should reject a delimiter containing quote characters', () => {
+      expect(() => identify('DELIMITER "//"\nSELECT 1//', { dialect: 'mysql' })).to.throw(
+        'DELIMITER cannot contain quote characters',
+      );
+    });
+  });
+
   describe('given queries with multiple statements', () => {
     it('should identify a query with different statements in a single line', () => {
       const actual = identify(
@@ -18,6 +98,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
         },
         {
           end: 76,
@@ -52,6 +133,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
         },
         {
           start: 74,
@@ -62,6 +144,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
           limit: false,
           offset: false,
         },
@@ -89,6 +172,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
           limit: false,
           offset: false,
         },
@@ -101,6 +185,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
           limit: false,
           offset: false,
         },
@@ -127,6 +212,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
           limit: false,
           offset: false,
         },
@@ -139,6 +225,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
           limit: false,
           offset: false,
         },
@@ -151,6 +238,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
           limit: false,
           offset: false,
         },
@@ -198,6 +286,7 @@ describe('identifier', () => {
             text: 'DECLARE\n            PK_NAME VARCHAR(200);\n\n          BEGIN\n            EXECUTE IMMEDIATE (\'CREATE SEQUENCE "untitled_table8_seq"\');\n\n          SELECT\n            cols.column_name INTO PK_NAME\n          FROM\n            all_constraints cons,\n            all_cons_columns cols\n          WHERE\n            cons.constraint_type = \'P\'\n            AND cons.constraint_name = cols.constraint_name\n            AND cons.owner = cols.owner\n            AND cols.table_name = \'untitled_table8\';\n\n          execute immediate (\n            \'create or replace trigger "untitled_table8_autoinc_trg"  BEFORE INSERT on "untitled_table8"  for each row  declare  checking number := 1;  begin    if (:new."\' || PK_NAME || \'" is null) then      while checking >= 1 loop        select "untitled_table8_seq".nextval into :new."\' || PK_NAME || \'" from dual;        select count("\' || PK_NAME || \'") into checking from "untitled_table8"        where "\' || PK_NAME || \'" = :new."\' || PK_NAME || \'";      end loop;    end if;  end;\'\n          );\n\n          END;',
             type: 'ANON_BLOCK',
             columns: [],
+            delimiter: ';',
           },
         ];
         expect(actual).to.eql(expected);
@@ -247,6 +336,7 @@ describe('identifier', () => {
             text: 'create table\n            "untitled_table8" (\n              "id" integer not null primary key,\n              "created_at" varchar(255) not null\n            );',
             type: 'CREATE_TABLE',
             columns: [],
+            delimiter: ';',
           },
           {
             end: 1212,
@@ -257,6 +347,7 @@ describe('identifier', () => {
             text: 'DECLARE\n            PK_NAME VARCHAR(200);\n\n          BEGIN\n            EXECUTE IMMEDIATE (\'CREATE SEQUENCE "untitled_table8_seq"\');\n\n          SELECT\n            cols.column_name INTO PK_NAME\n          FROM\n            all_constraints cons,\n            all_cons_columns cols\n          WHERE\n            cons.constraint_type = \'P\'\n            AND cons.constraint_name = cols.constraint_name\n            AND cons.owner = cols.owner\n            AND cols.table_name = \'untitled_table8\';\n\n          execute immediate (\n            \'create or replace trigger "untitled_table8_autoinc_trg"  BEFORE INSERT on "untitled_table8"  for each row  declare  checking number := 1;  begin    if (:new."\' || PK_NAME || \'" is null) then      while checking >= 1 loop        select "untitled_table8_seq".nextval into :new."\' || PK_NAME || \'" from dual;        select count("\' || PK_NAME || \'") into checking from "untitled_table8"        where "\' || PK_NAME || \'" = :new."\' || PK_NAME || \'";      end loop;    end if;  end;\'\n          );\n\n          END;',
             type: 'ANON_BLOCK',
             columns: [],
+            delimiter: ';',
           },
         ];
         expect(actual).to.eql(expected);
@@ -324,6 +415,7 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
+            delimiter: ';',
           },
           {
             start: 79,
@@ -334,6 +426,7 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
+            delimiter: ';',
             limit: false,
             offset: false,
           },
@@ -346,6 +439,7 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
+            delimiter: ';',
             limit: false,
             offset: false,
           },
@@ -372,6 +466,7 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
+            delimiter: ';',
           },
           {
             start: 54,
@@ -382,6 +477,7 @@ describe('identifier', () => {
             parameters: [],
             tables: [],
             columns: [],
+            delimiter: ';',
             limit: false,
             offset: false,
           },
@@ -409,6 +505,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
         },
         {
           start: 6,
@@ -419,6 +516,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
           limit: false,
           offset: false,
         },
@@ -445,6 +543,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
         },
         {
           start: 24,
@@ -480,6 +579,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
         },
         {
           start: 19,
@@ -490,6 +590,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
           limit: false,
           offset: false,
         },
@@ -502,6 +603,7 @@ describe('identifier', () => {
           parameters: [],
           tables: [],
           columns: [],
+          delimiter: ';',
         },
       ];
       expect(actual).to.eql(expected);
@@ -523,6 +625,7 @@ describe('identifier', () => {
               parameters: [],
               tables: [],
               columns: [],
+              delimiter: ';',
             },
             {
               start: 19 + offset,
@@ -533,6 +636,7 @@ describe('identifier', () => {
               parameters: [],
               tables: [],
               columns: [],
+              delimiter: ';',
               limit: false,
               offset: false,
             },
@@ -545,6 +649,7 @@ describe('identifier', () => {
               parameters: [],
               tables: [],
               columns: [],
+              delimiter: ';',
             },
           ];
           expect(actual).to.eql(expected);
