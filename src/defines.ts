@@ -155,6 +155,7 @@ export interface IdentifyResult {
   columns: ColumnReference[];
   limit?: boolean;
   offset?: boolean;
+  where?: boolean;
 }
 
 export interface Statement {
@@ -172,6 +173,7 @@ export interface Statement {
   columns: ColumnReference[];
   limit?: boolean;
   offset?: boolean;
+  where?: boolean;
   isCte?: boolean;
 }
 

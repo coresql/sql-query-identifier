@@ -623,6 +623,7 @@ describe('parser', () => {
             parameters: [],
             tables: [],
             columns: [],
+            where: true,
           },
         ],
         tokens: [
@@ -634,8 +635,20 @@ describe('parser', () => {
           },
           {
             type: 'unknown',
-            value: " Persons SET Name = 'John' WHERE PersonID = 1",
+            value: " Persons SET Name = 'John' ",
             start: 6,
+            end: 32,
+          },
+          {
+            type: 'keyword',
+            value: 'WHERE',
+            start: 33,
+            end: 37,
+          },
+          {
+            type: 'unknown',
+            value: ' PersonID = 1',
+            start: 38,
             end: 50,
           },
           {
@@ -669,6 +682,7 @@ describe('parser', () => {
             parameters: [],
             tables: [],
             columns: [],
+            where: true,
           },
         ],
         tokens: [
@@ -692,8 +706,20 @@ describe('parser', () => {
           },
           {
             type: 'unknown',
-            value: ' Persons WHERE PersonID = 1',
+            value: ' Persons ',
             start: 11,
+            end: 19,
+          },
+          {
+            type: 'keyword',
+            value: 'WHERE',
+            start: 20,
+            end: 24,
+          },
+          {
+            type: 'unknown',
+            value: ' PersonID = 1',
+            start: 25,
             end: 37,
           },
           {
@@ -841,8 +867,20 @@ describe('parser', () => {
           },
           {
             type: 'unknown',
-            value: ' a where x = ',
+            value: ' a ',
             start: 13,
+            end: 15,
+          },
+          {
+            type: 'keyword',
+            value: 'where',
+            start: 16,
+            end: 20,
+          },
+          {
+            type: 'unknown',
+            value: ' x = ',
+            start: 21,
             end: 25,
           },
           {
@@ -887,8 +925,20 @@ describe('parser', () => {
           },
           {
             type: 'unknown',
-            value: ' a where x = ',
+            value: ' a ',
             start: 13,
+            end: 15,
+          },
+          {
+            type: 'keyword',
+            value: 'where',
+            start: 16,
+            end: 20,
+          },
+          {
+            type: 'unknown',
+            value: ' x = ',
+            start: 21,
             end: 25,
           },
           {
@@ -933,8 +983,20 @@ describe('parser', () => {
           },
           {
             type: 'unknown',
-            value: ' a where x = ',
+            value: ' a ',
             start: 13,
+            end: 15,
+          },
+          {
+            type: 'keyword',
+            value: 'where',
+            start: 16,
+            end: 20,
+          },
+          {
+            type: 'unknown',
+            value: ' x = ',
+            start: 21,
             end: 25,
           },
           {
@@ -991,8 +1053,20 @@ describe('parser', () => {
           },
           {
             type: 'unknown',
-            value: ' a where x = ',
+            value: ' a ',
             start: 13,
+            end: 15,
+          },
+          {
+            type: 'keyword',
+            value: 'where',
+            start: 16,
+            end: 20,
+          },
+          {
+            type: 'unknown',
+            value: ' x = ',
+            start: 21,
             end: 25,
           },
           {
@@ -1075,8 +1149,20 @@ describe('parser', () => {
           },
           {
             type: 'unknown',
-            value: ' a where x = ',
+            value: ' a ',
             start: 13,
+            end: 15,
+          },
+          {
+            type: 'keyword',
+            value: 'where',
+            start: 16,
+            end: 20,
+          },
+          {
+            type: 'unknown',
+            value: ' x = ',
+            start: 21,
             end: 25,
           },
           {
